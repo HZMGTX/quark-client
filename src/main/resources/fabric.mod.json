@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "id": "ghostclient",
+  "version": "${version}",
+  "name": "Ghost Client",
+  "description": "A Minecraft Fabric ghost/hack client.",
+  "authors": [
+    "GhostClient Team"
+  ],
+  "contact": {
+    "homepage": "https://github.com/ghostclient",
+    "sources": "https://github.com/ghostclient/ghost-client"
+  },
+  "license": "MIT",
+  "icon": "assets/ghostclient/icon.png",
+  "environment": "client",
+  "entrypoints": {
+    "main": [
+      "com.ghostclient.GhostClient"
+    ],
+    "client": [
+      "com.ghostclient.GhostClient"
+    ]
+  },
+  "mixins": [
+    "ghostclient.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=0.15.7",
+    "fabric-api": "*",
+    "minecraft": "~1.20.4",
+    "java": ">=17"
+  }
+}
