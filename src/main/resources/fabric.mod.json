@@ -1,29 +1,29 @@
 {
   "schemaVersion": 1,
-  "id": "ghostclient",
+  "id": "quark",
   "version": "${version}",
-  "name": "Ghost Client",
+  "name": "Quark.cc",
   "description": "A Minecraft Fabric ghost/hack client.",
   "authors": [
-    "GhostClient Team"
+    "Quark Team"
   ],
   "contact": {
-    "homepage": "https://github.com/ghostclient",
-    "sources": "https://github.com/ghostclient/ghost-client"
+    "homepage": "https://github.com/quarkcc",
+    "sources": "https://github.com/quarkcc/quark-client"
   },
   "license": "MIT",
-  "icon": "assets/ghostclient/icon.png",
+  "icon": "assets/quark/icon.png",
   "environment": "client",
   "entrypoints": {
     "main": [
-      "com.ghostclient.GhostClient"
+      "cc.quark.Quark"
     ],
     "client": [
-      "com.ghostclient.GhostClient"
+      "cc.quark.Quark"
     ]
   },
   "mixins": [
-    "ghostclient.mixins.json"
+    "quark.mixins.json"
   ],
   "depends": {
     "fabricloader": ">=0.15.7",

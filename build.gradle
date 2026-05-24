@@ -34,7 +34,7 @@ processResources {
 }
 
 tasks.withType(JavaCompile).configureEach {
-    it.options.release = Integer.parseInt(project.java_version)
+    it.options.release = Integer.parseInt(project.property("java_version") as String)
     it.options.encoding = "UTF-8"
 }
 
@@ -46,14 +46,14 @@ java {
 
 jar {
     from("LICENSE") {
-        rename { "${it}_${project.archives_base_name}" }
+        rename { "${it}_${project.base.archivesName.get()}" }
     }
 
     manifest {
         attributes(
-            'Implementation-Title': 'GhostClient',
-            'Implementation-Version': project.mod_version,
-            'Main-Class': 'com.ghostclient.GhostClient'
+            'Implementation-Title': 'Quark',
+            'Implementation-Version': project.version,
+            'Main-Class': 'cc.quark.Quark'
         )
     }
 }
@@ -69,7 +69,7 @@ publishing {
         // Local repository only
         maven {
             name = "local"
-            url = layout.buildDirectory.dir("repo")
+            url = uri(layout.buildDirectory.dir("repo"))
         }
     }
 }

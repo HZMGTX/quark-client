@@ -1,0 +1,19 @@
+{
+  "required": true,
+  "package": "cc.quark.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "client": [
+    "MixinMinecraft",
+    "MixinClientPlayerEntity",
+    "MixinGameRenderer",
+    "MixinEntity",
+    "MixinPlayerInteractHandler",
+    "MixinAbstractClientPlayerEntity",
+    "MixinInGameHud",
+    "MixinLivingEntity",
+    "MixinClientConnection"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
