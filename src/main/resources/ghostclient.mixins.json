@@ -10,7 +10,8 @@
     "MixinPlayerInteractHandler",
     "MixinAbstractClientPlayerEntity",
     "MixinInGameHud",
-    "MixinLivingEntity"
+    "MixinLivingEntity",
+    "MixinClientConnection"
   ],
   "injectors": {
     "defaultRequire": 1

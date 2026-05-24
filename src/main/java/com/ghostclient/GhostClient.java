@@ -122,9 +122,7 @@ public class GhostClient implements ModInitializer, ClientModInitializer {
 
     private void openGui(MinecraftClient mc) {
         if (mc.currentScreen == null) {
-            // ClickGUI screen implemented in Part 2.
-            LOGGER.info("[GhostClient] ClickGUI toggled open.");
-            // mc.setScreen(new ClickGuiScreen());
+            mc.setScreen(new com.ghostclient.gui.ClickGUI());
         } else {
             mc.setScreen(null);
         }
