@@ -66,4 +66,9 @@ public class Reach extends Module {
             currentReach = reach.get();
         }
     }
+
+    /** Read by {@code MixinPlayerInteractHandler} to override the attack-range check. */
+    public double getCurrentReach() {
+        return currentReach;
+    }
 }

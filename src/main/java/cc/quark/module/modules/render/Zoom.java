@@ -55,9 +55,8 @@ public class Zoom extends Module {
 
     @Override
     public void onDisable() {
-        if (mc.options != null) {
-            mc.options.fov.setValue(savedFov);
-        }
+        zooming = false;
+        currentMultiplier = 1.0;
     }
 
     @EventHandler
@@ -67,11 +66,8 @@ public class Zoom extends Module {
         boolean keyHeld = GLFW.glfwGetKey(mc.getWindow().getHandle(), ZOOM_KEY) == GLFW.GLFW_PRESS;
 
         if (keyHeld && !zooming) {
-            // Start zoom â€” record current FOV
-            savedFov = mc.options.fov.getValue();
             zooming = true;
         } else if (!keyHeld && zooming) {
-            // Stop zoom
             zooming = false;
         }
 
@@ -86,9 +82,15 @@ public class Zoom extends Module {
 
         // Clamp multiplier so we don't get absurd values
         currentMultiplier = Math.max(0.05, Math.min(1.0, currentMultiplier));
+    }
 
-        double newFov = savedFov * currentMultiplier;
-        mc.options.fov.setValue(newFov);
+    /**
+     * Called by {@code MixinGameRenderer} to scale the rendered FOV.
+     * Returns the zoom-adjusted field of view without touching the user's
+     * FOV option, so the change is purely visual and reverts cleanly.
+     */
+    public double getModifiedFov(double original) {
+        return original * currentMultiplier;
     }
 
     /**
