@@ -79,12 +79,12 @@ public class Nametags extends Module {
             float hp = le.getHealth();
             // Color based on health percentage
             String hpStr = String.format("%.1f", hp);
-            sb.append(" Â§c").append(hpStr).append("Â§r hp");
+            sb.append(" §c").append(hpStr).append("§r hp");
         }
 
         if (showDistance.isEnabled()) {
             double dist = mc.player.distanceTo(entity);
-            sb.append(" Â§7").append(String.format("%.1f", dist)).append("mÂ§r");
+            sb.append(" §7").append(String.format("%.1f", dist)).append("m§r");
         }
 
         String label = sb.toString();
@@ -143,8 +143,8 @@ public class Nametags extends Module {
                 int dmg = stack.getDamage();
                 int pct = (int)(100f * (maxDmg - dmg) / maxDmg);
                 // Color: green > 60, yellow > 30, red otherwise
-                String color = pct > 60 ? "Â§a" : pct > 30 ? "Â§e" : "Â§c";
-                armorParts.add(color + pct + "%Â§r");
+                String color = pct > 60 ? "§a" : pct > 30 ? "§e" : "§c";
+                armorParts.add(color + pct + "%§r");
             }
         }
 

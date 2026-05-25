@@ -24,13 +24,13 @@ public class BindCommand extends Command {
     @Override
     public void execute(String[] args) {
         if (args.length < 2) {
-            reply("Â§cUsage: .bind <module> <key|none>");
+            reply("§cUsage: .bind <module> <key|none>");
             return;
         }
 
         Module module = moduleManager.getModule(args[0]);
         if (module == null) {
-            reply("Â§cModule not found: " + args[0]);
+            reply("§cModule not found: " + args[0]);
             return;
         }
 
@@ -44,12 +44,12 @@ public class BindCommand extends Command {
 
         int keyCode = resolveKey(keyName);
         if (keyCode == -1) {
-            reply("Â§cUnknown key: " + args[1] + ". Use a single letter or GLFW key name.");
+            reply("§cUnknown key: " + args[1] + ". Use a single letter or GLFW key name.");
             return;
         }
 
         module.setKeybind(keyCode);
-        reply(module.getName() + " bound to Â§b" + keyName + "Â§r.");
+        reply(module.getName() + " bound to §b" + keyName + "§r.");
     }
 
     /**

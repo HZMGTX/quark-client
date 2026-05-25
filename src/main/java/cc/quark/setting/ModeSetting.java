@@ -40,6 +40,13 @@ public class ModeSetting extends Setting<String> {
         this.value = modes.get((idx + 1) % modes.size());
     }
 
+    public void next() { cycle(); }
+
+    public void previous() {
+        int idx = modes.indexOf(value);
+        this.value = modes.get((idx - 1 + modes.size()) % modes.size());
+    }
+
     public List<String> getModes() {
         return modes;
     }

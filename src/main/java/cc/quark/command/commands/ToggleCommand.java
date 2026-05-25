@@ -20,7 +20,7 @@ public class ToggleCommand extends Command {
     @Override
     public void execute(String[] args) {
         if (args.length == 0) {
-            reply("Â§cUsage: .toggle <module>");
+            reply("§cUsage: .toggle <module>");
             return;
         }
 
@@ -28,11 +28,11 @@ public class ToggleCommand extends Command {
         Module module = moduleManager.getModule(name);
 
         if (module == null) {
-            reply("Â§cModule not found: " + name);
+            reply("§cModule not found: " + name);
             return;
         }
 
         module.toggle();
-        reply(module.getName() + " is now " + (module.isEnabled() ? "Â§aenabled" : "Â§cdisabled") + "Â§r.");
+        reply(module.getName() + " is now " + (module.isEnabled() ? "§aenabled" : "§cdisabled") + "§r.");
     }
 }

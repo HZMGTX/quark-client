@@ -43,6 +43,16 @@ public class ModuleManager {
         register(new AntiBot());
         register(new BowAimbot());
         register(new AutoCrystal());
+        register(new AntiKnockback());
+        register(new AutoGapple());
+        register(new AutoPot());
+        register(new Burrow());
+        register(new Surround());
+        register(new TriggerBot());
+        register(new AutoBlock());
+        register(new WTap());
+        register(new AntiFire());
+        register(new BowRelease());
 
         // -------- MOVEMENT --------
         register(new Sprint());
@@ -66,6 +76,13 @@ public class ModuleManager {
         register(new AntiVoid());
         register(new Jesus());
         register(new Strafe());
+        register(new BunnyHop());
+        register(new FastSwim());
+        register(new JetPack());
+        register(new AirStutter());
+        register(new AntiDrown());
+        register(new NoWeb());
+        register(new LegitSpeed());
 
         // -------- PLAYER --------
         register(new AntiAFK());
@@ -86,6 +103,11 @@ public class ModuleManager {
         register(new PacketLogger());
         register(new AutoTool());
         register(new MultiTask());
+        register(new AutoSprint());
+        register(new AutoDrop());
+        register(new AntiDebuff());
+        register(new AutoSwap());
+        register(new AutoHotbar());
 
         // -------- RENDER --------
         register(new ESP());
@@ -107,6 +129,10 @@ public class ModuleManager {
         register(new ItemESP());
         register(new TimeChanger());
         register(new StorageESP());
+        register(new TrueSight());
+        register(new Ambiance());
+        register(new BlockHighlight());
+        register(new NotificationOverlay());
 
         // -------- WORLD --------
         register(new Nuker());
@@ -115,6 +141,10 @@ public class ModuleManager {
         register(new AutoMine());
         register(new MiddleClick());
         register(new Tunneler());
+        register(new SpeedMine());
+        register(new StashFinder());
+        register(new Excavator());
+        register(new OreAlert());
 
         // -------- EXPLOIT --------
         register(new Timer());
@@ -127,6 +157,9 @@ public class ModuleManager {
         register(new AutoWalk());
         register(new Disabler());
         register(new PortalGod());
+        register(new AntiCrash());
+        register(new DeSync());
+        register(new AutoReconnect());
     }
 
     // -------------------------------------------------------------------------

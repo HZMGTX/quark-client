@@ -78,7 +78,7 @@ public class Speed extends Module {
         boolean onGround = mc.player.isOnGround();
 
         // Maintain sprint flag, bypassing knockback reset if enabled
-        if (moving && (sprintBypass.isEnabled() || !mc.player.hurtTime > 0)) {
+        if (moving && (sprintBypass.isEnabled() || mc.player.hurtTime <= 0)) {
             mc.player.setSprinting(true);
         }
 

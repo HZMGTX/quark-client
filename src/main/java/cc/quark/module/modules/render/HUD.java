@@ -76,7 +76,7 @@ public class HUD extends Module {
 
         // ---- Watermark ----
         if (watermark.isEnabled()) {
-            String wmText = Quark.MOD_NAME + " Â§7v" + Quark.VERSION;
+            String wmText = Quark.MOD_NAME + " §7v" + Quark.VERSION;
             int wmColor = getAccentColor(0);
             ctx.drawTextWithShadow(mc.textRenderer, wmText, 3, 3, wmColor);
         }
@@ -180,7 +180,7 @@ public class HUD extends Module {
             int amp = effect.getAmplifier() + 1;
             int dur = effect.getDuration() / 20; // convert ticks to seconds
             String line = name + (amp > 1 ? " " + (amp) : "")
-                    + " Â§7(" + formatDuration(dur) + ")Â§r";
+                    + " §7(" + formatDuration(dur) + ")§r";
             ctx.drawTextWithShadow(mc.textRenderer, line, x, y, 0xFFFFFFFF);
             y += 11;
         }

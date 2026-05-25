@@ -27,14 +27,14 @@ public class HelpCommand extends Command {
         int totalPages = (int) Math.ceil(commandManager.getCommands().size() / (double) perPage);
         page = Math.max(1, Math.min(page, totalPages));
 
-        replyRaw("Â§8--- Â§bQuark Commands Â§7(Page " + page + "/" + totalPages + ")Â§8 ---");
+        replyRaw("§8--- §bQuark Commands §7(Page " + page + "/" + totalPages + ")§8 ---");
 
         int start = (page - 1) * perPage;
         int end   = Math.min(start + perPage, commandManager.getCommands().size());
 
         for (int i = start; i < end; i++) {
             Command cmd = commandManager.getCommands().get(i);
-            replyRaw("  Â§b." + cmd.getUsage() + " Â§8- Â§7" + cmd.getDescription());
+            replyRaw("  §b." + cmd.getUsage() + " §8- §7" + cmd.getDescription());
         }
     }
 }

@@ -71,14 +71,14 @@ public class CommandManager {
 
         Command command = getCommand(name);
         if (command == null) {
-            sendMessage("Â§cUnknown command: " + name + ". Type Â§f.help Â§cfor a list.");
+            sendMessage("§cUnknown command: " + name + ". Type §f.help §cfor a list.");
             return true; // Still cancel the chat â€” it started with prefix.
         }
 
         try {
             command.execute(args);
         } catch (Exception e) {
-            sendMessage("Â§cError executing command: " + e.getMessage());
+            sendMessage("§cError executing command: " + e.getMessage());
             LOGGER.error("Command '{}' threw an exception", name, e);
         }
 

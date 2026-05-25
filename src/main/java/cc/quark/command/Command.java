@@ -48,7 +48,7 @@ public abstract class Command {
     protected void reply(String message) {
         MinecraftClient mc = MinecraftClient.getInstance();
         if (mc.player != null) {
-            mc.player.sendMessage(Text.literal("Â§7[Â§bGhostÂ§7] Â§r" + message), false);
+            mc.player.sendMessage(Text.literal("§7[§bGhost§7] §r" + message), false);
         }
     }
 

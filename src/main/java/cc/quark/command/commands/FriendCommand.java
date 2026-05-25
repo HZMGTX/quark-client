@@ -21,7 +21,7 @@ public class FriendCommand extends Command {
     @Override
     public void execute(String[] args) {
         if (args.length == 0) {
-            reply("Â§cUsage: .friend <add|remove|list> [username]");
+            reply("§cUsage: .friend <add|remove|list> [username]");
             return;
         }
 
@@ -29,23 +29,23 @@ public class FriendCommand extends Command {
 
         switch (sub) {
             case "add" -> {
-                if (args.length < 2) { reply("Â§cPlease specify a username."); return; }
+                if (args.length < 2) { reply("§cPlease specify a username."); return; }
                 String name = args[1];
                 if (friendManager.isFriend(name)) {
                     reply(name + " is already a friend.");
                 } else {
                     friendManager.addFriend(name);
-                    reply("Â§aAdded Â§r" + name + " Â§ato friends.");
+                    reply("§aAdded §r" + name + " §ato friends.");
                 }
             }
             case "remove", "del", "rm" -> {
-                if (args.length < 2) { reply("Â§cPlease specify a username."); return; }
+                if (args.length < 2) { reply("§cPlease specify a username."); return; }
                 String name = args[1];
                 if (!friendManager.isFriend(name)) {
                     reply(name + " is not in your friends list.");
                 } else {
                     friendManager.removeFriend(name);
-                    reply("Â§cRemoved Â§r" + name + " Â§cfrom friends.");
+                    reply("§cRemoved §r" + name + " §cfrom friends.");
                 }
             }
             case "list", "ls" -> {
@@ -53,10 +53,10 @@ public class FriendCommand extends Command {
                 if (friends.isEmpty()) {
                     reply("Your friends list is empty.");
                 } else {
-                    reply("Â§bFriends (" + friends.size() + ")Â§r: " + String.join(", ", friends));
+                    reply("§bFriends (" + friends.size() + ")§r: " + String.join(", ", friends));
                 }
             }
-            default -> reply("Â§cUnknown sub-command: " + sub + ". Use add, remove, or list.");
+            default -> reply("§cUnknown sub-command: " + sub + ". Use add, remove, or list.");
         }
     }
 }
