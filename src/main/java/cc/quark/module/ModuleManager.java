@@ -56,6 +56,10 @@ public class ModuleManager {
         register(new KeepSprint());
         register(new AntiFireball());
         register(new AutoDisconnect());
+        register(new AutoClicker());
+        register(new MobAura());
+        register(new AntiPoison());
+        register(new ForceField());
 
         // -------- MOVEMENT --------
         register(new Sprint());
@@ -89,6 +93,10 @@ public class ModuleManager {
         register(new NoPush());
         register(new EntitySpeed());
         register(new ReverseStep());
+        register(new NoGravity());
+        register(new AutoSneak());
+        register(new StraightLine());
+        register(new Anchor());
 
         // -------- PLAYER --------
         register(new AntiAFK());
@@ -118,6 +126,10 @@ public class ModuleManager {
         register(new Replenish());
         register(new AutoMount());
         register(new MiddleClickFriend());
+        register(new AutoPotion());
+        register(new FakeSneak());
+        register(new HealthAlert());
+        register(new AntiCactus());
 
         // -------- RENDER --------
         register(new ESP());
@@ -148,6 +160,11 @@ public class ModuleManager {
         register(new CrystalESP());
         register(new MobESP());
         register(new DeathCoords());
+        register(new Coordinates());
+        register(new Hitbox());
+        register(new TNTTimer());
+        register(new ShulkerViewer());
+        register(new EntityList());
 
         // -------- WORLD --------
         register(new Nuker());
@@ -163,6 +180,11 @@ public class ModuleManager {
         register(new Replant());
         register(new TreeFeller());
         register(new AutoSign());
+        register(new AutoBed());
+        register(new Follow());
+        register(new AutoDoor());
+        register(new PacketMine());
+        register(new AutoBreeder());
 
         // -------- EXPLOIT --------
         register(new Timer());
@@ -181,6 +203,8 @@ public class ModuleManager {
         register(new AntiAim());
         register(new FastUse());
         register(new HighwayBuilder());
+        register(new ChatSpammer());
+        register(new NoGround());
     }
 
     // -------------------------------------------------------------------------
