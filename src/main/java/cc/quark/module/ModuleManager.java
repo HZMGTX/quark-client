@@ -53,6 +53,9 @@ public class ModuleManager {
         register(new WTap());
         register(new AntiFire());
         register(new BowRelease());
+        register(new KeepSprint());
+        register(new AntiFireball());
+        register(new AutoDisconnect());
 
         // -------- MOVEMENT --------
         register(new Sprint());
@@ -83,6 +86,9 @@ public class ModuleManager {
         register(new AntiDrown());
         register(new NoWeb());
         register(new LegitSpeed());
+        register(new NoPush());
+        register(new EntitySpeed());
+        register(new ReverseStep());
 
         // -------- PLAYER --------
         register(new AntiAFK());
@@ -108,6 +114,10 @@ public class ModuleManager {
         register(new AntiDebuff());
         register(new AutoSwap());
         register(new AutoHotbar());
+        register(new AntiBlind());
+        register(new Replenish());
+        register(new AutoMount());
+        register(new MiddleClickFriend());
 
         // -------- RENDER --------
         register(new ESP());
@@ -133,6 +143,11 @@ public class ModuleManager {
         register(new Ambiance());
         register(new BlockHighlight());
         register(new NotificationOverlay());
+        register(new FOVChanger());
+        register(new WeatherChanger());
+        register(new CrystalESP());
+        register(new MobESP());
+        register(new DeathCoords());
 
         // -------- WORLD --------
         register(new Nuker());
@@ -145,6 +160,9 @@ public class ModuleManager {
         register(new StashFinder());
         register(new Excavator());
         register(new OreAlert());
+        register(new Replant());
+        register(new TreeFeller());
+        register(new AutoSign());
 
         // -------- EXPLOIT --------
         register(new Timer());
@@ -160,6 +178,9 @@ public class ModuleManager {
         register(new AntiCrash());
         register(new DeSync());
         register(new AutoReconnect());
+        register(new AntiAim());
+        register(new FastUse());
+        register(new HighwayBuilder());
     }
 
     // -------------------------------------------------------------------------
