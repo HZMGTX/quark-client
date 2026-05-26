@@ -1,33 +1,22 @@
 package cc.quark.ghost;
 
-/**
- * GhostManager - central anti-detection manager for Quark.
- *
- * <p>Stores the active {@link AntiCheatProfile} and exposes safe limits for
- * speed, reach, attack timing, rotation behaviour, and velocity modification
- * that modules should respect to avoid flagging that profile's anti-cheat.
- *
- * <p>Usage:
- * <pre>
- *   GhostManager.INSTANCE.setProfile(AntiCheatProfile.GRIM);
- *   double safeSpeed = GhostManager.INSTANCE.getMaxSpeed();
- * </pre>
- */
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.network.ServerInfo;
+
 public class GhostManager {
 
-    /** Singleton instance. */
     public static final GhostManager INSTANCE = new GhostManager();
 
     private AntiCheatProfile activeProfile = AntiCheatProfile.GRIM;
     private boolean silentRotations = true;
-    private boolean packetDelay = true;
+    private boolean packetDelay     = true;
+    private boolean autoDetect      = false;
 
-    private final HumanizationEngine humanizer   = new HumanizationEngine();
+    private int violationScore = 0;
+    private static final int VIOLATION_MAX = 100;
+
+    private final HumanizationEngine humanizer    = new HumanizationEngine();
     private final PacketShaper       packetShaper = new PacketShaper();
-
-    // -------------------------------------------------------------------------
-    // Profile enum
-    // -------------------------------------------------------------------------
 
     public enum AntiCheatProfile {
         VANILLA,
@@ -38,14 +27,11 @@ public class GhostManager {
         SPARTAN,
         MATRIX,
         INTAVE,
+        POLAR,
         VERUS,
         KARHU,
         CUSTOM
     }
-
-    // -------------------------------------------------------------------------
-    // Profile access
-    // -------------------------------------------------------------------------
 
     public AntiCheatProfile getActiveProfile() {
         return activeProfile;
@@ -59,20 +45,82 @@ public class GhostManager {
         this.activeProfile = profile;
     }
 
-    public void setSilentRotations(boolean silent) { this.silentRotations = silent; }
-    public boolean isSilentRotations() { return silentRotations; }
+    public void setSilentRotations(boolean silent)  { this.silentRotations = silent; }
+    public boolean isSilentRotations()             { return silentRotations; }
 
-    public void setPacketDelay(boolean delay) { this.packetDelay = delay; }
-    public boolean isPacketDelay() { return packetDelay; }
+    public void setPacketDelay(boolean delay)       { this.packetDelay = delay; }
+    public boolean isPacketDelay()                 { return packetDelay; }
 
-    // -------------------------------------------------------------------------
-    // Safe movement limits
-    // -------------------------------------------------------------------------
+    public void setAutoDetect(boolean autoDetect)   { this.autoDetect = autoDetect; }
+    public boolean isAutoDetect()                  { return autoDetect; }
 
-    /**
-     * Returns the maximum horizontal movement speed (blocks/tick) considered safe
-     * for the current anti-cheat profile.
-     */
+    public void onTick() {
+        if (autoDetect) {
+            detectServer();
+        }
+    }
+
+    private void detectServer() {
+        MinecraftClient mc = MinecraftClient.getInstance();
+        ServerInfo info = mc.getCurrentServerEntry();
+        if (info == null) return;
+
+        String addr = info.address.toLowerCase();
+
+        if (addr.contains("hypixel")) {
+            activeProfile = AntiCheatProfile.WATCHDOG;
+        } else if (addr.contains("mineplex")) {
+            activeProfile = AntiCheatProfile.AAC;
+        } else if (addr.contains("cubecraft")) {
+            activeProfile = AntiCheatProfile.MATRIX;
+        } else if (addr.contains("minemen") || addr.contains("mmc")) {
+            activeProfile = AntiCheatProfile.GRIM;
+        } else if (addr.contains("pvp.land") || addr.contains("intave")) {
+            activeProfile = AntiCheatProfile.INTAVE;
+        }
+    }
+
+    public void onChatMessage(String message) {
+        if (message == null) return;
+        String lower = message.toLowerCase();
+        if (lower.contains("kicked") || lower.contains("flagged") ||
+            lower.contains("cheat") || lower.contains("ban") ||
+            lower.contains("violation")) {
+            incrementViolationScore(15);
+        }
+        if (lower.contains("reconnect") || lower.contains("disconnect")) {
+            incrementViolationScore(5);
+        }
+    }
+
+    public void incrementViolationScore() {
+        violationScore = Math.min(VIOLATION_MAX, violationScore + 1);
+    }
+
+    public void incrementViolationScore(int amount) {
+        violationScore = Math.min(VIOLATION_MAX, violationScore + amount);
+    }
+
+    public void decrementViolationScore(int amount) {
+        violationScore = Math.max(0, violationScore - amount);
+    }
+
+    public void resetViolationScore() {
+        violationScore = 0;
+    }
+
+    public int getViolationScore() {
+        return violationScore;
+    }
+
+    public boolean shouldThrottle() {
+        return violationScore >= 50;
+    }
+
+    public boolean shouldThrottle(int threshold) {
+        return violationScore >= threshold;
+    }
+
     public double getMaxSpeed() {
         return switch (activeProfile) {
             case VANILLA  -> 1.0;
@@ -82,20 +130,14 @@ public class GhostManager {
             case WATCHDOG -> AntiCheatBypass.Watchdog.getSafeSpeed();
             case SPARTAN  -> AntiCheatBypass.Spartan.getSafeSpeed();
             case MATRIX   -> AntiCheatBypass.Matrix.getSafeSpeed();
-            case INTAVE   -> 0.29;
+            case INTAVE   -> AntiCheatBypass.Intave.getSafeSpeed();
+            case POLAR    -> AntiCheatBypass.Polar.getSafeSpeed();
             case VERUS    -> AntiCheatBypass.Verus.getSafeSpeed();
             case KARHU    -> AntiCheatBypass.Karhu.getSafeSpeed();
             case CUSTOM   -> 0.35;
         };
     }
 
-    // -------------------------------------------------------------------------
-    // Safe reach limits
-    // -------------------------------------------------------------------------
-
-    /**
-     * Returns the maximum attack reach (blocks) considered safe for the current profile.
-     */
     public double getMaxReach() {
         return switch (activeProfile) {
             case VANILLA  -> 6.0;
@@ -105,45 +147,31 @@ public class GhostManager {
             case WATCHDOG -> AntiCheatBypass.Watchdog.getSafeReach();
             case SPARTAN  -> 3.2;
             case MATRIX   -> AntiCheatBypass.Matrix.getSafeReach();
-            case INTAVE   -> 3.0;
+            case INTAVE   -> AntiCheatBypass.Intave.getSafeReach();
+            case POLAR    -> AntiCheatBypass.Polar.getSafeReach();
             case VERUS    -> AntiCheatBypass.Verus.getSafeReach();
             case KARHU    -> AntiCheatBypass.Karhu.getSafeReach();
             case CUSTOM   -> 3.5;
         };
     }
 
-    // -------------------------------------------------------------------------
-    // Attack timing
-    // -------------------------------------------------------------------------
-
-    /**
-     * Returns the minimum milliseconds that must pass between consecutive attacks
-     * to avoid combat-speed flags.
-     */
     public long getMinAttackDelay() {
         return switch (activeProfile) {
             case VANILLA  -> 0L;
             case NCP      -> 50L;
             case AAC      -> 60L;
             case GRIM     -> 75L;
-            case WATCHDOG -> (long) (AntiCheatBypass.Watchdog.getAttackCooldown() * 50L);
+            case WATCHDOG -> (long)(AntiCheatBypass.Watchdog.getAttackCooldown() * 50L);
             case SPARTAN  -> 55L;
             case MATRIX   -> 65L;
-            case INTAVE   -> 70L;
+            case INTAVE   -> AntiCheatBypass.Intave.getMinAttackDelay();
+            case POLAR    -> AntiCheatBypass.Polar.getMinAttackDelay();
             case VERUS    -> AntiCheatBypass.Verus.getMinAttackDelay();
             case KARHU    -> AntiCheatBypass.Karhu.getMinAttackDelay();
             case CUSTOM   -> 60L;
         };
     }
 
-    // -------------------------------------------------------------------------
-    // Rotation behaviour
-    // -------------------------------------------------------------------------
-
-    /**
-     * Returns {@code true} when the current profile requires rotations to look
-     * visually legitimate (smooth, not instant snapping).
-     */
     public boolean shouldRotateLegit() {
         return switch (activeProfile) {
             case VANILLA, CUSTOM -> false;
@@ -161,37 +189,20 @@ public class GhostManager {
             case SPARTAN  -> 35.0;
             case MATRIX   -> 30.0;
             case INTAVE   -> 25.0;
+            case POLAR    -> AntiCheatBypass.Polar.getMaxRotationDelta();
             case VERUS    -> 22.0;
             case KARHU    -> 18.0;
             case CUSTOM   -> 40.0;
         };
     }
 
-    // -------------------------------------------------------------------------
-    // Strafe / movement behaviour
-    // -------------------------------------------------------------------------
-
-    /**
-     * Returns {@code true} when strafe-attacking (moving sideways while attacking)
-     * is considered safe for the current profile.
-     */
     public boolean canStrafeAttack() {
         return switch (activeProfile) {
-            case GRIM, INTAVE, VERUS, KARHU -> false;
-            default                         -> true;
+            case GRIM, INTAVE, POLAR, VERUS, KARHU -> false;
+            default                                 -> true;
         };
     }
 
-    // -------------------------------------------------------------------------
-    // Velocity modification
-    // -------------------------------------------------------------------------
-
-    /**
-     * Returns a multiplier (0.0 â€“ 1.0) for incoming knockback velocity that
-     * modules may apply without triggering velocity-reduction flags.
-     *
-     * <p>1.0 = full vanilla knockback (safe); 0.0 = no knockback (likely flagged).
-     */
     public double getVelocityMultiplier() {
         return switch (activeProfile) {
             case VANILLA  -> 1.0;
@@ -201,16 +212,13 @@ public class GhostManager {
             case WATCHDOG -> 0.7;
             case SPARTAN  -> 0.65;
             case MATRIX   -> 0.75;
-            case INTAVE   -> 0.8;
-            case VERUS    -> 0.85;
-            case KARHU    -> 0.9;
+            case INTAVE   -> AntiCheatBypass.Intave.getMaxVelocityReduction();
+            case POLAR    -> 0.92;
+            case VERUS    -> AntiCheatBypass.Verus.getMaxVelocityReduction();
+            case KARHU    -> AntiCheatBypass.Karhu.getMaxVelocityReduction();
             case CUSTOM   -> 0.7;
         };
     }
-
-    // -------------------------------------------------------------------------
-    // Sub-system accessors
-    // -------------------------------------------------------------------------
 
     public HumanizationEngine getHumanizer() {
         return humanizer;

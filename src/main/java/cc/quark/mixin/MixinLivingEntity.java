@@ -1,9 +1,11 @@
 package cc.quark.mixin;
 
 import cc.quark.Quark;
+import cc.quark.event.events.EventDamage;
 import cc.quark.event.events.EventMove;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.damage.DamageSource;
+import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.Vec3d;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -48,6 +50,16 @@ public abstract class MixinLivingEntity {
         cc.quark.event.events.EventJump event = new cc.quark.event.events.EventJump();
         Quark.getInstance().getEventBus().post(event);
         if (event.isCancelled()) ci.cancel();
+    }
+
+    // TODO: verify signature — in 1.21.1 yarn damage takes (ServerWorld, DamageSource, float)
+    @Inject(method = "damage", at = @At("HEAD"), cancellable = true)
+    private void onDamage(ServerWorld world, DamageSource source, float amount, CallbackInfoReturnable<Boolean> cir) {
+        if (Quark.getInstance() == null) return;
+        if (!((LivingEntity)(Object)this).equals(net.minecraft.client.MinecraftClient.getInstance().player)) return;
+        EventDamage event = new EventDamage(amount, source);
+        Quark.getInstance().getEventBus().post(event);
+        if (event.isCancelled()) cir.setReturnValue(false);
     }
 
     @Inject(method = "isFallFlying", at = @At("RETURN"), cancellable = true)

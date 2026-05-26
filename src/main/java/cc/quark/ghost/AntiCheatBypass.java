@@ -54,10 +54,19 @@ public class AntiCheatBypass {
     }
 
     public static class Intave {
+        public static double getSafeSpeed() { return 0.25; }
+        public static double getSafeReach() { return 2.9; }
+        public static long getMinAttackDelay() { return 100L; }
+        public static boolean strictVelocityCheck() { return true; }
+        public static double getMaxVelocityReduction() { return 0.95; }
+        public static boolean strictMode() { return true; }
+    }
+
+    public static class Polar {
         public static double getSafeSpeed() { return 0.28; }
         public static double getSafeReach() { return 3.0; }
-        public static int getMinAttackDelay() { return 11; }
-        public static boolean strictMode() { return true; }
+        public static long getMinAttackDelay() { return 85L; }
+        public static int getMaxRotationDelta() { return 20; }
     }
 
     public static class Verus {

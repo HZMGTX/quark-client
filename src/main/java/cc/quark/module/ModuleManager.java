@@ -393,6 +393,8 @@ public class ModuleManager {
         register(new Trajectories());
         register(new Tracers());
         register(new TrueSight());
+        register(new MotionGraph());
+        register(new TabList());
         register(new ViewModel());
         register(new WeatherChanger());
         register(new XRay());
@@ -468,8 +470,10 @@ public class ModuleManager {
 
         // -------- MISC --------
         register(new AntiDetect());
+        register(new BetterChat());
         register(new Panic());
         register(new AutoConfig());
+        register(new ServerInfo());
         register(new Waypoints());
         register(new StreamerMode());
         register(new ChatLogger());

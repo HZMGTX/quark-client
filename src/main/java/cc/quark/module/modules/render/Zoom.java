@@ -6,57 +6,62 @@ import cc.quark.module.Category;
 import cc.quark.module.Module;
 import cc.quark.setting.BoolSetting;
 import cc.quark.setting.DoubleSetting;
-import net.minecraft.client.option.GameOptions;
+import net.minecraft.entity.effect.StatusEffectInstance;
+import net.minecraft.entity.effect.StatusEffects;
 import org.lwjgl.glfw.GLFW;
 
-/**
- * Zoom - reduces the field of view to simulate a spyglass/zoom effect.
- *
- * While the zoom key (default: C) is held, the FOV is smoothly interpolated
- * toward fovMultiplier * normalFov. Scroll wheel adjusts zoom level.
- * On release the FOV smoothly returns to normal.
- */
 public class Zoom extends Module {
 
-    private final DoubleSetting fovMultiplier = register(new DoubleSetting(
-            "FOV Multiplier", "Zoom level as a fraction of normal FOV", 0.15, 0.05, 0.9));
+    private final DoubleSetting fov = register(new DoubleSetting(
+            "FOV", "Target FOV when zoomed in (degrees)", 10.0, 1.0, 50.0));
 
     private final BoolSetting smooth = register(new BoolSetting(
             "Smooth", "Smoothly interpolate FOV change", true));
 
     private final BoolSetting scroll = register(new BoolSetting(
-            "Scroll", "Allow scroll wheel to adjust zoom level", true));
+            "Scroll Zoom", "Allow scroll wheel to adjust zoom level", true));
 
-    /** The GLFW key that activates zoom (C). */
+    private final BoolSetting cinemaMode = register(new BoolSetting(
+            "Cinema Mode", "Reduce mouse sensitivity while zoomed for cinematic pan", false));
+
+    private final BoolSetting nightVision = register(new BoolSetting(
+            "Night Vision", "Apply night vision effect while zoomed", false));
+
     private static final int ZOOM_KEY = GLFW.GLFW_KEY_C;
 
-    /** Original FOV saved on first zoom activation. */
-    private double savedFov = 70.0;
-
-    /** Current effective FOV multiplier (lerped). */
-    private double currentMultiplier = 1.0;
-
-    /** Whether zoom is actively held. */
-    private boolean zooming = false;
-
-    /** Dynamic multiplier adjusted by scroll. */
-    private double scrollMultiplier = 1.0;
+    private double savedFov    = 70.0;
+    private double currentFov  = 70.0;
+    private double targetFov   = 70.0;
+    private double scrolledFov = -1.0;
+    private boolean zooming    = false;
 
     public Zoom() {
-        super("Zoom", "Hold C to zoom in â€” scroll to adjust", Category.RENDER);
+        super("Zoom", "Hold C to zoom in — scroll to adjust zoom level", Category.RENDER);
     }
 
     @Override
     public void onEnable() {
-        zooming = false;
-        currentMultiplier = 1.0;
-        scrollMultiplier = 1.0;
+        zooming     = false;
+        scrolledFov = -1.0;
+        if (mc.options != null) {
+            savedFov   = mc.options.getFov().getValue();
+            currentFov = savedFov;
+            targetFov  = savedFov;
+        }
     }
 
     @Override
     public void onDisable() {
-        zooming = false;
-        currentMultiplier = 1.0;
+        zooming     = false;
+        scrolledFov = -1.0;
+        if (mc.options != null) {
+            mc.options.getFov().setValue((int) Math.round(savedFov));
+        }
+        currentFov = savedFov;
+        targetFov  = savedFov;
+        if (mc.player != null) {
+            mc.player.removeStatusEffect(StatusEffects.NIGHT_VISION);
+        }
     }
 
     @EventHandler
@@ -66,41 +71,53 @@ public class Zoom extends Module {
         boolean keyHeld = GLFW.glfwGetKey(mc.getWindow().getHandle(), ZOOM_KEY) == GLFW.GLFW_PRESS;
 
         if (keyHeld && !zooming) {
-            zooming = true;
+            savedFov    = mc.options.getFov().getValue();
+            zooming     = true;
+            scrolledFov = -1.0;
         } else if (!keyHeld && zooming) {
-            zooming = false;
+            zooming     = false;
+            scrolledFov = -1.0;
         }
 
-        double targetMultiplier = zooming ? fovMultiplier.get() * scrollMultiplier : 1.0;
+        if (zooming) {
+            targetFov = scrolledFov > 0 ? scrolledFov : fov.get();
+        } else {
+            targetFov = savedFov;
+        }
 
         if (smooth.isEnabled()) {
-            // Lerp toward target
-            currentMultiplier += (targetMultiplier - currentMultiplier) * 0.25;
+            currentFov += (targetFov - currentFov) * 0.15;
+            if (Math.abs(currentFov - targetFov) < 0.05) currentFov = targetFov;
         } else {
-            currentMultiplier = targetMultiplier;
+            currentFov = targetFov;
         }
 
-        // Clamp multiplier so we don't get absurd values
-        currentMultiplier = Math.max(0.05, Math.min(1.0, currentMultiplier));
+        currentFov = Math.max(1.0, Math.min(110.0, currentFov));
+
+        if (nightVision.isEnabled() && zooming) {
+            StatusEffectInstance cur = mc.player.getStatusEffect(StatusEffects.NIGHT_VISION);
+            if (cur == null || cur.getDuration() < 100) {
+                mc.player.addStatusEffect(
+                        new StatusEffectInstance(StatusEffects.NIGHT_VISION, 9999, 0, false, false, false));
+            }
+        } else if (!zooming) {
+            mc.player.removeStatusEffect(StatusEffects.NIGHT_VISION);
+        }
     }
 
-    /**
-     * Called by {@code MixinGameRenderer} to scale the rendered FOV.
-     * Returns the zoom-adjusted field of view without touching the user's
-     * FOV option, so the change is purely visual and reverts cleanly.
-     */
     public double getModifiedFov(double original) {
-        return original * currentMultiplier;
+        if (!isEnabled()) return original;
+        if (!zooming && Math.abs(currentFov - savedFov) < 0.5) return original;
+        return currentFov;
     }
 
-    /**
-     * Called by the mixin when a scroll event is detected.
-     * Adjusts the scroll-based multiplier if zoom is active and scroll is enabled.
-     *
-     * @param delta scroll wheel delta (positive = zoom in, negative = zoom out)
-     */
+    public boolean isCinemaMode() {
+        return isEnabled() && zooming && cinemaMode.isEnabled();
+    }
+
     public void onScroll(double delta) {
         if (!isEnabled() || !zooming || !scroll.isEnabled()) return;
-        scrollMultiplier = Math.max(0.1, Math.min(2.0, scrollMultiplier - delta * 0.1));
+        double base = scrolledFov > 0 ? scrolledFov : fov.get();
+        scrolledFov = Math.max(1.0, Math.min(70.0, base - delta * 2.0));
     }
 }

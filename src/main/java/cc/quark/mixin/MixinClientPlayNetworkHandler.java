@@ -3,6 +3,7 @@ package cc.quark.mixin;
 import cc.quark.Quark;
 import cc.quark.command.CommandManager;
 import cc.quark.event.events.EventChat;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
 import net.minecraft.network.packet.s2c.play.GameMessageS2CPacket;
 import org.spongepowered.asm.mixin.Mixin;
@@ -41,6 +42,13 @@ public abstract class MixinClientPlayNetworkHandler {
         instance.getEventBus().post(event);
         if (event.isCancelled()) {
             ci.cancel();
+            return;
+        }
+        String modified = event.getMessage();
+        if (!modified.equals(text) && MinecraftClient.getInstance().player != null) {
+            ci.cancel();
+            MinecraftClient.getInstance().player.sendMessage(
+                    net.minecraft.text.Text.literal(modified), false);
         }
     }
 }

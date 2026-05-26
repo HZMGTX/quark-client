@@ -80,7 +80,7 @@ public class Nuker extends Module {
 
                     if (checkReach.isEnabled()) {
                         Vec3d blockCenter = Vec3d.ofCenter(pos);
-                        if (!mc.world.isAir(pos) && !hasLineOfSight(playerEyes, blockCenter)) continue;
+                        if (!hasLineOfSight(playerEyes, blockCenter)) continue;
                     }
 
                     if (!breaking.contains(pos)) {
@@ -119,9 +119,9 @@ public class Nuker extends Module {
         Direction best = Direction.UP;
         double bestDot = Double.NEGATIVE_INFINITY;
         for (Direction dir : Direction.values()) {
-            double dot = dir.getUnitVector().getX() * diff.x
-                    + dir.getUnitVector().getY() * diff.y
-                    + dir.getUnitVector().getZ() * diff.z;
+            double dot = dir.getOffsetX() * diff.x
+                    + dir.getOffsetY() * diff.y
+                    + dir.getOffsetZ() * diff.z;
             if (dot > bestDot) {
                 bestDot = dot;
                 best = dir;

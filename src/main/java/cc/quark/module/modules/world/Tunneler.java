@@ -7,6 +7,7 @@ import cc.quark.module.Module;
 import cc.quark.setting.BoolSetting;
 import cc.quark.setting.IntSetting;
 import cc.quark.util.InventoryUtil;
+import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.item.Items;
 import net.minecraft.util.Hand;
@@ -33,7 +34,6 @@ public class Tunneler extends Module {
             "Torch Placer", "Place torches every 8 blocks", false));
 
     private int blocksBroken = 0;
-    private BlockPos lastBase = null;
 
     public Tunneler() {
         super("Tunneler", "Automatically mines a tunnel in the look direction", Category.WORLD);
@@ -42,7 +42,6 @@ public class Tunneler extends Module {
     @Override
     public void onEnable() {
         blocksBroken = 0;
-        lastBase = null;
     }
 
     @EventHandler
@@ -83,8 +82,7 @@ public class Tunneler extends Module {
         boolean allClear = toBreak.isEmpty();
 
         for (BlockPos pos : toBreak) {
-            Direction face = getBreakFace(pos, facing);
-            mc.interactionManager.attackBlock(pos, face);
+            mc.interactionManager.attackBlock(pos, facing.getOpposite());
             blocksBroken++;
         }
 
@@ -99,10 +97,6 @@ public class Tunneler extends Module {
                 mc.player.input.movementForward = 0.0f;
             }
         }
-    }
-
-    private Direction getBreakFace(BlockPos pos, Direction facing) {
-        return facing.getOpposite();
     }
 
     private void placeTorch(BlockPos base, Direction facing) {
@@ -137,8 +131,4 @@ public class Tunneler extends Module {
         }
     }
 
-    private BlockState getBlockState(BlockPos pos) {
-        if (mc.world == null) return null;
-        return mc.world.getBlockState(pos);
-    }
 }
