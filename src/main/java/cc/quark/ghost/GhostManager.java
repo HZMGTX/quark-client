@@ -58,6 +58,11 @@ public class GhostManager {
         if (autoDetect) {
             detectServer();
         }
+        packetShaper.tick();
+    }
+
+    public void tickServerDetection() {
+        detectServer();
     }
 
     private void detectServer() {
@@ -99,6 +104,10 @@ public class GhostManager {
 
     public void incrementViolationScore(int amount) {
         violationScore = Math.min(VIOLATION_MAX, violationScore + amount);
+    }
+
+    public void decrementViolationScore() {
+        violationScore = Math.max(0, violationScore - 1);
     }
 
     public void decrementViolationScore(int amount) {

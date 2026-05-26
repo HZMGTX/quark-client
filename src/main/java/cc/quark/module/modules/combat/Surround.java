@@ -7,8 +7,6 @@ import cc.quark.module.Module;
 import cc.quark.setting.BoolSetting;
 import cc.quark.setting.IntSetting;
 import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
-import net.minecraft.client.MinecraftClient;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
@@ -19,130 +17,177 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3d;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class Surround extends Module {
 
     private final BoolSetting center = register(new BoolSetting(
-            "Center", "Snap player to the centre of the current block before placing", true));
+            "Center", "Snap player to block center before placing", true));
 
     private final BoolSetting onlyOnGround = register(new BoolSetting(
-            "Only On Ground", "Only place blocks while the player is standing on the ground", true));
+            "Only On Ground", "Only place while the player is on the ground", true));
 
-    private final BoolSetting feet = register(new BoolSetting(
-            "Feet", "Place blocks at feet level (y+0) instead of only around player", true));
+    private final BoolSetting burrow = register(new BoolSetting(
+            "Burrow", "Also place a block at the player's exact foot position", false));
 
     private final BoolSetting extend = register(new BoolSetting(
-            "Extend", "Extend surround 2 blocks wide in each direction", false));
+            "Extend", "Place an additional ring at Y+1 for a full cage (8 blocks)", false));
+
+    private final BoolSetting fillCorners = register(new BoolSetting(
+            "Fill Corners", "Also fill the 4 diagonal corner positions", false));
+
+    private final BoolSetting clearOnDisable = register(new BoolSetting(
+            "Clear On Disable", "Remove placed surround blocks when disabling", false));
 
     private final IntSetting delay = register(new IntSetting(
-            "Delay", "Ticks between block placements (0 = instant all)", 0, 0, 10));
+            "Delay", "Ticks between individual block placements (0 = all at once)", 0, 0, 5));
 
     private int delayTicks = 0;
-    private int placementIndex = 0;
+    private int placeIndex = 0;
+    private final List<BlockPos> placedBlocks = new ArrayList<>();
+
+    private long lastSecondMs = 0;
+    private int placedThisSecond = 0;
+    private int displayBps = 0;
 
     public Surround() {
-        super("Surround", "Places blocks around your feet to protect against crystals", Category.COMBAT);
+        super("Surround", "Places an obsidian surround to protect against crystal damage", Category.COMBAT);
     }
 
     @Override
     public void onEnable() {
-        MinecraftClient mc = MinecraftClient.getInstance();
         if (mc.player == null) return;
         delayTicks = 0;
-        placementIndex = 0;
+        placeIndex = 0;
+        placedBlocks.clear();
+        placedThisSecond = 0;
+        displayBps = 0;
+        lastSecondMs = System.currentTimeMillis();
 
         if (center.isEnabled()) {
             BlockPos feet = mc.player.getBlockPos();
-            double centreX = feet.getX() + 0.5;
-            double centreZ = feet.getZ() + 0.5;
-            mc.player.setPosition(centreX, mc.player.getY(), centreZ);
+            mc.player.setPosition(feet.getX() + 0.5, mc.player.getY(), feet.getZ() + 0.5);
         }
+    }
+
+    @Override
+    public void onDisable() {
+        if (clearOnDisable.isEnabled() && mc.player != null && mc.world != null && mc.interactionManager != null) {
+            for (BlockPos bp : placedBlocks) {
+                BlockState state = mc.world.getBlockState(bp);
+                if (!state.isAir()) {
+                    mc.interactionManager.attackBlock(bp, Direction.UP);
+                    mc.player.swingHand(Hand.MAIN_HAND);
+                }
+            }
+        }
+        placedBlocks.clear();
+    }
+
+    @Override
+    public String getSuffix() {
+        return displayBps + " bps";
     }
 
     @EventHandler
     public void onTick(EventTick event) {
-        MinecraftClient mc = MinecraftClient.getInstance();
         if (mc.player == null || mc.world == null || mc.interactionManager == null) return;
-
         if (onlyOnGround.isEnabled() && !mc.player.isOnGround()) return;
+
+        long now = System.currentTimeMillis();
+        if (now - lastSecondMs >= 1000L) {
+            displayBps = placedThisSecond;
+            placedThisSecond = 0;
+            lastSecondMs = now;
+        }
 
         if (delayTicks > 0) {
             delayTicks--;
             return;
         }
 
-        // Build surround offsets based on settings
-        int[][] cardinalOffsets = {
-            {  0,  1 },  // North
-            {  0, -1 },  // South
-            {  1,  0 },  // East
-            { -1,  0 },  // West
-        };
+        List<BlockPos> positions = buildPositions();
 
-        int[][] cornerOffsets = {
-            {  1,  1 },  // NE
-            { -1,  1 },  // NW
-            {  1, -1 },  // SE
-            { -1, -1 }   // SW
-        };
-
-        int[][] extendOffsets = {
-            {  0,  2 },
-            {  0, -2 },
-            {  2,  0 },
-            { -2,  0 },
-        };
-
-        java.util.List<int[]> allOffsets = new java.util.ArrayList<>();
-        for (int[] o : cardinalOffsets) allOffsets.add(o);
-        for (int[] o : cornerOffsets) allOffsets.add(o);
-        if (extend.isEnabled()) {
-            for (int[] o : extendOffsets) allOffsets.add(o);
-        }
-
-        BlockPos feetPos = mc.player.getBlockPos();
-        int yOffset = feet.isEnabled() ? 0 : 0;
-
-        int blockSlot = findBestBlockSlot(mc);
+        int blockSlot = findBestBlockSlot();
         if (blockSlot == -1) return;
 
         int prevSlot = mc.player.getInventory().selectedSlot;
         mc.player.getInventory().selectedSlot = blockSlot;
 
-        int placedThisTick = 0;
-        for (int[] off : allOffsets) {
-            BlockPos target = feetPos.add(off[0], yOffset, off[1]);
-            BlockState existing = mc.world.getBlockState(target);
-            if (!existing.isAir() && !existing.isReplaceable()) continue;
-
-            Direction placeDir = findSupportFace(mc, target);
-            if (placeDir == null) continue;
-
-            BlockPos neighbor = target.offset(placeDir);
-            Vec3d hitVec = Vec3d.ofCenter(target).add(
-                    placeDir.getOffsetX() * 0.5,
-                    placeDir.getOffsetY() * 0.5,
-                    placeDir.getOffsetZ() * 0.5);
-
-            BlockHitResult hitResult = new BlockHitResult(hitVec, placeDir.getOpposite(), neighbor, false);
-
-            mc.interactionManager.interactBlock(mc.player, Hand.MAIN_HAND, hitResult);
-            if (mc.getNetworkHandler() != null) {
-                mc.getNetworkHandler().sendPacket(new HandSwingC2SPacket(Hand.MAIN_HAND));
+        if (delay.get() > 0) {
+            if (placeIndex >= positions.size()) placeIndex = 0;
+            while (placeIndex < positions.size()) {
+                BlockPos target = positions.get(placeIndex);
+                placeIndex++;
+                if (tryPlace(target)) {
+                    delayTicks = delay.get();
+                    break;
+                }
             }
-
-            placedThisTick++;
-
-            // If delay is set, place one block per delay period
-            if (delay.get() > 0) {
-                delayTicks = delay.get();
-                break;
+        } else {
+            placeIndex = 0;
+            for (BlockPos target : positions) {
+                tryPlace(target);
             }
         }
 
         mc.player.getInventory().selectedSlot = prevSlot;
     }
 
-    private Direction findSupportFace(MinecraftClient mc, BlockPos target) {
+    private boolean tryPlace(BlockPos target) {
+        if (mc.world == null) return false;
+        BlockState existing = mc.world.getBlockState(target);
+        if (!existing.isAir() && !existing.isReplaceable()) return false;
+
+        Direction placeDir = findSupportFace(target);
+        if (placeDir == null) return false;
+
+        BlockPos neighbor = target.offset(placeDir);
+        Vec3d hitVec = Vec3d.ofCenter(target).add(
+                placeDir.getOffsetX() * 0.5,
+                placeDir.getOffsetY() * 0.5,
+                placeDir.getOffsetZ() * 0.5);
+
+        BlockHitResult hitResult = new BlockHitResult(hitVec, placeDir.getOpposite(), neighbor, false);
+        mc.interactionManager.interactBlock(mc.player, Hand.MAIN_HAND, hitResult);
+        if (mc.getNetworkHandler() != null) {
+            mc.getNetworkHandler().sendPacket(new HandSwingC2SPacket(Hand.MAIN_HAND));
+        }
+
+        placedBlocks.add(target);
+        placedThisSecond++;
+        return true;
+    }
+
+    private List<BlockPos> buildPositions() {
+        BlockPos feetPos = mc.player.getBlockPos();
+        List<BlockPos> result = new ArrayList<>();
+
+        int[][] cardinals = { {0, 1}, {0, -1}, {1, 0}, {-1, 0} };
+        int[][] corners   = { {1, 1}, {-1, 1}, {1, -1}, {-1, -1} };
+
+        for (int[] o : cardinals) result.add(feetPos.add(o[0], 0, o[1]));
+
+        if (fillCorners.isEnabled()) {
+            for (int[] o : corners) result.add(feetPos.add(o[0], 0, o[1]));
+        }
+
+        if (extend.isEnabled()) {
+            for (int[] o : cardinals) result.add(feetPos.add(o[0], 1, o[1]));
+            if (fillCorners.isEnabled()) {
+                for (int[] o : corners) result.add(feetPos.add(o[0], 1, o[1]));
+            }
+        }
+
+        if (burrow.isEnabled()) {
+            result.add(0, feetPos);
+        }
+
+        return result;
+    }
+
+    private Direction findSupportFace(BlockPos target) {
         for (Direction dir : Direction.values()) {
             BlockPos neighbor = target.offset(dir);
             BlockState state = mc.world.getBlockState(neighbor);
@@ -153,12 +198,11 @@ public class Surround extends Module {
         return null;
     }
 
-    private int findBestBlockSlot(MinecraftClient mc) {
+    private int findBestBlockSlot() {
         int fallback = -1;
         for (int i = 0; i < 9; i++) {
             ItemStack stack = mc.player.getInventory().getStack(i);
-            if (stack.isEmpty()) continue;
-            if (!(stack.getItem() instanceof BlockItem)) continue;
+            if (stack.isEmpty() || !(stack.getItem() instanceof BlockItem)) continue;
             if (stack.getItem() == Items.OBSIDIAN) return i;
             if (fallback == -1) fallback = i;
         }

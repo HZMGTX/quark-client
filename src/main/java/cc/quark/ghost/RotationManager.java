@@ -49,14 +49,8 @@ public class RotationManager {
     }
 
     public void requestRotation(float yaw, float pitch, float maxTurn, boolean isSilent) {
-        if (prio_isDefault()) {
-            requestRotation(yaw, pitch, 0, isSilent, smoothMode, smoothFactor);
-        } else {
-            requestRotation(yaw, pitch, 0, isSilent, smoothMode, smoothFactor);
-        }
+        requestRotation(yaw, pitch, 0, isSilent, smoothMode, smoothFactor);
     }
-
-    private boolean prio_isDefault() { return priority == 0; }
 
     public void requestRotation(float yaw, float pitch, int prio, boolean isSilent,
                                 SmoothMode mode, float factor) {
@@ -175,9 +169,18 @@ public class RotationManager {
 
     private float[] applyGCD(float yaw, float pitch) {
         MinecraftClient mc = MinecraftClient.getInstance();
-        if (mc.options == null) return new float[]{ yaw, pitch };
+        float sensitivity = 0.5f;
+        if (mc.options != null) {
+            try {
+                Object sensOption = mc.options.getMouseSensitivity();
+                if (sensOption != null) {
+                    java.lang.reflect.Method getValue = sensOption.getClass().getMethod("getValue");
+                    Object val = getValue.invoke(sensOption);
+                    if (val instanceof Number) sensitivity = ((Number) val).floatValue();
+                }
+            } catch (Exception ignored) {}
+        }
 
-        float sensitivity = (float) mc.options.getMouseSensitivity().getValue();
         float gcd = computeGCD(sensitivity);
 
         float dYaw   = yaw   - lastSentYaw;

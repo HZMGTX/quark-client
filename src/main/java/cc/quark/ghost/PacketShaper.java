@@ -113,6 +113,10 @@ public class PacketShaper {
         return packetQueue.size();
     }
 
+    public void clearQueue() {
+        packetQueue.clear();
+    }
+
     public boolean isSuspiciousSequence(List<Class<?>> recentPackets) {
         if (recentPackets == null || recentPackets.isEmpty()) return false;
 

@@ -4,20 +4,18 @@ import cc.quark.event.EventHandler;
 import cc.quark.event.events.EventTick;
 import cc.quark.module.Category;
 import cc.quark.module.Module;
+import cc.quark.setting.DoubleSetting;
 import cc.quark.setting.ModeSetting;
 import net.minecraft.entity.effect.StatusEffectInstance;
 import net.minecraft.entity.effect.StatusEffects;
 
-/**
- * Fullbright - makes the game render as if it were fully lit everywhere.
- *
- * Gamma mode:       Sets the game's gamma option to 10.0 (vanilla gamma hack).
- * Night Vision mode: Applies infinite night vision potion effect.
- */
 public class Fullbright extends Module {
 
     private final ModeSetting mode = register(new ModeSetting(
-            "Mode", "Fullbright implementation method", "Gamma", "Gamma", "Night Vision"));
+            "Mode", "Fullbright implementation method", "Gamma", "Gamma", "Night Vision", "Both"));
+
+    private final DoubleSetting gammaValue = register(new DoubleSetting(
+            "Gamma Value", "Gamma level to apply (vanilla max is ~1.0, higher = brighter)", 16.0, 1.0, 1000.0));
 
     private double savedGamma = 1.0;
 
@@ -34,10 +32,10 @@ public class Fullbright extends Module {
 
     @Override
     public void onDisable() {
-        if (mc.options != null && mode.is("Gamma")) {
+        if (mc.options != null && (mode.is("Gamma") || mode.is("Both"))) {
             mc.options.getGamma().setValue(savedGamma);
         }
-        if (mc.player != null && mode.is("Night Vision")) {
+        if (mc.player != null && (mode.is("Night Vision") || mode.is("Both"))) {
             mc.player.removeStatusEffect(StatusEffects.NIGHT_VISION);
         }
     }
@@ -46,12 +44,11 @@ public class Fullbright extends Module {
     public void onTick(EventTick event) {
         if (mc.player == null || mc.world == null || mc.options == null) return;
 
-        if (mode.is("Gamma")) {
-            // Force gamma to 10.0 every tick so it doesn't get reset by slider
-            mc.options.getGamma().setValue(10.0);
-        } else if (mode.is("Night Vision")) {
-            // Apply night vision with a large duration so it doesn't expire
-            // Re-apply every 20 ticks to keep duration fresh
+        if (mode.is("Gamma") || mode.is("Both")) {
+            mc.options.getGamma().setValue(gammaValue.get());
+        }
+
+        if (mode.is("Night Vision") || mode.is("Both")) {
             StatusEffectInstance current = mc.player.getStatusEffect(StatusEffects.NIGHT_VISION);
             if (current == null || current.getDuration() < 200) {
                 mc.player.addStatusEffect(
