@@ -23,7 +23,11 @@ public class FastBow extends Module {
         if (mc.player == null) return;
         if (!mc.player.isUsingItem()) return;
         if (!(mc.player.getActiveItem().getItem() instanceof BowItem)) return;
-        int used = mc.player.getActiveItem().getMaxUseTime() - mc.player.getItemUseTimeLeft();
+        //? if mc >= "1.20.5" {
+        int used = mc.player.getActiveItem().getMaxUseTime(mc.player) - mc.player.getItemUseTimeLeft();
+        //?} else {
+        /*int used = mc.player.getActiveItem().getItem().getMaxUseTime(mc.player.getActiveItem()) - mc.player.getItemUseTimeLeft();*/
+        //?}
         if (used >= charge.get()) {
             mc.player.stopUsingItem();
         }

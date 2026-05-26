@@ -3,6 +3,7 @@ package cc.quark.module;
 import cc.quark.Quark;
 import cc.quark.module.modules.combat.*;
 import cc.quark.module.modules.exploit.*;
+import cc.quark.module.modules.misc.*;
 import cc.quark.module.modules.movement.*;
 import cc.quark.module.modules.player.*;
 import cc.quark.module.modules.render.*;
@@ -56,6 +57,7 @@ public class ModuleManager {
         register(new AutoCrystal());
         register(new AutoDisconnect());
         register(new AutoEgg());
+        register(new AutoLog());
         register(new AutoGapple());
         register(new AutoLeave());
         register(new AutoPearl());
@@ -287,7 +289,7 @@ public class ModuleManager {
         register(new ChatBot());
         register(new ChatFilter());
         register(new ChestAura());
-        register(new ChestStealer());
+        register(new cc.quark.module.modules.player.ChestStealer());
         register(new FakeSneak());
         register(new FastBreak());
         register(new FastEat());
@@ -310,6 +312,7 @@ public class ModuleManager {
         register(new NoCooldown());
         register(new NoFatigue());
         register(new NoHunger());
+        register(new cc.quark.module.modules.player.NoFall());
         register(new NoPacketKick());
         register(new NoPushItems());
         register(new NoRotate());
@@ -324,6 +327,7 @@ public class ModuleManager {
         register(new SpamBot2());
         register(new ToolSaver());
         register(new TowerJump());
+        register(new XCarry());
 
         // -------- RENDER --------
         register(new ActiveMods());
@@ -333,6 +337,7 @@ public class ModuleManager {
         register(new AspectRatio());
         register(new BlockHighlight());
         register(new Breadcrumbs());
+        register(new Chams());
         register(new ChestESP());
         register(new ChestTracers());
         register(new ClickGuiModule());
@@ -395,6 +400,7 @@ public class ModuleManager {
         register(new AutoPillar());
         register(new AutoSign());
         register(new AutoSmelt());
+        register(new cc.quark.module.modules.world.ChestStealer());
         register(new ClearArea());
         register(new CropFarm());
         register(new Excavator());
@@ -443,9 +449,11 @@ public class ModuleManager {
         register(new Spoofer());
         register(new Timer());
 
-        // Top the registry up to TARGET_MODULE_COUNT with inert placeholder
-        // modules, distributed across categories. Replace with real
-        // implementations over time.
+        // -------- MISC --------
+        register(new AntiDetect());
+        register(new Blink());
+        register(new MiddleClickFriend());
+
         generatePlaceholders();
     }
 

@@ -92,7 +92,14 @@ public class ClickGUI extends Screen {
         for (CategoryPanel panel : panels) {
             panel.render(context, mouseX, mouseY, delta, searchQuery, alpha);
         }
-        
+
+        // --- Watermark: "Quark.cc" in accent color, bottom-right ---
+        String watermark = "Quark.cc";
+        int wmX = screenW - 60;
+        int wmY = screenH - 20;
+        context.fill(wmX - 4, wmY - 3, wmX + 52, wmY + 11, ColorUtil.withAlpha(0x0A0A0A, (int)(200 * alpha)));
+        cc.quark.util.RenderUtil.drawCustomText(context, watermark, wmX, wmY, getAccentColor());
+
         context.getMatrices().pop();
 
         super.render(context, mouseX, mouseY, delta);
@@ -134,6 +141,9 @@ public class ClickGUI extends Screen {
         return super.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount);
     }
 
+    // Index of the currently "focused" panel for TAB cycling
+    private int tabFocusIndex = 0;
+
     @Override
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
         if (keyCode == 256) { // ESC
@@ -142,6 +152,27 @@ public class ClickGUI extends Screen {
         }
         if (keyCode == 259) { // Backspace
             if (!searchQuery.isEmpty()) searchQuery = searchQuery.substring(0, searchQuery.length() - 1);
+            return true;
+        }
+        // CTRL+A: clear search
+        if (keyCode == 65 && (modifiers & org.lwjgl.glfw.GLFW.GLFW_MOD_CONTROL) != 0) {
+            searchQuery = "";
+            return true;
+        }
+        // TAB: cycle focus to next panel (shift its position to screen center-ish)
+        if (keyCode == 258) { // GLFW_KEY_TAB
+            if (!panels.isEmpty()) {
+                boolean reverse = (modifiers & org.lwjgl.glfw.GLFW.GLFW_MOD_SHIFT) != 0;
+                if (reverse) {
+                    tabFocusIndex = (tabFocusIndex - 1 + panels.size()) % panels.size();
+                } else {
+                    tabFocusIndex = (tabFocusIndex + 1) % panels.size();
+                }
+                // Scroll the focused panel into a visible horizontal position
+                CategoryPanel focused = panels.get(tabFocusIndex);
+                int targetX = (this.width - PANEL_WIDTH) / 2;
+                focused.setX(targetX);
+            }
             return true;
         }
         return super.keyPressed(keyCode, scanCode, modifiers);

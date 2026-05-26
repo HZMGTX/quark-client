@@ -27,7 +27,11 @@ public class BowRelease extends Module {
         boolean isBow = active.getItem() instanceof BowItem || active.getItem() instanceof CrossbowItem;
         if (!isBow) return;
 
+        //? if mc >= "1.20.5" {
         int elapsed = active.getItem().getMaxUseTime(active, mc.player) - mc.player.getItemUseTimeLeft();
+        //?} else {
+        /*int elapsed = active.getItem().getMaxUseTime(active) - mc.player.getItemUseTimeLeft();*/
+        //?}
         if (elapsed >= minCharge.get()) {
             mc.player.stopUsingItem();
         }

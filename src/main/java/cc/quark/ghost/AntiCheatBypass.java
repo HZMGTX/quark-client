@@ -59,4 +59,22 @@ public class AntiCheatBypass {
         public static int getMinAttackDelay() { return 11; }
         public static boolean strictMode() { return true; }
     }
+
+    public static class Verus {
+        public static double getSafeSpeed() { return 0.27; }
+        public static double getSafeReach() { return 3.05; }
+        public static long getMinAttackDelay() { return 72L; }
+        public static int getMaxAirTicks() { return 10; }
+        public static boolean requiresGroundReset() { return true; }
+        public static double getMaxVelocityReduction() { return 0.85; }
+    }
+
+    public static class Karhu {
+        public static double getSafeSpeed() { return 0.26; }
+        public static double getSafeReach() { return 3.0; }
+        public static long getMinAttackDelay() { return 80L; }
+        public static boolean strictRotationCheck() { return true; }
+        public static int getMaxRotationDelta() { return 18; }
+        public static double getMaxVelocityReduction() { return 0.9; }
+    }
 }

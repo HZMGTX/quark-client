@@ -122,18 +122,12 @@ public class InventoryManager extends Module {
                             bestInvSlot, hotbarSlot, SlotActionType.SWAP, mc.player);
                 }
             } else {
-                // Food slot: find best food
-                if (!current.contains(net.minecraft.component.DataComponentTypes.FOOD)) {
+                if (getFoodNutrition(current) <= 0) {
                     int bestNutrition = -1;
                     for (int j = 9; j < 36; j++) {
                         ItemStack stack = mc.player.getInventory().getStack(j);
-                        if (!stack.contains(net.minecraft.component.DataComponentTypes.FOOD)) continue;
-                        net.minecraft.component.type.FoodComponent food = stack.get(net.minecraft.component.DataComponentTypes.FOOD);
-                        if (food == null) continue;
-                        if (food.nutrition() > bestNutrition) {
-                            bestNutrition = food.nutrition();
-                            bestInvSlot = j;
-                        }
+                        int nutrition = getFoodNutrition(stack);
+                        if (nutrition > bestNutrition) { bestNutrition = nutrition; bestInvSlot = j; }
                     }
                     if (bestInvSlot != -1) {
                         mc.interactionManager.clickSlot(
@@ -216,10 +210,20 @@ public class InventoryManager extends Module {
         if (stack.getItem() instanceof ArmorItem a) return 700 + a.getProtection();
         if (stack.getItem() instanceof BowItem) return 600;
         if (stack.getItem() instanceof CrossbowItem) return 590;
-        if (stack.contains(net.minecraft.component.DataComponentTypes.FOOD)) {
-            net.minecraft.component.type.FoodComponent food = stack.get(net.minecraft.component.DataComponentTypes.FOOD);
-            return food != null ? 400 + food.nutrition() : 400;
-        }
+        int nutrition = getFoodNutrition(stack);
+        if (nutrition > 0) return 400 + nutrition;
         return stack.getCount();
+    }
+
+    private int getFoodNutrition(ItemStack stack) {
+        //? if mc >= "1.20.5" {
+        if (!stack.contains(net.minecraft.component.DataComponentTypes.FOOD)) return 0;
+        net.minecraft.component.type.FoodComponent fc = stack.get(net.minecraft.component.DataComponentTypes.FOOD);
+        return fc != null ? fc.nutrition() : 0;
+        //?} else {
+        /*if (!stack.getItem().isFood()) return 0;
+        net.minecraft.item.FoodComponent fc = stack.getItem().getFoodComponent();
+        return fc != null ? fc.getHunger() : 0;*/
+        //?}
     }
 }

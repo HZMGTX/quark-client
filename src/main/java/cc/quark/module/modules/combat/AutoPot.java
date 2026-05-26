@@ -12,8 +12,10 @@ import net.minecraft.entity.effect.StatusEffectInstance;
 import net.minecraft.entity.effect.StatusEffects;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
+//? if mc >= "1.20.5" {
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.PotionContentsComponent;
+//?}
 import net.minecraft.util.Hand;
 import net.minecraft.registry.entry.RegistryEntry;
 
@@ -198,6 +200,7 @@ public class AutoPot extends Module {
             case FIRE_RESISTANCE -> StatusEffects.FIRE_RESISTANCE;
         };
 
+        //? if mc >= "1.20.5" {
         PotionContentsComponent contents = stack.get(DataComponentTypes.POTION_CONTENTS);
         if (contents != null) {
             for (StatusEffectInstance effect : contents.getEffects()) {
@@ -205,6 +208,12 @@ public class AutoPot extends Module {
                     return true;
             }
         }
+        //?} else {
+        /*for (StatusEffectInstance effect : net.minecraft.potion.PotionUtil.getEffects(stack)) {
+            if (effect.getEffectType() == targetEffect)
+                return true;
+        }*/
+        //?}
 
         return false;
     }

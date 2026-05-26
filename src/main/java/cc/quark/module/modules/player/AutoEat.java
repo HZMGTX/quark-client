@@ -8,7 +8,9 @@ import cc.quark.setting.BoolSetting;
 import cc.quark.setting.EnumSetting;
 import cc.quark.setting.IntSetting;
 import net.minecraft.client.network.ClientPlayerEntity;
+//? if mc >= "1.20.5" {
 import net.minecraft.component.type.FoodComponent;
+//?}
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
@@ -108,34 +110,17 @@ public class AutoEat extends Module {
         boolean bestIsHotbar = false;
         int bestNutrition = -1;
 
-        // Check hotbar first
         for (int i = 0; i < 9; i++) {
             ItemStack stack = player.getInventory().getStack(i);
-            if (!stack.contains(net.minecraft.component.DataComponentTypes.FOOD)) continue;
-            if (isJunkFood(stack.getItem())) continue;
-            FoodComponent food = stack.get(net.minecraft.component.DataComponentTypes.FOOD);
-            if (food == null) continue;
-            int nutrition = food.nutrition();
-            if (nutrition > bestNutrition) {
-                bestNutrition = nutrition;
-                bestSlot = i;
-                bestIsHotbar = true;
-            }
+            int nutrition = getFoodNutrition(stack);
+            if (nutrition <= 0 || isJunkFood(stack.getItem())) continue;
+            if (nutrition > bestNutrition) { bestNutrition = nutrition; bestSlot = i; bestIsHotbar = true; }
         }
-
-        // Check main inventory (slots 9-35)
         for (int i = 9; i < 36; i++) {
             ItemStack stack = player.getInventory().getStack(i);
-            if (!stack.contains(net.minecraft.component.DataComponentTypes.FOOD)) continue;
-            if (isJunkFood(stack.getItem())) continue;
-            FoodComponent food = stack.get(net.minecraft.component.DataComponentTypes.FOOD);
-            if (food == null) continue;
-            int nutrition = food.nutrition();
-            if (nutrition > bestNutrition) {
-                bestNutrition = nutrition;
-                bestSlot = i;
-                bestIsHotbar = false;
-            }
+            int nutrition = getFoodNutrition(stack);
+            if (nutrition <= 0 || isJunkFood(stack.getItem())) continue;
+            if (nutrition > bestNutrition) { bestNutrition = nutrition; bestSlot = i; bestIsHotbar = false; }
         }
 
         if (bestSlot == -1) return; // No food found
@@ -162,9 +147,20 @@ public class AutoEat extends Module {
             player.getInventory().selectedSlot = 8;
         }
 
-        // Start eating
         mc.interactionManager.interactItem(player, Hand.MAIN_HAND);
         mc.options.useKey.setPressed(true);
         eating = true;
+    }
+
+    private int getFoodNutrition(ItemStack stack) {
+        //? if mc >= "1.20.5" {
+        if (!stack.contains(net.minecraft.component.DataComponentTypes.FOOD)) return 0;
+        FoodComponent fc = stack.get(net.minecraft.component.DataComponentTypes.FOOD);
+        return fc != null ? fc.nutrition() : 0;
+        //?} else {
+        /*if (!stack.getItem().isFood()) return 0;
+        net.minecraft.item.FoodComponent fc = stack.getItem().getFoodComponent();
+        return fc != null ? fc.getHunger() : 0;*/
+        //?}
     }
 }

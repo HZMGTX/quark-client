@@ -19,8 +19,10 @@ public class GhostManager {
     public static final GhostManager INSTANCE = new GhostManager();
 
     private AntiCheatProfile activeProfile = AntiCheatProfile.GRIM;
+    private boolean silentRotations = true;
+    private boolean packetDelay = true;
 
-    private final HumanizationEngine humanizer  = new HumanizationEngine();
+    private final HumanizationEngine humanizer   = new HumanizationEngine();
     private final PacketShaper       packetShaper = new PacketShaper();
 
     // -------------------------------------------------------------------------
@@ -28,23 +30,16 @@ public class GhostManager {
     // -------------------------------------------------------------------------
 
     public enum AntiCheatProfile {
-        /** No anti-cheat present â€” full module power. */
         VANILLA,
-        /** NoCheatPlus â€” older, widely deployed. */
         NCP,
-        /** Advanced Anti Cheat. */
         AAC,
-        /** GrimAC â€” modern, prediction-based, very strict. */
         GRIM,
-        /** Hypixel Watchdog â€” fast and lenient on speed, strict on reach/combat. */
         WATCHDOG,
-        /** Spartan Anti Cheat. */
         SPARTAN,
-        /** Matrix Anti Cheat. */
         MATRIX,
-        /** Intave AC. */
         INTAVE,
-        /** Manual tuning â€” no limits applied by default. */
+        VERUS,
+        KARHU,
         CUSTOM
     }
 
@@ -64,6 +59,12 @@ public class GhostManager {
         this.activeProfile = profile;
     }
 
+    public void setSilentRotations(boolean silent) { this.silentRotations = silent; }
+    public boolean isSilentRotations() { return silentRotations; }
+
+    public void setPacketDelay(boolean delay) { this.packetDelay = delay; }
+    public boolean isPacketDelay() { return packetDelay; }
+
     // -------------------------------------------------------------------------
     // Safe movement limits
     // -------------------------------------------------------------------------
@@ -75,13 +76,15 @@ public class GhostManager {
     public double getMaxSpeed() {
         return switch (activeProfile) {
             case VANILLA  -> 1.0;
-            case NCP      -> AntiCheatBypass.NCP.getSafeSpeed(true);       // 0.287
-            case AAC      -> AntiCheatBypass.AAC.getSafeSpeed();            // 0.26
-            case GRIM     -> AntiCheatBypass.Grim.getSafeSpeed();           // 0.2806
-            case WATCHDOG -> AntiCheatBypass.Watchdog.getSafeSpeed();       // 0.35
-            case SPARTAN  -> AntiCheatBypass.Spartan.getSafeSpeed();        // 0.36
-            case MATRIX   -> AntiCheatBypass.Matrix.getSafeSpeed();         // 0.34
+            case NCP      -> AntiCheatBypass.NCP.getSafeSpeed(true);
+            case AAC      -> AntiCheatBypass.AAC.getSafeSpeed();
+            case GRIM     -> AntiCheatBypass.Grim.getSafeSpeed();
+            case WATCHDOG -> AntiCheatBypass.Watchdog.getSafeSpeed();
+            case SPARTAN  -> AntiCheatBypass.Spartan.getSafeSpeed();
+            case MATRIX   -> AntiCheatBypass.Matrix.getSafeSpeed();
             case INTAVE   -> 0.29;
+            case VERUS    -> AntiCheatBypass.Verus.getSafeSpeed();
+            case KARHU    -> AntiCheatBypass.Karhu.getSafeSpeed();
             case CUSTOM   -> 0.35;
         };
     }
@@ -98,11 +101,13 @@ public class GhostManager {
             case VANILLA  -> 6.0;
             case NCP      -> 3.1;
             case AAC      -> 3.1;
-            case GRIM     -> AntiCheatBypass.Grim.getMaxReach();            // 3.0
-            case WATCHDOG -> AntiCheatBypass.Watchdog.getSafeReach();       // 3.2
+            case GRIM     -> AntiCheatBypass.Grim.getMaxReach();
+            case WATCHDOG -> AntiCheatBypass.Watchdog.getSafeReach();
             case SPARTAN  -> 3.2;
-            case MATRIX   -> AntiCheatBypass.Matrix.getSafeReach();         // 3.15
+            case MATRIX   -> AntiCheatBypass.Matrix.getSafeReach();
             case INTAVE   -> 3.0;
+            case VERUS    -> AntiCheatBypass.Verus.getSafeReach();
+            case KARHU    -> AntiCheatBypass.Karhu.getSafeReach();
             case CUSTOM   -> 3.5;
         };
     }
@@ -121,10 +126,12 @@ public class GhostManager {
             case NCP      -> 50L;
             case AAC      -> 60L;
             case GRIM     -> 75L;
-            case WATCHDOG -> (long) (AntiCheatBypass.Watchdog.getAttackCooldown() * 50L); // 300 ms
+            case WATCHDOG -> (long) (AntiCheatBypass.Watchdog.getAttackCooldown() * 50L);
             case SPARTAN  -> 55L;
             case MATRIX   -> 65L;
             case INTAVE   -> 70L;
+            case VERUS    -> AntiCheatBypass.Verus.getMinAttackDelay();
+            case KARHU    -> AntiCheatBypass.Karhu.getMinAttackDelay();
             case CUSTOM   -> 60L;
         };
     }
@@ -144,10 +151,6 @@ public class GhostManager {
         };
     }
 
-    /**
-     * Returns the maximum degrees per tick the player's view can rotate without
-     * triggering aim-speed checks for the current profile.
-     */
     public double getRotationSpeed() {
         return switch (activeProfile) {
             case VANILLA  -> 180.0;
@@ -158,6 +161,8 @@ public class GhostManager {
             case SPARTAN  -> 35.0;
             case MATRIX   -> 30.0;
             case INTAVE   -> 25.0;
+            case VERUS    -> 22.0;
+            case KARHU    -> 18.0;
             case CUSTOM   -> 40.0;
         };
     }
@@ -172,8 +177,8 @@ public class GhostManager {
      */
     public boolean canStrafeAttack() {
         return switch (activeProfile) {
-            case GRIM, INTAVE -> false;
-            default           -> true;
+            case GRIM, INTAVE, VERUS, KARHU -> false;
+            default                         -> true;
         };
     }
 
@@ -191,12 +196,14 @@ public class GhostManager {
         return switch (activeProfile) {
             case VANILLA  -> 1.0;
             case NCP      -> AntiCheatBypass.NCP.useAcceleration() ? 0.6 : 0.8;
-            case AAC      -> AntiCheatBypass.AAC.getAirControl(); // 0.98
-            case GRIM     -> 1.0;  // Grim simulates vanilla; any reduction flags instantly
+            case AAC      -> AntiCheatBypass.AAC.getAirControl();
+            case GRIM     -> 1.0;
             case WATCHDOG -> 0.7;
             case SPARTAN  -> 0.65;
             case MATRIX   -> 0.75;
             case INTAVE   -> 0.8;
+            case VERUS    -> 0.85;
+            case KARHU    -> 0.9;
             case CUSTOM   -> 0.7;
         };
     }

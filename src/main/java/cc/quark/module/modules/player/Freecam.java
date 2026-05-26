@@ -144,10 +144,13 @@ public class Freecam extends Module {
             setPitch(pitch);
         }
 
+        //? if mc >= "1.20.5" {
         @Override
-        protected void initDataTracker(net.minecraft.entity.data.DataTracker.Builder builder) {
-            // Freecam entity has no special data
-        }
+        protected void initDataTracker(net.minecraft.entity.data.DataTracker.Builder builder) {}
+        //?} else {
+        /*@Override
+        protected void initDataTracker() {}*/
+        //?}
 
         @Override
         protected void readCustomDataFromNbt(net.minecraft.nbt.NbtCompound nbt) {}

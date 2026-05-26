@@ -46,27 +46,40 @@ public class RenderUtil {
         matrices.push();
 
         Tessellator tessellator = Tessellator.getInstance();
-        BufferBuilder buf = tessellator.begin(VertexFormat.DrawMode.LINES, VertexFormats.LINES);
-
         MatrixStack.Entry entry = matrices.peek();
 
-        // Bottom face
+        //? if mc >= "1.20.5" {
+        BufferBuilder buf = tessellator.begin(VertexFormat.DrawMode.LINES, VertexFormats.LINES);
         drawLine(buf, entry, x1, y1, z1, x2, y1, z1, r, g, b, a);
         drawLine(buf, entry, x2, y1, z1, x2, y1, z2, r, g, b, a);
         drawLine(buf, entry, x2, y1, z2, x1, y1, z2, r, g, b, a);
         drawLine(buf, entry, x1, y1, z2, x1, y1, z1, r, g, b, a);
-        // Top face
         drawLine(buf, entry, x1, y2, z1, x2, y2, z1, r, g, b, a);
         drawLine(buf, entry, x2, y2, z1, x2, y2, z2, r, g, b, a);
         drawLine(buf, entry, x2, y2, z2, x1, y2, z2, r, g, b, a);
         drawLine(buf, entry, x1, y2, z2, x1, y2, z1, r, g, b, a);
-        // Verticals
         drawLine(buf, entry, x1, y1, z1, x1, y2, z1, r, g, b, a);
         drawLine(buf, entry, x2, y1, z1, x2, y2, z1, r, g, b, a);
         drawLine(buf, entry, x2, y1, z2, x2, y2, z2, r, g, b, a);
         drawLine(buf, entry, x1, y1, z2, x1, y2, z2, r, g, b, a);
-
         BufferRenderer.drawWithGlobalProgram(buf.end());
+        //?} else {
+        /*BufferBuilder buf = tessellator.getBuffer();
+        buf.begin(VertexFormat.DrawMode.LINES, VertexFormats.LINES);
+        drawLine(buf, entry, x1, y1, z1, x2, y1, z1, r, g, b, a);
+        drawLine(buf, entry, x2, y1, z1, x2, y1, z2, r, g, b, a);
+        drawLine(buf, entry, x2, y1, z2, x1, y1, z2, r, g, b, a);
+        drawLine(buf, entry, x1, y1, z2, x1, y1, z1, r, g, b, a);
+        drawLine(buf, entry, x1, y2, z1, x2, y2, z1, r, g, b, a);
+        drawLine(buf, entry, x2, y2, z1, x2, y2, z2, r, g, b, a);
+        drawLine(buf, entry, x2, y2, z2, x1, y2, z2, r, g, b, a);
+        drawLine(buf, entry, x1, y2, z2, x1, y2, z1, r, g, b, a);
+        drawLine(buf, entry, x1, y1, z1, x1, y2, z1, r, g, b, a);
+        drawLine(buf, entry, x2, y1, z1, x2, y2, z1, r, g, b, a);
+        drawLine(buf, entry, x2, y1, z2, x2, y2, z2, r, g, b, a);
+        drawLine(buf, entry, x1, y1, z2, x1, y2, z2, r, g, b, a);
+        tessellator.draw();*/
+        //?}
 
         matrices.pop();
 
@@ -97,43 +110,49 @@ public class RenderUtil {
         matrices.push();
 
         Tessellator tessellator = Tessellator.getInstance();
-        BufferBuilder buf = tessellator.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR);
-
         Matrix4f m = matrices.peek().getPositionMatrix();
 
-        // All 6 faces
-        // Bottom
+        //? if mc >= "1.20.5" {
+        BufferBuilder buf = tessellator.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR);
         buf.vertex(m, (float)x1, (float)y1, (float)z1).color(r,g,b,a);
         buf.vertex(m, (float)x2, (float)y1, (float)z1).color(r,g,b,a);
         buf.vertex(m, (float)x2, (float)y1, (float)z2).color(r,g,b,a);
         buf.vertex(m, (float)x1, (float)y1, (float)z2).color(r,g,b,a);
-        // Top
         buf.vertex(m, (float)x1, (float)y2, (float)z1).color(r,g,b,a);
         buf.vertex(m, (float)x1, (float)y2, (float)z2).color(r,g,b,a);
         buf.vertex(m, (float)x2, (float)y2, (float)z2).color(r,g,b,a);
         buf.vertex(m, (float)x2, (float)y2, (float)z1).color(r,g,b,a);
-        // North
         buf.vertex(m, (float)x1, (float)y1, (float)z1).color(r,g,b,a);
         buf.vertex(m, (float)x1, (float)y2, (float)z1).color(r,g,b,a);
         buf.vertex(m, (float)x2, (float)y2, (float)z1).color(r,g,b,a);
         buf.vertex(m, (float)x2, (float)y1, (float)z1).color(r,g,b,a);
-        // South
         buf.vertex(m, (float)x1, (float)y1, (float)z2).color(r,g,b,a);
         buf.vertex(m, (float)x2, (float)y1, (float)z2).color(r,g,b,a);
         buf.vertex(m, (float)x2, (float)y2, (float)z2).color(r,g,b,a);
         buf.vertex(m, (float)x1, (float)y2, (float)z2).color(r,g,b,a);
-        // West
         buf.vertex(m, (float)x1, (float)y1, (float)z1).color(r,g,b,a);
         buf.vertex(m, (float)x1, (float)y1, (float)z2).color(r,g,b,a);
         buf.vertex(m, (float)x1, (float)y2, (float)z2).color(r,g,b,a);
         buf.vertex(m, (float)x1, (float)y2, (float)z1).color(r,g,b,a);
-        // East
         buf.vertex(m, (float)x2, (float)y1, (float)z1).color(r,g,b,a);
         buf.vertex(m, (float)x2, (float)y2, (float)z1).color(r,g,b,a);
         buf.vertex(m, (float)x2, (float)y2, (float)z2).color(r,g,b,a);
         buf.vertex(m, (float)x2, (float)y1, (float)z2).color(r,g,b,a);
-
         BufferRenderer.drawWithGlobalProgram(buf.end());
+        //?} else {
+        /*BufferBuilder buf = tessellator.getBuffer();
+        buf.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR);
+        buf.vertex(m, (float)x1, (float)y1, (float)z1).color(r,g,b,a).next();
+        buf.vertex(m, (float)x2, (float)y1, (float)z1).color(r,g,b,a).next();
+        buf.vertex(m, (float)x2, (float)y1, (float)z2).color(r,g,b,a).next();
+        buf.vertex(m, (float)x1, (float)y1, (float)z2).color(r,g,b,a).next();
+        buf.vertex(m, (float)x1, (float)y2, (float)z1).color(r,g,b,a).next();
+        buf.vertex(m, (float)x1, (float)y2, (float)z2).color(r,g,b,a).next();
+        buf.vertex(m, (float)x2, (float)y2, (float)z2).color(r,g,b,a).next();
+        buf.vertex(m, (float)x2, (float)y2, (float)z1).color(r,g,b,a).next();
+        tessellator.draw();*/
+        //?}
+
         matrices.pop();
 
         RenderSystem.enableDepthTest();
@@ -156,8 +175,6 @@ public class RenderUtil {
         matrices.push();
 
         Tessellator tessellator = Tessellator.getInstance();
-        BufferBuilder buf = tessellator.begin(VertexFormat.DrawMode.LINES, VertexFormats.LINES);
-
         MatrixStack.Entry entry = matrices.peek();
 
         double x1 = from.x - camPos.x;
@@ -167,9 +184,17 @@ public class RenderUtil {
         double y2 = to.y - camPos.y;
         double z2 = to.z - camPos.z;
 
+        //? if mc >= "1.20.5" {
+        BufferBuilder buf = tessellator.begin(VertexFormat.DrawMode.LINES, VertexFormats.LINES);
         drawLine(buf, entry, x1, y1, z1, x2, y2, z2, r, g, b, a);
-
         BufferRenderer.drawWithGlobalProgram(buf.end());
+        //?} else {
+        /*BufferBuilder buf = tessellator.getBuffer();
+        buf.begin(VertexFormat.DrawMode.LINES, VertexFormats.LINES);
+        drawLine(buf, entry, x1, y1, z1, x2, y2, z2, r, g, b, a);
+        tessellator.draw();*/
+        //?}
+
         matrices.pop();
 
         RenderSystem.enableDepthTest();
@@ -190,8 +215,13 @@ public class RenderUtil {
         float ny = dy / len;
         float nz = dz / len;
 
+        //? if mc >= "1.20.5" {
         buf.vertex(entry, (float)x1, (float)y1, (float)z1).color(r, g, b, a).normal(entry, nx, ny, nz);
         buf.vertex(entry, (float)x2, (float)y2, (float)z2).color(r, g, b, a).normal(entry, nx, ny, nz);
+        //?} else {
+        /*buf.vertex(entry.getPositionMatrix(), (float)x1, (float)y1, (float)z1).color(r, g, b, a).normal(entry.getNormalMatrix(), nx, ny, nz).next();
+        buf.vertex(entry.getPositionMatrix(), (float)x2, (float)y2, (float)z2).color(r, g, b, a).normal(entry.getNormalMatrix(), nx, ny, nz).next();*/
+        //?}
     }
 
     /**

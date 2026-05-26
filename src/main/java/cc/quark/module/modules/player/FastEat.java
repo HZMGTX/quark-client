@@ -38,10 +38,13 @@ public class FastEat extends Module {
         if (mode.get() != Mode.PACKET) return;
         if (!mc.player.isUsingItem()) return;
 
-        // Only apply to food items
+        //? if mc >= "1.20.5" {
         if (!mc.player.getActiveItem().contains(net.minecraft.component.DataComponentTypes.FOOD)) return;
-
         int maxUseTicks = mc.player.getActiveItem().getMaxUseTime(mc.player);
+        //?} else {
+        /*if (!mc.player.getActiveItem().getItem().isFood()) return;
+        int maxUseTicks = mc.player.getActiveItem().getItem().getMaxUseTime(mc.player.getActiveItem());*/
+        //?}
         int usedTicks = mc.player.getItemUseTimeLeft();
 
         // If more than 5 ticks remaining, force finish by sending stop then restart

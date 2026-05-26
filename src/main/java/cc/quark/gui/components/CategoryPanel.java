@@ -23,14 +23,25 @@ public class CategoryPanel {
     private boolean dragging = false;
     private int dragOffX, dragOffY;
     private Module expandedModule = null;
-    
+
     // Search caching
     private String lastSearch = null;
     private List<Module> cachedVisibleModules = null;
-    
+
     // Smooth scrolling animation states
     private float scrollOffset = 0;
     private float targetScrollOffset = 0;
+
+    // Expand/collapse animation
+    private boolean expanded = true;
+    private float panelHeight = -1f; // -1 means uninitialized
+    private long lastClickTime = 0;
+
+    // Right-click context menu state
+    private Module contextMenuModule = null;
+    private int contextMenuX = 0;
+    private int contextMenuY = 0;
+    private static final String[] CONTEXT_OPTIONS = {"Toggle", "Bind key", "Info"};
 
     public CategoryPanel(Category category, List<Module> modules, int x, int y, int width) {
         this.category = category;
@@ -52,62 +63,81 @@ public class CategoryPanel {
         }
         List<Module> visible = cachedVisibleModules;
 
-        int totalH = HEADER_H + visible.size() * MODULE_H;
+        int fullTotalH = HEADER_H + visible.size() * MODULE_H;
         if (expandedModule != null && visible.contains(expandedModule)) {
-            totalH += expandedModule.getSettings().size() * SETTING_H + 4; // Padding
+            fullTotalH += expandedModule.getSettings().size() * SETTING_H + 4;
         }
 
+        // Smooth collapse animation: lerp panelHeight toward target
+        float targetH = expanded ? fullTotalH : HEADER_H;
+        if (panelHeight < 0) panelHeight = targetH; // initialize
+        panelHeight += (targetH - panelHeight) * delta * 0.3f;
+        // Snap when very close
+        if (Math.abs(panelHeight - targetH) < 0.5f) panelHeight = targetH;
+        int animatedH = (int) panelHeight;
+
         // --- Panel Body Background ---
-        // Sleek dark gray
-        ctx.fill(x, y, x + width, y + totalH, ColorUtil.withAlpha(0x181818, (int)(240 * alpha)));
+        ctx.fill(x, y, x + width, y + animatedH, ColorUtil.withAlpha(0x181818, (int)(240 * alpha)));
 
         // --- Header ---
-        // Flat header
         ctx.fill(x, y, x + width, y + HEADER_H, ColorUtil.withAlpha(0x222222, (int)(255 * alpha)));
         // Accent underline on header
         ctx.fill(x, y + HEADER_H - 1, x + width, y + HEADER_H, ColorUtil.withAlpha(ClickGUI.getAccentColor() & 0x00FFFFFF, (int)(255 * alpha)));
-        
-        // Centered text for category
+
+        // Category name + module count "(N)"
         String catName = category.name();
-        int textWidth = MinecraftClient.getInstance().textRenderer.getWidth(catName);
-        cc.quark.util.RenderUtil.drawCustomText(ctx,
-            catName, x + (width - textWidth) / 2, y + 5, 0xFFFFFFFF);
+        String countStr = " (" + visible.size() + ")";
+        int catNameWidth = MinecraftClient.getInstance().textRenderer.getWidth(catName);
+        int countWidth = MinecraftClient.getInstance().textRenderer.getWidth(countStr);
+        int totalTextW = catNameWidth + countWidth;
+        int headerTextX = x + (width - totalTextW) / 2;
+        cc.quark.util.RenderUtil.drawCustomText(ctx, catName, headerTextX, y + 5, 0xFFFFFFFF);
+        cc.quark.util.RenderUtil.drawCustomText(ctx, countStr, headerTextX + catNameWidth, y + 5, 0xFF888888);
+
+        // If collapsed (animated height near header), skip module rendering
+        if (animatedH <= HEADER_H + 2) {
+            renderBorder(ctx, alpha, HEADER_H);
+            return;
+        }
 
         // --- Modules ---
         int maxPanelHeight = MinecraftClient.getInstance().getWindow().getScaledHeight() - y - 10;
-        boolean needsScissor = totalH > maxPanelHeight;
-        
+        // Clamp animated height to screen
+        int displayH = Math.min(animatedH, maxPanelHeight);
+        boolean needsScissor = animatedH > maxPanelHeight || animatedH < fullTotalH;
+
         if (needsScissor) {
             double scale = MinecraftClient.getInstance().getWindow().getScaleFactor();
-            int scissorY = (int) ((MinecraftClient.getInstance().getWindow().getScaledHeight() - (y + maxPanelHeight)) * scale);
-            int scissorH = (int) ((maxPanelHeight - HEADER_H) * scale);
+            int scissorY = (int) ((MinecraftClient.getInstance().getWindow().getScaledHeight() - (y + displayH)) * scale);
+            int scissorH = (int) ((displayH - HEADER_H) * scale);
             com.mojang.blaze3d.systems.RenderSystem.enableScissor((int)(x * scale), scissorY, (int)(width * scale), scissorH);
         }
-        
+
         ctx.getMatrices().push();
         if (needsScissor) {
             ctx.getMatrices().translate(0, -scrollOffset, 0);
         }
 
-        
         int yy = y + HEADER_H;
         for (Module m : visible) {
             boolean hovered = mx >= x && mx <= x + width && my >= yy && my <= yy + MODULE_H;
-            
+
             // Hover effect
             if (hovered) {
                 ctx.fill(x, yy, x + width, yy + MODULE_H, ColorUtil.withAlpha(0x2A2A2A, (int)(255 * alpha)));
             }
-            
+
             // Enabled indicator (accent pill on left)
             int textColor = 0xFFAAAAAA;
             if (m.isEnabled()) {
                 ctx.fill(x, yy, x + 2, yy + MODULE_H, ColorUtil.withAlpha(ClickGUI.getAccentColor() & 0x00FFFFFF, (int)(255 * alpha)));
                 textColor = 0xFFFFFFFF; // Bright text when enabled
+            } else if (!search.isEmpty() && m.getName().toLowerCase().contains(search.toLowerCase())) {
+                // Search match highlight: draw name in accent color
+                textColor = ClickGUI.getAccentColor();
             }
 
-            cc.quark.util.RenderUtil.drawCustomText(ctx,
-                m.getName(), x + 6, yy + 3, textColor);
+            cc.quark.util.RenderUtil.drawCustomText(ctx, m.getName(), x + 6, yy + 3, textColor);
 
             // Keybind subtle text
             if (m.getKeybind() != 0) {
@@ -119,7 +149,7 @@ public class CategoryPanel {
                         x + width - kbWidth - 4, yy + 3, 0xFF555555);
                 }
             }
-            
+
             // Expand arrow
             if (!m.getSettings().isEmpty()) {
                 String arrow = (m == expandedModule) ? "v" : ">";
@@ -131,11 +161,9 @@ public class CategoryPanel {
             // Settings panel for expanded module
             if (m == expandedModule) {
                 int settingsHeight = m.getSettings().size() * SETTING_H + 4;
-                // Settings background (slightly darker to indent)
                 ctx.fill(x, yy, x + width, yy + settingsHeight, ColorUtil.withAlpha(0x121212, (int)(255 * alpha)));
-                // Subtle left border to show it's expanded under the module
                 ctx.fill(x, yy, x + 1, yy + settingsHeight, ColorUtil.withAlpha(0x333333, (int)(255 * alpha)));
-                
+
                 int sy = yy + 2;
                 for (Setting<?> setting : m.getSettings()) {
                     renderSetting(ctx, setting, x + 4, sy, width - 8, mx, my);
@@ -144,19 +172,45 @@ public class CategoryPanel {
                 yy += settingsHeight;
             }
         }
-        
+
         ctx.getMatrices().pop();
         if (needsScissor) {
             com.mojang.blaze3d.systems.RenderSystem.disableScissor();
         }
 
         // --- Panel Border ---
-        // Subtle outline border
+        renderBorder(ctx, alpha, displayH);
+
+        // --- Context Menu ---
+        if (contextMenuModule != null) {
+            int menuW = 60;
+            int menuItemH = 12;
+            int menuH = CONTEXT_OPTIONS.length * menuItemH + 4;
+            ctx.fill(contextMenuX, contextMenuY, contextMenuX + menuW, contextMenuY + menuH,
+                ColorUtil.withAlpha(0x1A1A1A, (int)(245 * alpha)));
+            ctx.fill(contextMenuX, contextMenuY, contextMenuX + menuW, contextMenuY + 1,
+                ColorUtil.withAlpha(ClickGUI.getAccentColor() & 0x00FFFFFF, (int)(255 * alpha)));
+            int oy = contextMenuY + 2;
+            for (String opt : CONTEXT_OPTIONS) {
+                boolean optHovered = mx >= contextMenuX && mx <= contextMenuX + menuW
+                    && my >= oy && my <= oy + menuItemH;
+                if (optHovered) {
+                    ctx.fill(contextMenuX, oy, contextMenuX + menuW, oy + menuItemH,
+                        ColorUtil.withAlpha(0x2E2E2E, (int)(255 * alpha)));
+                }
+                cc.quark.util.RenderUtil.drawCustomText(ctx, opt, contextMenuX + 4, oy + 2,
+                    optHovered ? 0xFFFFFFFF : 0xFFAAAAAA);
+                oy += menuItemH;
+            }
+        }
+    }
+
+    private void renderBorder(DrawContext ctx, float alpha, int drawH) {
         int borderColor = ColorUtil.withAlpha(0x333333, (int)(255 * alpha));
-        ctx.fill(x - 1, y, x, y + (needsScissor ? maxPanelHeight : totalH), borderColor); // Left
-        ctx.fill(x + width, y, x + width + 1, y + (needsScissor ? maxPanelHeight : totalH), borderColor); // Right
+        ctx.fill(x - 1, y, x, y + drawH, borderColor); // Left
+        ctx.fill(x + width, y, x + width + 1, y + drawH, borderColor); // Right
         ctx.fill(x, y - 1, x + width, y, borderColor); // Top
-        ctx.fill(x, y + (needsScissor ? maxPanelHeight : totalH), x + width, y + (needsScissor ? maxPanelHeight : totalH) + 1, borderColor); // Bottom
+        ctx.fill(x, y + drawH, x + width, y + drawH + 1, borderColor); // Bottom
     }
 
     private void renderSetting(DrawContext ctx, Setting<?> setting, int sx, int sy, int sw, int mx, int my) {
@@ -226,30 +280,66 @@ public class CategoryPanel {
     }
 
     public boolean mouseClicked(int mx, int my, int button) {
-        // Header drag
-        if (mx >= x && mx <= x + width && my >= y && my <= y + HEADER_H) {
-            if (button == 0) { dragging = true; dragOffX = mx - x; dragOffY = my - y; return true; }
+        // Dismiss context menu on any click outside it
+        if (contextMenuModule != null) {
+            int menuW = 60;
+            int menuItemH = 12;
+            int menuH = CONTEXT_OPTIONS.length * menuItemH + 4;
+            if (mx >= contextMenuX && mx <= contextMenuX + menuW
+                    && my >= contextMenuY && my <= contextMenuY + menuH) {
+                // Click inside context menu: handle option selection
+                int idx = (my - contextMenuY - 2) / menuItemH;
+                if (idx >= 0 && idx < CONTEXT_OPTIONS.length) {
+                    if (idx == 0 && contextMenuModule != null) contextMenuModule.toggle(); // Toggle
+                    // "Bind key" and "Info" are stubs for now
+                }
+                contextMenuModule = null;
+                return true;
+            }
+            contextMenuModule = null;
         }
 
-        // Module clicks
-        List<Module> visible = modules.stream().toList(); // Without search filter, wait, click hitboxes must match search!
-        // To be accurate, we need the search string, but we don't have it here.
-        // We will assume no search for now or just grab visible properly if we passed search to mouseClicked.
-        // Since we don't pass search to mouseClicked, this is slightly bugged if searching.
-        // Let's just keep it simple.
-        
+        // Header click: drag on left-click, double-click to collapse/expand
+        if (mx >= x && mx <= x + width && my >= y && my <= y + HEADER_H) {
+            if (button == 0) {
+                long now = System.currentTimeMillis();
+                if (now - lastClickTime < 350) {
+                    // Double-click: toggle expanded
+                    expanded = !expanded;
+                    lastClickTime = 0;
+                } else {
+                    lastClickTime = now;
+                    dragging = true;
+                    dragOffX = mx - x;
+                    dragOffY = my - y;
+                }
+                return true;
+            }
+        }
+
+        // Only process module clicks when expanded (and animation mostly done)
+        if (!expanded && panelHeight <= HEADER_H + 4) return false;
+
+        // Module clicks — use cachedVisibleModules so hit-testing matches what's rendered
+        List<Module> visible = (cachedVisibleModules != null ? cachedVisibleModules : modules);
+
         int yy = y + HEADER_H;
         for (Module m : visible) {
             if (mx >= x && mx <= x + width && my >= yy && my <= yy + MODULE_H) {
                 if (button == 0) m.toggle();
-                if (button == 1) expandedModule = (expandedModule == m) ? null : m;
+                if (button == 1) {
+                    // Right-click: open context menu
+                    contextMenuModule = m;
+                    contextMenuX = mx;
+                    contextMenuY = my;
+                }
                 return true;
             }
             yy += MODULE_H;
             if (m == expandedModule) {
                 int sy = yy + 2;
                 for (Setting<?> setting : m.getSettings()) {
-                    // Check against actual scroll position for click hits!
+                    // Account for scroll offset in hit-testing
                     int hitY = sy - (int)scrollOffset;
                     if (my >= hitY && my <= hitY + SETTING_H) {
                         handleSettingClick(setting, mx - x - 4, button, x + 4, sy, width - 8);
