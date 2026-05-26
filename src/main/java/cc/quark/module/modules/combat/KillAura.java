@@ -23,20 +23,12 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
-/**
- * KillAura - automatically attacks nearby entities every configurable delay.
- *
- * <p>When Ghost Mode is enabled the module respects {@link GhostManager}'s
- * profile-aware safe limits for reach, attack delay, and strafe behaviour, and
- * delegates rotations to {@link RotationManager} for smooth, silent aim.
- */
 public class KillAura extends Module {
 
     public enum SortMode {
         DISTANCE, HEALTH, ANGLE
     }
 
-    // Settings
     private final DoubleSetting range = register(new DoubleSetting(
             "Range", "Attack range in blocks", 3.0, 2.0, 6.0));
 
@@ -52,6 +44,9 @@ public class KillAura extends Module {
     private final BoolSetting onlyPlayers = register(new BoolSetting(
             "Only Players", "Only target other players", false));
 
+    private final BoolSetting attackMobs = register(new BoolSetting(
+            "Attack Mobs", "Also target hostile mobs (not just players)", false));
+
     private final DoubleSetting cooldownPct = register(new DoubleSetting(
             "Cooldown %", "How full the 1.9+ attack bar must be", 100.0, 10.0, 100.0));
 
@@ -64,13 +59,24 @@ public class KillAura extends Module {
     private final BoolSetting swing = register(new BoolSetting(
             "Swing", "Play the hand-swing animation", true));
 
-    /** When enabled, KillAura respects GhostManager safe limits and uses RotationManager. */
+    private final BoolSetting wTap = register(new BoolSetting(
+            "W-Tap", "Release forward key briefly on attack to reset sprint and boost knockback", true));
+
+    private final BoolSetting sprintReset = register(new BoolSetting(
+            "Sprint Reset", "Reset sprint momentum on each attack", false));
+
+    private final BoolSetting fovFilter = register(new BoolSetting(
+            "FOV Filter", "Only attack targets within the configured FOV", false));
+
+    private final DoubleSetting fov = register(new DoubleSetting(
+            "FOV", "FOV degrees to consider targets in (from your look direction)", 90.0, 10.0, 360.0));
+
     private final BoolSetting ghostMode = register(new BoolSetting(
             "Ghost Mode", "Integrate GhostManager limits and RotationManager for silent aim", true));
 
-    // State
     private int ticksSinceLastAttack = 0;
     private long lastAttackMs = 0L;
+    private int wTapTicks = 0;
 
     private LivingEntity currentTarget = null;
 
@@ -83,16 +89,35 @@ public class KillAura extends Module {
         ticksSinceLastAttack = 0;
         lastAttackMs = 0L;
         currentTarget = null;
+        wTapTicks = 0;
+    }
+
+    @Override
+    public void onDisable() {
+        if (mc.player != null && wTapTicks > 0) {
+            mc.options.forwardKey.setPressed(false);
+            wTapTicks = 0;
+        }
     }
 
     @EventHandler
     public void onTick(EventTick event) {
         if (mc.player == null || mc.world == null || mc.interactionManager == null) return;
 
-        // 1.9+ Cooldown check instead of fixed ticks
+        // Re-enable forward key after W-tap pause
+        if (wTapTicks > 0) {
+            wTapTicks--;
+            if (wTapTicks == 0) {
+                // restore forward key state based on actual input
+                mc.options.forwardKey.setPressed(mc.player.input.movementForward > 0);
+            }
+            return;
+        }
+
+        // 1.9+ Cooldown check
         if (mc.player.getAttackCooldownProgress(0.0f) < (cooldownPct.get() / 100.0)) return;
 
-        // Ghost Mode: enforce minimum attack delay from GhostManager profile
+        // Ghost Mode: enforce minimum attack delay
         if (ghostMode.isEnabled()) {
             long minDelay = GhostManager.INSTANCE.getMinAttackDelay();
             if (minDelay > 0 && System.currentTimeMillis() - lastAttackMs < minDelay) return;
@@ -114,17 +139,32 @@ public class KillAura extends Module {
             if (!(entity instanceof LivingEntity living)) continue;
             if (living.isDead() || living.getHealth() <= 0f) continue;
 
-            // Only players filter
-            if (onlyPlayers.isEnabled() && !(entity instanceof PlayerEntity)) continue;
+            // Player/mob filter logic
+            boolean isPlayer = entity instanceof PlayerEntity;
+            boolean isMob = EntityUtil.isMob(entity);
+
+            if (onlyPlayers.isEnabled()) {
+                if (!isPlayer) continue;
+            } else if (!attackMobs.isEnabled() && !isPlayer) {
+                continue;
+            }
 
             // Friend check
-            if (entity instanceof PlayerEntity player) {
-                String name = player.getGameProfile().getName();
+            if (isPlayer) {
+                String name = ((PlayerEntity) entity).getGameProfile().getName();
                 if (Quark.getInstance().getFriendManager().isFriend(name)) continue;
             }
 
-            // Range check
-            if (EntityUtil.distanceTo(entity) > r) continue;
+            // FOV filter: check angle between player look and direction to entity
+            if (fovFilter.isEnabled()) {
+                float angleTo = RotationUtil.getAngleTo(entity);
+                if (angleTo > fov.get() / 2.0f) continue;
+            }
+
+            // Range check using bounding box expansion for better hit detection
+            double entityHalfWidth = entity.getWidth() / 2.0 + 0.1;
+            double distToCenter = EntityUtil.distanceTo(entity);
+            if (distToCenter - entityHalfWidth > r) continue;
 
             // Line-of-sight check (unless throughWalls is enabled)
             if (!throughWalls.isEnabled()) {
@@ -154,16 +194,14 @@ public class KillAura extends Module {
 
         // Ghost Mode: strafe attack guard
         if (ghostMode.isEnabled() && !GhostManager.INSTANCE.canStrafeAttack()) {
-            // If the player is actively strafing (non-zero sideways input), skip attack
             if (mc.player.sidewaysSpeed != 0f) return;
         }
 
         for (int i = 0; i < count; i++) {
             LivingEntity target = targets.get(i);
 
-            // Calculate angles to target eye position
-            Vec3d eyePos  = target.getEyePos();
-            Vec3d myEyes  = mc.player.getEyePos();
+            Vec3d eyePos = target.getEyePos();
+            Vec3d myEyes = mc.player.getEyePos();
             double dx = eyePos.x - myEyes.x;
             double dy = eyePos.y - myEyes.y;
             double dz = eyePos.z - myEyes.z;
@@ -174,17 +212,14 @@ public class KillAura extends Module {
 
             if (rotations.isEnabled()) {
                 if (ghostMode.isEnabled()) {
-                    // Delegate to RotationManager (silent, server-side, smooth)
                     RotationManager.INSTANCE.requestRotation(calcYaw, calcPitch, 10, true);
 
-                    // Use RotationManager's current server yaw to check aim convergence
                     float serverYaw   = RotationManager.INSTANCE.getServerYaw();
                     float serverPitch = RotationManager.INSTANCE.getServerPitch();
                     float yawErr      = Math.abs(MathHelper.wrapDegrees(calcYaw - serverYaw));
                     float pitchErr    = Math.abs(calcPitch - serverPitch);
-                    if (yawErr > 10f || pitchErr > 10f) continue; // Still turning
+                    if (yawErr > 10f || pitchErr > 10f) continue;
                 } else {
-                    // Legacy: directly move player camera with turn speed cap
                     float maxTurn    = turnSpeed.get();
                     float currentYaw = mc.player.getYaw();
                     float currentPitch = mc.player.getPitch();
@@ -200,11 +235,15 @@ public class KillAura extends Module {
                     mc.player.setYaw(currentYaw + yawDiff);
                     mc.player.setPitch(MathHelper.clamp(currentPitch + pitchDiff, -90f, 90f));
 
-                    // Don't attack until we are roughly facing the target (within 10°)
                     if (Math.abs(MathHelper.wrapDegrees(calcYaw - mc.player.getYaw())) > 10.0f) {
                         continue;
                     }
                 }
+            }
+
+            // Sprint reset before attack
+            if (sprintReset.isEnabled()) {
+                mc.player.setSprinting(false);
             }
 
             // Attack
@@ -213,6 +252,18 @@ public class KillAura extends Module {
 
             if (swing.isEnabled()) {
                 mc.player.swingHand(net.minecraft.util.Hand.MAIN_HAND);
+            }
+
+            // W-tap: release forward key for 1 tick to reset sprint and boost knockback
+            if (wTap.isEnabled() && mc.player.isSprinting()) {
+                mc.options.forwardKey.setPressed(false);
+                mc.player.setSprinting(false);
+                wTapTicks = 1;
+            }
+
+            // Re-enable sprint after reset
+            if (sprintReset.isEnabled()) {
+                mc.player.setSprinting(true);
             }
         }
     }

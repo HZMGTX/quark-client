@@ -6,7 +6,7 @@ import cc.quark.module.Category;
 import cc.quark.module.Module;
 import cc.quark.setting.BoolSetting;
 import cc.quark.setting.DoubleSetting;
-import com.mojang.blaze3d.systems.RenderSystem;
+import cc.quark.util.ColorUtil;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.render.*;
 import net.minecraft.client.util.math.MatrixStack;
@@ -14,33 +14,27 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
-import net.minecraft.network.packet.Packet;
-import net.minecraft.text.Text;
 import net.minecraft.util.math.Vec3d;
-import org.joml.Matrix4f;
 
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Nametags - enhanced player nametags showing health, distance, armor, and ping.
- */
 public class Nametags extends Module {
 
     private final BoolSetting showHealth = register(new BoolSetting(
-            "Health", "Show entity health", true));
+            "Health", "Show entity health as hearts", true));
 
     private final BoolSetting showDistance = register(new BoolSetting(
             "Distance", "Show distance to entity", true));
 
     private final BoolSetting showArmor = register(new BoolSetting(
-            "Armor", "Show armor durability", true));
+            "Armor", "Show armor durability for players", true));
 
     private final DoubleSetting scale = register(new DoubleSetting(
             "Scale", "Nametag text scale", 1.0, 0.5, 3.0));
 
     public Nametags() {
-        super("Nametags", "Shows enhanced info above player heads", Category.RENDER);
+        super("Nametags", "Shows enhanced info above entity heads", Category.RENDER);
     }
 
     @EventHandler
@@ -60,103 +54,79 @@ public class Nametags extends Module {
         Camera camera = mc.gameRenderer.getCamera();
         Vec3d camPos = camera.getPos();
 
-        // Interpolate entity position
         double ex = entity.prevX + (entity.getX() - entity.prevX) * tickDelta;
         double ey = entity.prevY + (entity.getY() - entity.prevY) * tickDelta;
         double ez = entity.prevZ + (entity.getZ() - entity.prevZ) * tickDelta;
 
-        // Position nametag above the entity's head
         double tx = ex - camPos.x;
-        double ty = ey + entity.getHeight() + 0.3 - camPos.y;
+        double ty = ey + entity.getHeight() + 0.35 - camPos.y;
         double tz = ez - camPos.z;
 
-        // Build the label
-        StringBuilder sb = new StringBuilder();
         String name = entity.getDisplayName().getString();
-        sb.append(name);
+        StringBuilder nameLine = new StringBuilder(name);
 
-        if (showHealth.isEnabled()) {
-            float hp = entity.getHealth();
-            // Color based on health percentage
-            String hpStr = String.format("%.1f", hp);
-            sb.append(" §c").append(hpStr).append("§r hp");
+        int nameColor = 0xFFFFFFFF;
+        if (entity instanceof PlayerEntity player) {
+            float pct = player.getMaxHealth() > 0 ? player.getHealth() / player.getMaxHealth() : 1f;
+            nameColor = ColorUtil.healthColor(pct) | 0xFF000000;
         }
 
-        if (showDistance.isEnabled()) {
-            double dist = mc.player.distanceTo(entity);
-            sb.append(" §7").append(String.format("%.1f", dist)).append("m§r");
-        }
-
-        String label = sb.toString();
+        TextRenderer textRenderer = mc.textRenderer;
+        float s = (float)(scale.get() * 0.025);
 
         matrices.push();
         matrices.translate(tx, ty, tz);
-
-        // Billboard: rotate to face camera
         matrices.multiply(camera.getRotation());
-        float s = (float)(scale.get() * 0.025);
         matrices.scale(-s, -s, s);
 
-        TextRenderer textRenderer = mc.textRenderer;
-        int textWidth = textRenderer.getWidth(label);
+        VertexConsumerProvider.Immediate immediate = mc.getBufferBuilders().getEntityVertexConsumers();
 
-        Matrix4f matrix = matrices.peek().getPositionMatrix();
-
-        // Draw background
-        int x = -textWidth / 2;
-        VertexConsumerProvider.Immediate immediate =
-                mc.getBufferBuilders().getEntityVertexConsumers();
+        int nameW = textRenderer.getWidth(nameLine.toString());
         textRenderer.draw(
-                label,
-                x, 0,
-                0xFFFFFFFF,
+                nameLine.toString(),
+                -nameW / 2f, 0f,
+                nameColor,
                 false,
-                matrix,
+                matrices.peek().getPositionMatrix(),
                 immediate,
                 TextRenderer.TextLayerType.SEE_THROUGH,
-                0x44000000,
+                0x55000000,
                 0xF000F0
         );
         immediate.draw();
 
-        // Armor bar below name
-        if (showArmor.isEnabled() && entity instanceof PlayerEntity player) {
-            renderArmorInfo(matrices, textRenderer, player, textWidth);
-        }
+        int lineY = 10;
 
-        matrices.pop();
-    }
-
-    private void renderArmorInfo(MatrixStack matrices, TextRenderer textRenderer,
-                                  PlayerEntity player, int nameWidth) {
-        List<String> armorParts = new ArrayList<>();
-        ItemStack[] armor = new ItemStack[]{
-                player.getInventory().getStack(36), // boots
-                player.getInventory().getStack(37), // leggings
-                player.getInventory().getStack(38), // chestplate
-                player.getInventory().getStack(39)  // helmet
-        };
-
-        for (ItemStack stack : armor) {
-            if (!stack.isEmpty() && stack.isDamageable()) {
-                int maxDmg = stack.getMaxDamage();
-                int dmg = stack.getDamage();
-                int pct = (int)(100f * (maxDmg - dmg) / maxDmg);
-                // Color: green > 60, yellow > 30, red otherwise
-                String color = pct > 60 ? "§a" : pct > 30 ? "§e" : "§c";
-                armorParts.add(color + pct + "%§r");
-            }
-        }
-
-        if (!armorParts.isEmpty()) {
-            String armorStr = String.join(" ", armorParts);
-            int aw = textRenderer.getWidth(armorStr);
-            VertexConsumerProvider.Immediate immediate =
-                    mc.getBufferBuilders().getEntityVertexConsumers();
+        if (showHealth.isEnabled()) {
+            float hp = entity.getHealth();
+            float maxHp = entity.getMaxHealth();
+            float pct = maxHp > 0 ? hp / maxHp : 1f;
+            int hc = ColorUtil.healthColor(pct) | 0xFF000000;
+            int hearts = (int) Math.ceil(hp / 2f);
+            StringBuilder hpSb = new StringBuilder();
+            for (int i = 0; i < Math.min(hearts, 10); i++) hpSb.append('❤');
+            String hpStr = hpSb + String.format(" %.1f", hp);
+            int hpW = textRenderer.getWidth(hpStr);
             textRenderer.draw(
-                    armorStr,
-                    -aw / 2, 10,
-                    0xFFFFFFFF,
+                    hpStr, -hpW / 2f, lineY,
+                    hc, false,
+                    matrices.peek().getPositionMatrix(),
+                    immediate,
+                    TextRenderer.TextLayerType.SEE_THROUGH,
+                    0x44000000,
+                    0xF000F0
+            );
+            immediate.draw();
+            lineY += 10;
+        }
+
+        if (showDistance.isEnabled()) {
+            double dist = mc.player.distanceTo(entity);
+            String distStr = String.format("%.1fm", dist);
+            int distW = textRenderer.getWidth(distStr);
+            textRenderer.draw(
+                    distStr, -distW / 2f, lineY,
+                    0xFFAAAAAA,
                     false,
                     matrices.peek().getPositionMatrix(),
                     immediate,
@@ -165,6 +135,51 @@ public class Nametags extends Module {
                     0xF000F0
             );
             immediate.draw();
+            lineY += 10;
         }
+
+        if (showArmor.isEnabled() && entity instanceof PlayerEntity player) {
+            renderArmorLine(matrices, textRenderer, immediate, player, lineY);
+        }
+
+        matrices.pop();
+    }
+
+    private void renderArmorLine(MatrixStack matrices, TextRenderer textRenderer,
+                                  VertexConsumerProvider.Immediate immediate,
+                                  PlayerEntity player, int lineY) {
+        List<String> armorParts = new ArrayList<>();
+        ItemStack[] armorSlots = {
+                player.getInventory().getStack(36),
+                player.getInventory().getStack(37),
+                player.getInventory().getStack(38),
+                player.getInventory().getStack(39)
+        };
+
+        for (ItemStack stack : armorSlots) {
+            if (!stack.isEmpty() && stack.isDamageable()) {
+                int maxDmg = stack.getMaxDamage();
+                int dmg = stack.getDamage();
+                int pct = maxDmg > 0 ? (int)(100f * (maxDmg - dmg) / maxDmg) : 100;
+                String col = pct > 60 ? "§a" : pct > 30 ? "§e" : "§c";
+                armorParts.add(col + pct + "%§r");
+            }
+        }
+
+        if (armorParts.isEmpty()) return;
+
+        String armorStr = String.join(" ", armorParts);
+        int aw = textRenderer.getWidth(armorStr);
+        textRenderer.draw(
+                armorStr, -aw / 2f, lineY,
+                0xFFFFFFFF,
+                false,
+                matrices.peek().getPositionMatrix(),
+                immediate,
+                TextRenderer.TextLayerType.SEE_THROUGH,
+                0x44000000,
+                0xF000F0
+        );
+        immediate.draw();
     }
 }

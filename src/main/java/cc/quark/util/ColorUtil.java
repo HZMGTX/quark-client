@@ -70,4 +70,31 @@ public class ColorUtil {
     public static int getAlpha(int color) {
         return (color >> 24) & 0xFF;
     }
+
+    public static int rainbow(float hue) {
+        hue = ((hue % 360f) + 360f) % 360f;
+        Color c = Color.getHSBColor(hue / 360f, 1.0f, 1.0f);
+        return toRGBA(c.getRed(), c.getGreen(), c.getBlue(), 255);
+    }
+
+    public static int lerpColor(int from, int to, float t) {
+        return lerp(from, to, t);
+    }
+
+    public static int healthColor(float pct) {
+        pct = Math.max(0f, Math.min(1f, pct));
+        if (pct > 0.6f) {
+            float tt = (pct - 0.6f) / 0.4f;
+            int r = (int)(255 * (1f - tt));
+            int g = 255;
+            return toRGBA(r, g, 0, 255);
+        } else if (pct > 0.3f) {
+            float tt = (pct - 0.3f) / 0.3f;
+            int r = 255;
+            int g = (int)(255 * tt);
+            return toRGBA(r, g, 0, 255);
+        } else {
+            return toRGBA(255, 0, 0, 255);
+        }
+    }
 }

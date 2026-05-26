@@ -1,6 +1,5 @@
 package cc.quark.module.modules.render;
 
-import cc.quark.Quark;
 import cc.quark.event.EventHandler;
 import cc.quark.event.events.EventRender3D;
 import cc.quark.module.Category;
@@ -17,24 +16,16 @@ import net.minecraft.world.chunk.WorldChunk;
 
 public class StorageESP extends Module {
 
-    private final IntSetting range = register(new IntSetting("Range", "Search range", 32, 10, 64));
-    private final BoolSetting showCount = register(new BoolSetting("Show Count", "Show item count", true));
-    private final BoolSetting chests = register(new BoolSetting("Chests", "Show chests", true));
-    private final BoolSetting shulkers = register(new BoolSetting("Shulkers", "Show shulker boxes", true));
-    private final BoolSetting furnaces = register(new BoolSetting("Furnaces", "Show furnaces", false));
+    private final IntSetting range     = register(new IntSetting("Range",        "Search range in blocks",     32, 10, 64));
+    private final BoolSetting chests   = register(new BoolSetting("Chests",      "Show chests and barrels",    true));
+    private final BoolSetting shulkers = register(new BoolSetting("Shulkers",    "Show shulker boxes",         true));
+    private final BoolSetting enderChests = register(new BoolSetting("EnderChests", "Show ender chests",       true));
+    private final BoolSetting furnaces = register(new BoolSetting("Furnaces",    "Show furnaces",              false));
+    private final BoolSetting hoppers  = register(new BoolSetting("Hoppers",     "Show hoppers",               false));
+    private final BoolSetting showFill = register(new BoolSetting("Fill",        "Fill box with color",        true));
 
     public StorageESP() {
-        super("StorageESP", "Shows storage blocks with item info", Category.RENDER, 0);
-    }
-
-    @Override
-    public void onEnable() {
-        Quark.getInstance().getEventBus().subscribe(this);
-    }
-
-    @Override
-    public void onDisable() {
-        Quark.getInstance().getEventBus().unsubscribe(this);
+        super("StorageESP", "Shows storage blocks through walls", Category.RENDER);
     }
 
     @EventHandler
@@ -52,27 +43,35 @@ public class StorageESP extends Module {
 
                 for (BlockEntity be : chunk.getBlockEntities().values()) {
                     if (mc.player.getPos().distanceTo(be.getPos().toCenterPos()) > range.getValue()) continue;
-                    int color = getColor(be);
-                    if (color == 0) continue;
+
+                    float[] color = getColor(be);
+                    if (color == null) continue;
+
+                    float r = color[0], g = color[1], b = color[2];
                     BlockPos pos = be.getPos();
                     Box box = new Box(pos.getX(), pos.getY(), pos.getZ(),
                                       pos.getX() + 1, pos.getY() + 1, pos.getZ() + 1);
-                    float r = ((color >> 16) & 0xFF) / 255.0f;
-                    float g = ((color >> 8) & 0xFF) / 255.0f;
-                    float b = (color & 0xFF) / 255.0f;
-                    RenderUtil.drawESPBox(matrices, box, r, g, b, 0.85f, 1.5f);
+                    RenderUtil.drawESPBox(matrices, box, r, g, b, 0.9f, 1.5f);
+                    if (showFill.isEnabled()) {
+                        RenderUtil.drawFilledBox(matrices, box, r, g, b, 0.2f);
+                    }
                 }
             }
         }
     }
 
-    private int getColor(BlockEntity be) {
-        if (be instanceof ChestBlockEntity && chests.getValue()) return 0xFFAA00;
-        if (be instanceof BarrelBlockEntity && chests.getValue()) return 0xAA7700;
-        if (be instanceof ShulkerBoxBlockEntity && shulkers.getValue()) return 0xAA55FF;
-        if (be instanceof FurnaceBlockEntity && furnaces.getValue()) return 0xFF5500;
-        if (be instanceof BlastFurnaceBlockEntity && furnaces.getValue()) return 0xFF7700;
-        if (be instanceof HopperBlockEntity) return 0x888888;
-        return 0;
+    private float[] getColor(BlockEntity be) {
+        if ((be instanceof ChestBlockEntity || be instanceof BarrelBlockEntity) && chests.isEnabled())
+            return new float[]{1.0f, 0.67f, 0.0f};
+        if (be instanceof ShulkerBoxBlockEntity && shulkers.isEnabled())
+            return new float[]{0.67f, 0.33f, 1.0f};
+        if (be instanceof EnderChestBlockEntity && enderChests.isEnabled())
+            return new float[]{0.35f, 0.0f, 0.55f};
+        if ((be instanceof FurnaceBlockEntity || be instanceof BlastFurnaceBlockEntity
+                || be instanceof SmokerBlockEntity) && furnaces.isEnabled())
+            return new float[]{1.0f, 0.33f, 0.0f};
+        if (be instanceof HopperBlockEntity && hoppers.isEnabled())
+            return new float[]{0.55f, 0.55f, 0.55f};
+        return null;
     }
 }

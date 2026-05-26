@@ -467,6 +467,8 @@ public class ModuleManager {
 
         // -------- MISC --------
         register(new AntiDetect());
+        register(new Panic());
+        register(new AutoConfig());
 
         generatePlaceholders();
     }

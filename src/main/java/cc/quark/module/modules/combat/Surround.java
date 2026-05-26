@@ -5,6 +5,7 @@ import cc.quark.event.events.EventTick;
 import cc.quark.module.Category;
 import cc.quark.module.Module;
 import cc.quark.setting.BoolSetting;
+import cc.quark.setting.IntSetting;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.client.MinecraftClient;
@@ -18,14 +19,6 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3d;
 
-/**
- * Surround - places obsidian (or any available solid block) at the 8 positions
- * surrounding the player's feet to protect against end crystal explosions.
- *
- * <p>Cardinal positions (N/S/E/W) are placed first; corners (NE/NW/SE/SW) second.
- * A block is only placed when the target position is air/replaceable and there is
- * a valid adjacent solid face to place against.
- */
 public class Surround extends Module {
 
     private final BoolSetting center = register(new BoolSetting(
@@ -33,6 +26,18 @@ public class Surround extends Module {
 
     private final BoolSetting onlyOnGround = register(new BoolSetting(
             "Only On Ground", "Only place blocks while the player is standing on the ground", true));
+
+    private final BoolSetting feet = register(new BoolSetting(
+            "Feet", "Place blocks at feet level (y+0) instead of only around player", true));
+
+    private final BoolSetting extend = register(new BoolSetting(
+            "Extend", "Extend surround 2 blocks wide in each direction", false));
+
+    private final IntSetting delay = register(new IntSetting(
+            "Delay", "Ticks between block placements (0 = instant all)", 0, 0, 10));
+
+    private int delayTicks = 0;
+    private int placementIndex = 0;
 
     public Surround() {
         super("Surround", "Places blocks around your feet to protect against crystals", Category.COMBAT);
@@ -42,9 +47,10 @@ public class Surround extends Module {
     public void onEnable() {
         MinecraftClient mc = MinecraftClient.getInstance();
         if (mc.player == null) return;
+        delayTicks = 0;
+        placementIndex = 0;
 
         if (center.isEnabled()) {
-            // Snap to block centre
             BlockPos feet = mc.player.getBlockPos();
             double centreX = feet.getX() + 0.5;
             double centreZ = feet.getZ() + 0.5;
@@ -59,33 +65,55 @@ public class Surround extends Module {
 
         if (onlyOnGround.isEnabled() && !mc.player.isOnGround()) return;
 
-        // Surround positions relative to player feet (dx, dz)
-        int[][] offsets = {
+        if (delayTicks > 0) {
+            delayTicks--;
+            return;
+        }
+
+        // Build surround offsets based on settings
+        int[][] cardinalOffsets = {
             {  0,  1 },  // North
             {  0, -1 },  // South
             {  1,  0 },  // East
             { -1,  0 },  // West
+        };
+
+        int[][] cornerOffsets = {
             {  1,  1 },  // NE
             { -1,  1 },  // NW
             {  1, -1 },  // SE
             { -1, -1 }   // SW
         };
 
-        BlockPos feet = mc.player.getBlockPos();
+        int[][] extendOffsets = {
+            {  0,  2 },
+            {  0, -2 },
+            {  2,  0 },
+            { -2,  0 },
+        };
 
-        // Find a solid block in hotbar to place (prefer obsidian, then any block)
+        java.util.List<int[]> allOffsets = new java.util.ArrayList<>();
+        for (int[] o : cardinalOffsets) allOffsets.add(o);
+        for (int[] o : cornerOffsets) allOffsets.add(o);
+        if (extend.isEnabled()) {
+            for (int[] o : extendOffsets) allOffsets.add(o);
+        }
+
+        BlockPos feetPos = mc.player.getBlockPos();
+        int yOffset = feet.isEnabled() ? 0 : 0;
+
         int blockSlot = findBestBlockSlot(mc);
         if (blockSlot == -1) return;
 
         int prevSlot = mc.player.getInventory().selectedSlot;
         mc.player.getInventory().selectedSlot = blockSlot;
 
-        for (int[] off : offsets) {
-            BlockPos target = feet.add(off[0], 0, off[1]);
+        int placedThisTick = 0;
+        for (int[] off : allOffsets) {
+            BlockPos target = feetPos.add(off[0], yOffset, off[1]);
             BlockState existing = mc.world.getBlockState(target);
             if (!existing.isAir() && !existing.isReplaceable()) continue;
 
-            // Find a neighbour face to place against
             Direction placeDir = findSupportFace(mc, target);
             if (placeDir == null) continue;
 
@@ -101,15 +129,19 @@ public class Surround extends Module {
             if (mc.getNetworkHandler() != null) {
                 mc.getNetworkHandler().sendPacket(new HandSwingC2SPacket(Hand.MAIN_HAND));
             }
+
+            placedThisTick++;
+
+            // If delay is set, place one block per delay period
+            if (delay.get() > 0) {
+                delayTicks = delay.get();
+                break;
+            }
         }
 
         mc.player.getInventory().selectedSlot = prevSlot;
     }
 
-    /**
-     * Returns the direction from {@code target} toward the best adjacent solid block
-     * that can serve as a placement face, or {@code null} if none found.
-     */
     private Direction findSupportFace(MinecraftClient mc, BlockPos target) {
         for (Direction dir : Direction.values()) {
             BlockPos neighbor = target.offset(dir);
@@ -121,23 +153,15 @@ public class Surround extends Module {
         return null;
     }
 
-    /**
-     * Finds the hotbar slot with the best block for surrounding.
-     * Prefers obsidian, then any block item.
-     * Returns -1 if no suitable block is found.
-     */
     private int findBestBlockSlot(MinecraftClient mc) {
         int fallback = -1;
-
         for (int i = 0; i < 9; i++) {
             ItemStack stack = mc.player.getInventory().getStack(i);
             if (stack.isEmpty()) continue;
             if (!(stack.getItem() instanceof BlockItem)) continue;
-
             if (stack.getItem() == Items.OBSIDIAN) return i;
             if (fallback == -1) fallback = i;
         }
-
         return fallback;
     }
 }

@@ -1,34 +1,45 @@
 package cc.quark.module.modules.combat;
 
 import cc.quark.event.EventHandler;
+import cc.quark.event.events.EventAttack;
 import cc.quark.event.events.EventTick;
 import cc.quark.module.Category;
 import cc.quark.module.Module;
-import cc.quark.setting.DoubleSetting;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.LivingEntity;
+import cc.quark.setting.BoolSetting;
 
-/**
- * JumpReset - jumps when a nearby enemy is close to reduce knockback taken.
- */
 public class JumpReset extends Module {
 
-    private final DoubleSetting range = register(new DoubleSetting("Range", "Trigger range", 3.5, 1.0, 6.0));
+    private final BoolSetting onlySprint = register(new BoolSetting(
+            "Only Sprint", "Only perform jump reset while sprinting", true));
+
+    private boolean doJump = false;
 
     public JumpReset() {
-        super("JumpReset", "Jumps near enemies to reduce knockback", Category.COMBAT);
+        super("JumpReset", "Jumps on attack to reset knockback and boost damage", Category.COMBAT);
+    }
+
+    @Override
+    public void onEnable() {
+        doJump = false;
+    }
+
+    @EventHandler
+    public void onAttack(EventAttack event) {
+        if (mc.player == null) return;
+
+        if (onlySprint.isEnabled() && !mc.player.isSprinting()) return;
+
+        if (mc.player.isOnGround()) {
+            doJump = true;
+        }
     }
 
     @EventHandler
     public void onTick(EventTick event) {
-        if (mc.player == null || mc.world == null) return;
-        if (!mc.player.isOnGround()) return;
-        for (Entity entity : mc.world.getEntities()) {
-            if (entity == mc.player || !(entity instanceof LivingEntity living) || living.isDead()) continue;
-            if (mc.player.distanceTo(entity) <= range.get()) {
-                mc.player.input.jumping = true;
-                return;
-            }
+        if (mc.player == null) return;
+        if (doJump && mc.player.isOnGround()) {
+            mc.player.jump();
+            doJump = false;
         }
     }
 }

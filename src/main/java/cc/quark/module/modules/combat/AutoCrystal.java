@@ -2,6 +2,7 @@ package cc.quark.module.modules.combat;
 
 import cc.quark.event.EventHandler;
 import cc.quark.event.events.EventTick;
+import cc.quark.ghost.RotationManager;
 import cc.quark.module.Category;
 import cc.quark.module.Module;
 import cc.quark.setting.BoolSetting;
@@ -22,24 +23,10 @@ import net.minecraft.util.math.*;
 
 import java.util.*;
 
-/**
- * AutoCrystal - places End Crystals on obsidian/bedrock at positions that
- * maximise damage to nearby players, then immediately attacks them to trigger
- * the explosion.
- *
- * <p>Damage calculation uses the vanilla explosion formula:
- * <pre>
- *   exposure = 1 - (dist / (2 * radius))
- *   damage   = (exposure^2 * 7 + exposure) * 6 * 0.85 / 2
- * </pre>
- * where {@code radius = 6.0} for an end crystal explosion.
- */
 public class AutoCrystal extends Module {
 
-    /** Vanilla end-crystal explosion radius (blocks). */
     private static final float CRYSTAL_RADIUS = 6.0f;
 
-    // ---- Settings ----
     private final DoubleSetting placeRange = register(new DoubleSetting(
             "Place Range", "Range to place crystals (blocks)", 4.0, 2.0, 6.0));
 
@@ -52,18 +39,23 @@ public class AutoCrystal extends Module {
     private final DoubleSetting maxSelfDamage = register(new DoubleSetting(
             "Max Self Damage", "Maximum self-damage allowed when placing", 6.0, 0.0, 10.0));
 
+    private final IntSetting placeDelay = register(new IntSetting(
+            "Place Delay", "Ticks between crystal placements", 1, 0, 10));
+
+    private final IntSetting breakDelay = register(new IntSetting(
+            "Break Delay", "Ticks between crystal breaks", 0, 0, 10));
+
+    private final BoolSetting rotate = register(new BoolSetting(
+            "Rotate", "Silently rotate toward crystal positions using RotationManager", true));
+
     private final BoolSetting renderPlace = register(new BoolSetting(
             "Render Place", "Highlight positions where crystals will be placed", true));
 
     private final BoolSetting renderBreak = register(new BoolSetting(
             "Render Break", "Highlight crystals about to be broken", true));
 
-    private final IntSetting delay = register(new IntSetting(
-            "Delay", "Ticks between place/break actions", 1, 0, 5));
-
-    // ---- State ----
-    private int ticksSinceLast = 0;
-    /** Last position we placed a crystal at; used to immediately break it. */
+    private int ticksSincePlace = 0;
+    private int ticksSinceBreak = 0;
     private BlockPos lastPlacePos = null;
 
     public AutoCrystal() {
@@ -73,85 +65,108 @@ public class AutoCrystal extends Module {
 
     @Override
     public void onEnable() {
-        ticksSinceLast = 0;
-        lastPlacePos   = null;
+        ticksSincePlace = 0;
+        ticksSinceBreak = 0;
+        lastPlacePos = null;
     }
 
     @EventHandler
     public void onTick(EventTick event) {
         if (mc.player == null || mc.world == null || mc.interactionManager == null) return;
 
-        ticksSinceLast++;
-        if (ticksSinceLast < delay.get()) return;
-        ticksSinceLast = 0;
+        ticksSincePlace++;
+        ticksSinceBreak++;
 
-        // ---- Break existing crystals first ----
-        EndCrystalEntity crystalToBreak = findBestCrystalToBreak();
-        if (crystalToBreak != null) {
-            attackCrystal(crystalToBreak);
-            return; // Break takes priority this tick
+        // Break existing crystals first (separate delay)
+        if (ticksSinceBreak > breakDelay.get()) {
+            EndCrystalEntity crystalToBreak = findBestCrystalToBreak();
+            if (crystalToBreak != null) {
+                if (rotate.isEnabled()) {
+                    Vec3d crystalPos = crystalToBreak.getEyePos();
+                    float yaw = (float) Math.toDegrees(Math.atan2(
+                            -(crystalPos.x - mc.player.getEyePos().x),
+                            crystalPos.z - mc.player.getEyePos().z));
+                    float pitch = (float) Math.toDegrees(Math.atan2(
+                            -(crystalPos.y - mc.player.getEyePos().y),
+                            Math.sqrt(Math.pow(crystalPos.x - mc.player.getEyePos().x, 2) +
+                                    Math.pow(crystalPos.z - mc.player.getEyePos().z, 2))));
+                    RotationManager.INSTANCE.requestRotation(yaw, MathHelper.clamp(pitch, -90f, 90f), 5, true);
+                }
+                attackCrystal(crystalToBreak);
+                ticksSinceBreak = 0;
+                return;
+            }
         }
 
-        // ---- Find nearest target player ----
-        PlayerEntity target = findNearestTarget();
+        // Place new crystals
+        if (ticksSincePlace <= placeDelay.get()) return;
+
+        // Find target with highest DPS (most damage)
+        PlayerEntity target = findBestDpsTarget();
         if (target == null) return;
 
-        // ---- Find best placement position ----
         BlockPos placePos = findBestPlacement(target);
         if (placePos == null) return;
 
-        // ---- Check we're holding an end crystal ----
-        if (!holdingCrystal()) {
-            switchToCrystal();
-            if (!holdingCrystal()) return;
+        // Switch to crystal slot in hotbar
+        int crystalSlot = findCrystalSlot();
+        if (crystalSlot == -1) return;
+
+        int prevSlot = mc.player.getInventory().selectedSlot;
+        mc.player.getInventory().selectedSlot = crystalSlot;
+
+        // Rotate toward placement position if enabled
+        if (rotate.isEnabled()) {
+            Vec3d crystalCenter = Vec3d.ofCenter(placePos.up());
+            float yaw = (float) Math.toDegrees(Math.atan2(
+                    -(crystalCenter.x - mc.player.getEyePos().x),
+                    crystalCenter.z - mc.player.getEyePos().z));
+            float pitch = (float) Math.toDegrees(Math.atan2(
+                    -(crystalCenter.y - mc.player.getEyePos().y),
+                    Math.sqrt(Math.pow(crystalCenter.x - mc.player.getEyePos().x, 2) +
+                            Math.pow(crystalCenter.z - mc.player.getEyePos().z, 2))));
+            RotationManager.INSTANCE.requestRotation(yaw, MathHelper.clamp(pitch, -90f, 90f), 5, true);
         }
 
         placeCrystal(placePos);
         lastPlacePos = placePos;
-    }
+        ticksSincePlace = 0;
 
-    // -------------------------------------------------------------------------
-    // Crystal placement
-    // -------------------------------------------------------------------------
+        mc.player.getInventory().selectedSlot = prevSlot;
+    }
 
     private BlockPos findBestPlacement(PlayerEntity target) {
         BlockPos playerPos = mc.player.getBlockPos();
-        double bestScore   = Double.NEGATIVE_INFINITY;
-        BlockPos bestPos   = null;
+        double bestScore = Double.NEGATIVE_INFINITY;
+        BlockPos bestPos = null;
 
         for (int dx = -4; dx <= 4; dx++) {
             for (int dy = -2; dy <= 2; dy++) {
                 for (int dz = -4; dz <= 4; dz++) {
                     BlockPos pos = playerPos.add(dx, dy, dz);
 
-                    // Must be obsidian or bedrock beneath the crystal
                     var base = mc.world.getBlockState(pos).getBlock();
                     if (base != Blocks.OBSIDIAN && base != Blocks.BEDROCK) continue;
 
-                    // The block on top must be air
                     BlockPos above = pos.up();
                     if (!mc.world.getBlockState(above).isAir()) continue;
 
-                    // The block two above also must be air (crystal occupies 2 blocks)
                     BlockPos aboveAbove = above.up();
                     if (!mc.world.getBlockState(aboveAbove).isAir()) continue;
 
-                    // Must be within place range
                     Vec3d crystalCenter = Vec3d.ofCenter(above);
                     if (mc.player.getEyePos().distanceTo(crystalCenter) > placeRange.get()) continue;
 
-                    // Damage calculations
                     double dmgToTarget = calcExplosionDamage(target, crystalCenter);
-                    double dmgToSelf   = calcExplosionDamage(mc.player, crystalCenter);
+                    double dmgToSelf = calcExplosionDamage(mc.player, crystalCenter);
 
                     if (dmgToTarget < minDamage.get()) continue;
-                    if (dmgToSelf   > maxSelfDamage.get()) continue;
+                    if (dmgToSelf > maxSelfDamage.get()) continue;
 
-                    // Score: maximise enemy damage, minimise self-damage
                     double score = dmgToTarget - dmgToSelf * 0.5;
                     if (score > bestScore) {
                         bestScore = score;
-                        bestPos   = pos;
+                        bestPos = pos;
                     }
                 }
             }
@@ -161,7 +176,6 @@ public class AutoCrystal extends Module {
 
     private void placeCrystal(BlockPos basePos) {
         BlockPos above = basePos.up();
-        // Place on top face of the base block
         BlockHitResult hit = new BlockHitResult(
                 Vec3d.ofCenter(above),
                 Direction.UP,
@@ -176,20 +190,15 @@ public class AutoCrystal extends Module {
         }
     }
 
-    // -------------------------------------------------------------------------
-    // Crystal breaking
-    // -------------------------------------------------------------------------
-
     private EndCrystalEntity findBestCrystalToBreak() {
-        EndCrystalEntity best     = null;
-        double            bestDmg = Double.NEGATIVE_INFINITY;
+        EndCrystalEntity best = null;
+        double bestDmg = Double.NEGATIVE_INFINITY;
 
         for (Entity entity : mc.world.getEntities()) {
             if (!(entity instanceof EndCrystalEntity crystal)) continue;
             if (EntityUtil.distanceTo(crystal) > breakRange.get()) continue;
 
-            // Find nearest target to this crystal
-            PlayerEntity nearestTarget = findNearestTarget();
+            PlayerEntity nearestTarget = findBestDpsTarget();
             if (nearestTarget == null) continue;
 
             Vec3d crystalPos = crystal.getPos().add(0, 1, 0);
@@ -201,7 +210,7 @@ public class AutoCrystal extends Module {
 
             if (dmg > bestDmg) {
                 bestDmg = dmg;
-                best    = crystal;
+                best = crystal;
             }
         }
         return best;
@@ -216,63 +225,45 @@ public class AutoCrystal extends Module {
         mc.player.swingHand(Hand.MAIN_HAND);
     }
 
-    // -------------------------------------------------------------------------
-    // Damage calculation
-    // -------------------------------------------------------------------------
-
-    /**
-     * Approximates the explosion damage dealt to {@code entity} by a crystal explosion
-     * centered at {@code explosionPos}, using the vanilla explosion damage formula.
-     *
-     * <p>Simplified (no block exposure ray-cast for performance):
-     * <pre>
-     *   exposure = 1 - (dist / radius)
-     *   impact   = exposure * (0.7 + radius * 0.3)
-     *   damage   = (impact^2 + impact) * 7 * radius + 1
-     * </pre>
-     */
     private double calcExplosionDamage(net.minecraft.entity.LivingEntity entity, Vec3d explosionPos) {
         double dist = entity.getPos().add(0, entity.getHeight() / 2.0, 0)
                 .distanceTo(explosionPos);
         if (dist > CRYSTAL_RADIUS) return 0;
 
         double exposure = 1.0 - (dist / CRYSTAL_RADIUS);
-        double impact   = exposure * (0.7 + CRYSTAL_RADIUS * 0.3);
+        double impact = exposure * (0.7 + CRYSTAL_RADIUS * 0.3);
         return (impact * impact + impact) * 7.0 * CRYSTAL_RADIUS + 1.0;
     }
 
-    // -------------------------------------------------------------------------
-    // Helpers
-    // -------------------------------------------------------------------------
-
-    private PlayerEntity findNearestTarget() {
+    private PlayerEntity findBestDpsTarget() {
         if (mc.world == null) return null;
-        PlayerEntity nearest = null;
-        double minDist = Double.MAX_VALUE;
+        PlayerEntity bestTarget = null;
+        double bestDps = Double.NEGATIVE_INFINITY;
 
         for (Entity e : mc.world.getEntities()) {
             if (!(e instanceof PlayerEntity p)) continue;
             if (p == mc.player) continue;
             if (p.isDead() || p.getHealth() <= 0) continue;
+
             double d = EntityUtil.distanceTo(p);
-            if (d < minDist) {
-                minDist = d;
-                nearest = p;
+            if (d > placeRange.get() + 4) continue;
+
+            // Score based on proximity and health (closer + lower health = higher priority)
+            double dps = (1.0 / Math.max(d, 0.1)) * (1.0 / Math.max(p.getHealth(), 0.1));
+            if (dps > bestDps) {
+                bestDps = dps;
+                bestTarget = p;
             }
         }
-        return nearest;
+        return bestTarget;
     }
 
-    private boolean holdingCrystal() {
-        return mc.player.getMainHandStack().getItem() == Items.END_CRYSTAL;
-    }
-
-    private void switchToCrystal() {
+    private int findCrystalSlot() {
         for (int i = 0; i < 9; i++) {
             if (mc.player.getInventory().getStack(i).getItem() == Items.END_CRYSTAL) {
-                mc.player.getInventory().selectedSlot = i;
-                return;
+                return i;
             }
         }
+        return -1;
     }
 }

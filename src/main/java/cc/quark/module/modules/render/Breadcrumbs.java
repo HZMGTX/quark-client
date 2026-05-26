@@ -9,26 +9,31 @@ import cc.quark.setting.BoolSetting;
 import cc.quark.setting.ColorSetting;
 import cc.quark.setting.IntSetting;
 import cc.quark.util.RenderUtil;
+import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Vec3d;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
 
-/**
- * Breadcrumbs - draws a trail of lines behind the player showing their path.
- */
 public class Breadcrumbs extends Module {
 
-    private final IntSetting length = register(new IntSetting(
-            "Length", "Maximum number of trail points to keep", 200, 50, 500));
+    private final IntSetting maxPoints = register(new IntSetting(
+            "Max Points", "Maximum number of trail points to keep", 500, 100, 2000));
+
+    private final IntSetting interval = register(new IntSetting(
+            "Interval", "Record a point every N ticks", 2, 1, 20));
 
     private final ColorSetting color = register(new ColorSetting(
             "Color", "Trail color (ARGB)", 0xFF00AAFF));
 
     private final BoolSetting fade = register(new BoolSetting(
-            "Fade", "Fade trail from full opacity to transparent at the tail", true));
+            "Fade", "Fade trail from full opacity at head to transparent at tail", true));
+
+    private final BoolSetting showStart = register(new BoolSetting(
+            "Show Start", "Mark the starting position with a box", true));
 
     private final Deque<Vec3d> trail = new ArrayDeque<>();
+    private int tickCounter = 0;
 
     public Breadcrumbs() {
         super("Breadcrumbs", "Renders a position trail behind the player", Category.RENDER);
@@ -37,29 +42,33 @@ public class Breadcrumbs extends Module {
     @Override
     public void onEnable() {
         trail.clear();
+        tickCounter = 0;
     }
 
     @Override
     public void onDisable() {
         trail.clear();
+        tickCounter = 0;
     }
 
     @EventHandler
     public void onTick(EventTick event) {
         if (mc.player == null) return;
 
-        Vec3d pos = mc.player.getPos();
+        tickCounter++;
+        if (tickCounter < interval.get()) return;
+        tickCounter = 0;
 
-        // Only add a new point if the player has moved at least 0.2 blocks
+        Vec3d pos = mc.player.getPos().add(0, 0.1, 0);
+
         if (!trail.isEmpty()) {
             Vec3d last = trail.peekLast();
-            if (last.distanceTo(pos) < 0.2) return;
+            if (last.distanceTo(pos) < 0.1) return;
         }
 
-        trail.addLast(pos.add(0, 0.1, 0)); // Slight Y offset to avoid clipping into ground
+        trail.addLast(pos);
 
-        // Trim to max length
-        while (trail.size() > length.get()) {
+        while (trail.size() > maxPoints.get()) {
             trail.pollFirst();
         }
     }
@@ -78,7 +87,6 @@ public class Breadcrumbs extends Module {
         for (int i = 0; i < points.length - 1; i++) {
             float alpha;
             if (fade.isEnabled()) {
-                // Newest point = full alpha, oldest = transparent
                 alpha = baseA * ((float)(i + 1) / points.length);
             } else {
                 alpha = baseA;
@@ -87,6 +95,14 @@ public class Breadcrumbs extends Module {
             RenderUtil.drawLine3D(event.getMatrixStack(),
                     points[i], points[i + 1],
                     baseR, baseG, baseB, alpha, 1.5f);
+        }
+
+        if (showStart.isEnabled() && points.length > 0) {
+            Vec3d start = points[0];
+            Box startBox = new Box(start.x - 0.3, start.y - 0.05, start.z - 0.3,
+                                   start.x + 0.3, start.y + 0.05, start.z + 0.3);
+            RenderUtil.drawFilledBox(event.getMatrixStack(), startBox, 1.0f, 0.5f, 0.0f, 0.6f);
+            RenderUtil.drawESPBox(event.getMatrixStack(), startBox, 1.0f, 0.5f, 0.0f, 0.9f, 1.5f);
         }
     }
 }

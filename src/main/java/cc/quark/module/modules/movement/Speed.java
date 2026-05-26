@@ -27,7 +27,7 @@ import net.minecraft.util.math.Vec3d;
 public class Speed extends Module {
 
     public enum SpeedMode {
-        VANILLA, STRAFE, BHOP, NCP, GRIM, MATRIX, AAC
+        VANILLA, STRAFE, BHOP, NCP, GRIM, MATRIX, AAC, YPORT, WATCHDOG
     }
 
     private final EnumSetting<SpeedMode> mode = register(new EnumSetting<>(
@@ -43,11 +43,13 @@ public class Speed extends Module {
             "Sprint Bypass", "Keep sprinting even when receiving knockback", true));
 
     // Internal state
-    private boolean wasOnGround   = false;
-    private int     ncpPhase      = 0;
-    private boolean aacToggle     = false;
-    private double  currentSpeed  = 0.0;
-    private int     matrixTicks   = 0;
+    private boolean wasOnGround    = false;
+    private int     ncpPhase       = 0;
+    private boolean aacToggle      = false;
+    private double  currentSpeed   = 0.0;
+    private int     matrixTicks    = 0;
+    private boolean yportPhase     = false;
+    private int     watchdogTicks  = 0;
 
     public Speed() {
         super("Speed", "Increases movement speed", Category.MOVEMENT);
@@ -55,10 +57,12 @@ public class Speed extends Module {
 
     @Override
     public void onEnable() {
-        ncpPhase     = 0;
-        aacToggle    = false;
-        currentSpeed = 0.0;
-        matrixTicks  = 0;
+        ncpPhase      = 0;
+        aacToggle     = false;
+        currentSpeed  = 0.0;
+        matrixTicks   = 0;
+        yportPhase    = false;
+        watchdogTicks = 0;
     }
 
     @Override
@@ -138,6 +142,43 @@ public class Speed extends Module {
                                                : speed.get() * 0.215 * 0.85;
                     aacToggle = !aacToggle;
                     applyHorizontalBoostDirect(aacSpeed);
+                }
+            }
+            case YPORT -> {
+                // YPort: alternating y-position spoofing for server-side speed bypass
+                // On ground ticks: apply a small downward velocity to keep "on ground" packets
+                // On air ticks: apply boosted horizontal speed
+                if (moving) {
+                    if (onGround) {
+                        // Every other ground tick, push slightly down to stay in ground detection zone
+                        if (yportPhase) {
+                            Vec3d vel = mc.player.getVelocity();
+                            mc.player.setVelocity(vel.x, -0.1, vel.z);
+                        }
+                        yportPhase = !yportPhase;
+                        applyHorizontalBoostDirect(speed.get() * 0.27);
+                    } else {
+                        applyHorizontalBoostDirect(speed.get() * 0.27);
+                    }
+                } else {
+                    yportPhase = false;
+                }
+            }
+            case WATCHDOG -> {
+                // Hypixel Watchdog-safe bhop: jump on land with 0.42 boost, cap speed at 0.35
+                if (onGround && !wasOnGround && moving) {
+                    mc.player.jump();
+                    watchdogTicks = 0;
+                } else if (!onGround && moving) {
+                    watchdogTicks++;
+                    // Cap horizontal speed to 0.35 to stay under Watchdog threshold
+                    double watchdogSpeed = Math.min(speed.get() * 0.215, 0.35);
+                    Vec3d vel = mc.player.getVelocity();
+                    double[] dir = getMovementDirection();
+                    double hSpeed = Math.sqrt(vel.x * vel.x + vel.z * vel.z);
+                    if (hSpeed < watchdogSpeed) {
+                        mc.player.setVelocity(dir[0] * watchdogSpeed, vel.y, dir[1] * watchdogSpeed);
+                    }
                 }
             }
             default -> { /* STRAFE handled in onMove */ }
