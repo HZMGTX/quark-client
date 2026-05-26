@@ -107,6 +107,13 @@ public class ClickGUI extends Screen {
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        // Dismiss any open context menus on ALL panels before processing the click.
+        // This ensures right-click menus from other panels are closed whenever the
+        // user clicks anywhere on screen, not just within the panel that owns the menu.
+        for (CategoryPanel panel : panels) {
+            panel.dismissContextMenu();
+        }
+
         for (CategoryPanel panel : panels) {
             if (panel.mouseClicked((int)mouseX, (int)mouseY, button)) return true;
         }

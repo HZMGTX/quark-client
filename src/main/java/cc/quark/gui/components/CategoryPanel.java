@@ -430,6 +430,15 @@ public class CategoryPanel {
         return false;
     }
 
+    /**
+     * Dismisses any open right-click context menu on this panel without
+     * handling any option selection.  Call this on every panel before
+     * forwarding a click event so menus from other panels are closed.
+     */
+    public void dismissContextMenu() {
+        contextMenuModule = null;
+    }
+
     public int getX() { return x; }
     public void setX(int x) { this.x = x; }
 

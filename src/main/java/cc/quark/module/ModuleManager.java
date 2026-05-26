@@ -44,6 +44,8 @@ public class ModuleManager {
         register(new AntiKnockback());
         register(new AntiPoison());
         register(new AntiSurround());
+        register(new CriticalHit());
+        register(new TargetStrafe());
         register(new AntiWeakness());
         register(new AttackSpeed());
         register(new AuraDelay());
@@ -177,6 +179,7 @@ public class ModuleManager {
         register(new GravityZero());
         register(new GroundSpeed());
         register(new GroundStrafe());
+        register(new BouncePad());
         register(new HighJump());
         register(new Honey());
         register(new HopStep());
@@ -260,6 +263,7 @@ public class ModuleManager {
         register(new AutoDrop());
         register(new AutoEat());
         register(new AutoFeed());
+        register(new cc.quark.module.modules.player.AntiPoison());
         register(new AutoFish());
         register(new AutoGG());
         register(new AutoHeal());
@@ -276,6 +280,7 @@ public class ModuleManager {
         register(new AutoRespawn());
         register(new AutoSelect());
         register(new AutoSmelt2());
+        register(new AutoSword());
         register(new AutoSoup2());
         register(new AutoSprint());
         register(new AutoStack());
@@ -290,6 +295,7 @@ public class ModuleManager {
         register(new ChatFilter());
         register(new ChestAura());
         register(new cc.quark.module.modules.player.ChestStealer());
+        register(new FakePlayer());
         register(new FakeSneak());
         register(new FastBreak());
         register(new FastEat());
@@ -324,6 +330,7 @@ public class ModuleManager {
         register(new SaturationKeeper());
         register(new Scaffold());
         register(new ScaffoldFast());
+        register(new Sneak());
         register(new SpamBot2());
         register(new ToolSaver());
         register(new TowerJump());
@@ -332,6 +339,7 @@ public class ModuleManager {
         // -------- RENDER --------
         register(new ActiveMods());
         register(new Ambiance());
+        register(new ArmourStatus());
         register(new AnimalESP());
         register(new ArmorHUD());
         register(new AspectRatio());
@@ -339,6 +347,7 @@ public class ModuleManager {
         register(new Breadcrumbs());
         register(new Chams());
         register(new ChestESP());
+        register(new CombatInfo());
         register(new ChestTracers());
         register(new ClickGuiModule());
         register(new Coordinates());
@@ -358,6 +367,7 @@ public class ModuleManager {
         register(new Hitbox());
         register(new HoleESP());
         register(new ItemESP());
+        register(new ItemPhysics());
         register(new ItemTracers());
         register(new MobESP());
         register(new ModuleList());
@@ -379,6 +389,7 @@ public class ModuleManager {
         register(new TargetHUD());
         register(new TNTTimer());
         register(new TimeChanger());
+        register(new Trajectories());
         register(new Tracers());
         register(new TrueSight());
         register(new ViewModel());
@@ -389,6 +400,8 @@ public class ModuleManager {
         // -------- WORLD --------
         register(new AutoBed());
         register(new AutoBreeder());
+        register(new AutoPlace());
+        register(new AutoSmelter());
         register(new AutoBridge2());
         register(new AutoBuild());
         register(new AutoCook());
@@ -409,6 +422,7 @@ public class ModuleManager {
         register(new InstaBreak());
         register(new MelonFarm());
         register(new MiddleClick());
+        register(new MineAssist());
         register(new NetherWartFarm());
         register(new Nuker());
         register(new OreAlert());
@@ -420,6 +434,7 @@ public class ModuleManager {
         register(new SugarCaneFarm());
         register(new TreeFeller());
         register(new Tunneler());
+        register(new VeinMiner());
 
         // -------- EXPLOIT --------
         register(new AntiAim());
@@ -445,14 +460,13 @@ public class ModuleManager {
         register(new PacketCancel());
         register(new PacketFly());
         register(new PingSpoof());
+        register(new HypixelBypass());
         register(new PortalGod());
         register(new Spoofer());
         register(new Timer());
 
         // -------- MISC --------
         register(new AntiDetect());
-        register(new Blink());
-        register(new MiddleClickFriend());
 
         generatePlaceholders();
     }

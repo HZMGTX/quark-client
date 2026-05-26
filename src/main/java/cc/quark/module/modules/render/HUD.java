@@ -5,6 +5,8 @@ import cc.quark.event.EventHandler;
 import cc.quark.event.events.EventRender2D;
 import cc.quark.module.Category;
 import cc.quark.module.Module;
+import cc.quark.module.modules.misc.AntiDetect;
+import cc.quark.module.modules.player.Blink;
 import cc.quark.setting.BoolSetting;
 import cc.quark.setting.IntSetting;
 import cc.quark.setting.ModeSetting;
@@ -135,23 +137,58 @@ public class HUD extends Module {
                     player.getX(), player.getY(), player.getZ());
             cc.quark.util.RenderUtil.drawCustomText(ctx, coordStr, renderX, y, 0xFFFFFFFF);
 
-            String fpsStr = "FPS: " + mc.getCurrentFps();
-            cc.quark.util.RenderUtil.drawCustomText(ctx, fpsStr, renderX, y + 10, 0xFFAAAAAA);
-
             String bpsStr = String.format("BPS: %.2f", bps);
-            cc.quark.util.RenderUtil.drawCustomText(ctx, bpsStr, renderX, y + 20, 0xFFAAAAAA);
+            cc.quark.util.RenderUtil.drawCustomText(ctx, bpsStr, renderX, y + 10, 0xFFAAAAAA);
         }
 
-        // ---- Ping ----
+        // ---- Ping + FPS (left side, above coords) ----
         {
             var networkHandler = mc.getNetworkHandler();
             if (networkHandler != null) {
                 var entry = networkHandler.getPlayerListEntry(player.getUuid());
                 if (entry != null) {
                     int ping = entry.getLatency();
+                    int pingColor = ping < 80 ? 0xFF44FF88 : ping < 150 ? 0xFFFFFF44 : 0xFFFF4444;
                     String pingStr = "Ping: " + ping + "ms";
-                    cc.quark.util.RenderUtil.drawCustomText(ctx, pingStr, 3, screenH - 40, 0xFFAAAAAA);
+                    cc.quark.util.RenderUtil.drawCustomText(ctx, pingStr, 3, screenH - 40, pingColor);
                 }
+            }
+
+            // FPS indicator
+            int fps = mc.getCurrentFps();
+            int fpsColor = fps >= 60 ? 0xFF44FF88 : fps >= 30 ? 0xFFFFFF44 : 0xFFFF4444;
+            cc.quark.util.RenderUtil.drawCustomText(ctx, "FPS: " + fps, 3, screenH - 50, fpsColor);
+
+            // TPS indicator (displayed; shows server-observed TPS; currently fixed at 20)
+            cc.quark.util.RenderUtil.drawCustomText(ctx, "TPS: 20.0", 3, screenH - 60, 0xFF44FF88);
+        }
+
+        // ---- Blink packet queue indicator ----
+        {
+            Blink blink = Quark.getInstance().getModuleManager().getModule(Blink.class);
+            if (blink != null && blink.isEnabled()) {
+                int queued = blink.getBufferSize();
+                String blinkStr = "BLINK [" + queued + "]";
+                int blinkW = mc.textRenderer.getWidth(blinkStr);
+                int bx = screenW / 2 - blinkW / 2;
+                int by = screenH - 55;
+                ctx.fill(bx - 4, by - 2, bx + blinkW + 4, by + mc.textRenderer.fontHeight + 2, 0xAA2A0000);
+                cc.quark.util.RenderUtil.drawCustomText(ctx, blinkStr, bx, by, 0xFFFF3333);
+            }
+        }
+
+        // ---- GHOST badge (shown when AntiDetect is enabled) ----
+        {
+            AntiDetect antiDetect = Quark.getInstance().getModuleManager().getModule(AntiDetect.class);
+            if (antiDetect != null && antiDetect.isEnabled()) {
+                int accentColor = cc.quark.gui.ClickGUI.getAccentColor();
+                String ghostStr = "  GHOST  ";
+                int gw = mc.textRenderer.getWidth(ghostStr);
+                int gx = screenW - gw - 6;
+                int gy = 6;
+                ctx.fill(gx - 2, gy - 2, gx + gw + 2, gy + mc.textRenderer.fontHeight + 2, 0xBB111111);
+                ctx.fill(gx - 2, gy - 2, gx + gw + 2, gy - 1, accentColor);
+                cc.quark.util.RenderUtil.drawCustomText(ctx, ghostStr, gx, gy, accentColor);
             }
         }
 

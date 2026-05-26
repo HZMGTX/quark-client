@@ -15,9 +15,10 @@ plugins {
 stonecutter {
     create(rootProject) {
         // Minecraft versions this mod is built for.
-        // 26.x (year-based) entries are scaffolded but require their own
-        // mapping/loom coordinates in build.gradle once those APIs are pinned.
-        versions("1.20.1", "1.20.4", "1.20.6", "1.21.1", "1.21.4")
+        // Verify yarn/loader/fabric-api coordinates at https://fabricmc.net/develop
+        // before building each version. Year-based (25.x, 26.x) entries need their
+        // own mapping coordinates added to build.gradle once pinned.
+        versions("1.20.1", "1.20.4", "1.20.6", "1.21.1", "1.21.3", "1.21.4", "1.21.5")
         vcsVersion = "1.21.1"
     }
 }
