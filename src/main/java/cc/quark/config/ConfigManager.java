@@ -67,11 +67,13 @@ public class ConfigManager {
             return;
         }
 
+        Module.silent = true; // suppress notifications during config load
         int loaded = 0;
         for (Module module : moduleManager.getModules()) {
             if (loadModule(module)) loaded++;
         }
-        
+        Module.silent = false;
+
         loadGui();
 
         LOGGER.info("Config loaded ({}/{} modules).", loaded, moduleManager.getModules().size());

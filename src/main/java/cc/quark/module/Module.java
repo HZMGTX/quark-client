@@ -30,6 +30,9 @@ public abstract class Module {
 
     private final List<Setting<?>> settings = new ArrayList<>();
 
+    // When true, enable()/disable() skip NotificationOverlay calls (used during config load)
+    public static boolean silent = false;
+
     // -------------------------------------------------------------------------
     // Constructors
     // -------------------------------------------------------------------------
@@ -76,6 +79,7 @@ public abstract class Module {
         enabled = true;
         cc.quark.Quark.getInstance().getEventBus().subscribe(this);
         onEnable();
+        if (!silent) sendToggleNotif(true);
     }
 
     public final void disable() {
@@ -83,6 +87,24 @@ public abstract class Module {
         enabled = false;
         cc.quark.Quark.getInstance().getEventBus().unsubscribe(this);
         onDisable();
+        if (!silent) sendToggleNotif(false);
+    }
+
+    private void sendToggleNotif(boolean enabling) {
+        try {
+            cc.quark.Quark q = cc.quark.Quark.getInstance();
+            if (q == null) return;
+            cc.quark.module.ModuleManager mm = q.getModuleManager();
+            if (mm == null) return;
+            cc.quark.module.modules.render.NotificationOverlay overlay =
+                mm.getModule(cc.quark.module.modules.render.NotificationOverlay.class);
+            if (overlay == null || !overlay.isEnabled()) return;
+            cc.quark.module.modules.render.NotificationOverlay.NotifType t =
+                enabling
+                    ? cc.quark.module.modules.render.NotificationOverlay.NotifType.SUCCESS
+                    : cc.quark.module.modules.render.NotificationOverlay.NotifType.INFO;
+            cc.quark.module.modules.render.NotificationOverlay.send(name, enabling ? "Enabled" : "Disabled", t);
+        } catch (Exception ignored) {}
     }
 
     // -------------------------------------------------------------------------
