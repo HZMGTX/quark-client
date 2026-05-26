@@ -3,9 +3,7 @@ package cc.quark.gui;
 import cc.quark.Quark;
 import cc.quark.gui.components.CategoryPanel;
 import cc.quark.module.Category;
-import cc.quark.module.Module;
 import cc.quark.module.ModuleManager;
-import cc.quark.setting.*;
 import cc.quark.util.ColorUtil;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
@@ -16,11 +14,18 @@ import java.util.List;
 
 public class ClickGUI extends Screen {
 
-    private final List<CategoryPanel> panels = new ArrayList<>();
+    private static final List<CategoryPanel> panels = new ArrayList<>();
     private String searchQuery = "";
     private float alpha = 0f;
-    private static final int PANEL_WIDTH = 120;
-    private static final int PANEL_HEADER = 16;
+    private static final int PANEL_WIDTH = 130;
+    // Global accent color fetched from ClickGuiModule
+    public static int getAccentColor() {
+        cc.quark.module.Module mod = Quark.getInstance().getModuleManager().getModule("ClickGUI");
+        if (mod instanceof cc.quark.module.modules.render.ClickGuiModule cgm) {
+            return cgm.getAccentColor();
+        }
+        return 0xFF00AAFF; // Fallback
+    }
 
     public ClickGUI() {
         super(Text.literal("Quark.cc"));
@@ -28,36 +33,67 @@ public class ClickGUI extends Screen {
 
     @Override
     protected void init() {
-        panels.clear();
+        if (!panels.isEmpty()) return; // Already initialized, keep positions
+
         ModuleManager mm = Quark.getInstance().getModuleManager();
-        int x = 10;
+        
+        // Center panels roughly on screen
+        int totalWidth = Category.values().length * (PANEL_WIDTH + 10) - 10;
+        int startX = Math.max(10, (this.width - totalWidth) / 2);
+        
+        int x = startX;
         for (Category cat : Category.values()) {
-            panels.add(new CategoryPanel(cat, mm.getModulesForCategory(cat), x, 10, PANEL_WIDTH));
-            x += PANEL_WIDTH + 5;
+            panels.add(new CategoryPanel(cat, mm.getModulesForCategory(cat), x, 50, PANEL_WIDTH));
+            x += PANEL_WIDTH + 10;
         }
+    }
+
+    public static List<CategoryPanel> getPanels() {
+        return panels;
     }
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
         alpha = Math.min(1f, alpha + delta * 0.15f);
 
-        // Dim background
-        context.fill(0, 0, context.getScaledWindowWidth(), context.getScaledWindowHeight(),
-                     ColorUtil.withAlpha(0x000000, (int)(120 * alpha)));
+        int screenW = context.getScaledWindowWidth();
+        int screenH = context.getScaledWindowHeight();
 
-        // Search bar at top-right
-        int sbX = context.getScaledWindowWidth() - 140;
-        int sbY = 5;
-        context.fill(sbX, sbY, sbX + 130, sbY + 14, ColorUtil.withAlpha(0x000000, 180));
-        context.fill(sbX, sbY, sbX + 130, sbY + 1, 0xFF5555FF);
-        String search = searchQuery.isEmpty() ? "Search..." : searchQuery;
-        int searchColor = searchQuery.isEmpty() ? 0xFF666666 : 0xFFFFFFFF;
-        context.drawTextWithShadow(client.textRenderer, search, sbX + 4, sbY + 3, searchColor);
+        // Dark dim backdrop
+        context.fill(0, 0, screenW, screenH, ColorUtil.withAlpha(0x050505, (int)(180 * alpha)));
 
-        // Render panels
+        // --- Scale-In Animation Matrix ---
+        float ease = alpha == 1.0f ? 1.0f : 1.0f - (float)Math.pow(2, -10 * alpha);
+        float animScale = 0.8f + (0.2f * ease);
+
+        context.getMatrices().push();
+        
+        // Pivot around the center of the screen
+        int centerX = screenW / 2;
+        int centerY = screenH / 2;
+        context.getMatrices().translate(centerX, centerY, 0);
+        context.getMatrices().scale(animScale, animScale, 1.0f);
+        // Translate back
+        context.getMatrices().translate(-centerX, -centerY, 0);
+
+        // Modern flat search bar
+        int sbWidth = 200;
+        int sbX = centerX - (sbWidth / 2);
+        int sbY = 20; // Above the panels
+        
+        context.fill(sbX, sbY, sbX + sbWidth, sbY + 18, ColorUtil.withAlpha(0x101010, 255));
+        context.fill(sbX, sbY + 17, sbX + sbWidth, sbY + 18, getAccentColor()); // Accent underline
+        
+        String search = searchQuery.isEmpty() ? "Search modules..." : searchQuery;
+        int searchColor = searchQuery.isEmpty() ? 0xFF888888 : 0xFFFFFFFF;
+        cc.quark.util.RenderUtil.drawCustomText(context, search, sbX + 6, sbY + 5, searchColor);
+
+        // Render category panels
         for (CategoryPanel panel : panels) {
             panel.render(context, mouseX, mouseY, delta, searchQuery, alpha);
         }
+        
+        context.getMatrices().pop();
 
         super.render(context, mouseX, mouseY, delta);
     }
@@ -85,6 +121,12 @@ public class ClickGUI extends Screen {
     }
 
     @Override
+    public void close() {
+        Quark.getInstance().getConfigManager().save();
+        super.close();
+    }
+
+    @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
         for (CategoryPanel panel : panels) {
             if (panel.mouseScrolled((int)mouseX, (int)mouseY, verticalAmount)) return true;
@@ -107,24 +149,16 @@ public class ClickGUI extends Screen {
 
     @Override
     public boolean charTyped(char chr, int modifiers) {
-        searchQuery += chr;
-        return true;
+        // Only accept printable characters
+        if (chr >= 32 && chr <= 126) {
+            searchQuery += chr;
+            return true;
+        }
+        return super.charTyped(chr, modifiers);
     }
 
     @Override
     public boolean shouldPause() {
         return false;
-    }
-
-    // Category accent colors
-    public static int getCategoryColor(Category cat) {
-        return switch (cat) {
-            case COMBAT   -> 0xFFFF5555;
-            case MOVEMENT -> 0xFF55FF55;
-            case PLAYER   -> 0xFF5555FF;
-            case RENDER   -> 0xFF55FFFF;
-            case WORLD    -> 0xFFFFFF55;
-            case EXPLOIT  -> 0xFFAA55FF;
-        };
     }
 }

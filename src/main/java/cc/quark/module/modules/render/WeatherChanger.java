@@ -23,14 +23,14 @@ public class WeatherChanger extends Module {
 
         GameStateChangeS2CPacket.Reason reason = pkt.getReason();
 
-        if (weather.is("Clear") && (reason == GameStateChangeS2CPacket.BEGIN_RAINING
+        if (weather.is("Clear") && (reason == GameStateChangeS2CPacket.RAIN_STARTED
                 || reason == GameStateChangeS2CPacket.RAIN_GRADIENT_CHANGED
                 || reason == GameStateChangeS2CPacket.THUNDER_GRADIENT_CHANGED)) {
             event.cancel();
-        } else if (weather.is("Rain") && reason == GameStateChangeS2CPacket.STOP_RAINING) {
-            event.cancel();
-        } else if (weather.is("Thunder") && reason == GameStateChangeS2CPacket.STOP_RAINING) {
-            event.cancel();
+        } else if (weather.is("Rain") && (reason == GameStateChangeS2CPacket.RAIN_STARTED || reason == GameStateChangeS2CPacket.RAIN_GRADIENT_CHANGED)) {
+            // Let rain through
+        } else if (weather.is("Thunder") && (reason == GameStateChangeS2CPacket.RAIN_STARTED || reason == GameStateChangeS2CPacket.RAIN_GRADIENT_CHANGED || reason == GameStateChangeS2CPacket.THUNDER_GRADIENT_CHANGED)) {
+            // Let thunder through
         }
     }
 }

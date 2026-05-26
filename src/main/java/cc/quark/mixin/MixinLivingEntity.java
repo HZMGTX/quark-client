@@ -39,4 +39,25 @@ public abstract class MixinLivingEntity {
             cir.setReturnValue(false);
         }
     }
+
+    @Inject(method = "jump", at = @At("HEAD"), cancellable = true)
+    private void onJump(CallbackInfo ci) {
+        if (Quark.getInstance() == null) return;
+        LivingEntity self = (LivingEntity)(Object)this;
+        if (self != net.minecraft.client.MinecraftClient.getInstance().player) return;
+        cc.quark.event.events.EventJump event = new cc.quark.event.events.EventJump();
+        Quark.getInstance().getEventBus().post(event);
+        if (event.isCancelled()) ci.cancel();
+    }
+
+    @Inject(method = "isFallFlying", at = @At("RETURN"), cancellable = true)
+    private void onIsFallFlying(CallbackInfoReturnable<Boolean> cir) {
+        if (Quark.getInstance() == null) return;
+        LivingEntity self = (LivingEntity)(Object)this;
+        if (self != net.minecraft.client.MinecraftClient.getInstance().player) return;
+        cc.quark.module.modules.movement.ElytraFly elytraFly = Quark.getInstance().getModuleManager().getModule(cc.quark.module.modules.movement.ElytraFly.class);
+        if (elytraFly != null && elytraFly.isEnabled() && elytraFly.isFakeElytra()) {
+            cir.setReturnValue(true);
+        }
+    }
 }

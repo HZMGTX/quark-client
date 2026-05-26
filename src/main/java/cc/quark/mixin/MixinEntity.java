@@ -12,12 +12,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(Entity.class)
 public abstract class MixinEntity {
 
-    /**
-     * Expose stepHeight so the Step module can write to it directly via the
-     * public accessor added in Step.java (which casts the player to this type).
-     */
-    @Shadow
-    public float stepHeight;
+    // Step height is an attribute in 1.21.1
 
     /**
      * Hook setVelocity(Vec3d) â€“ used by the Velocity module to cancel or

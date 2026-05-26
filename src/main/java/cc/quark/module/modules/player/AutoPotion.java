@@ -37,7 +37,7 @@ public class AutoPotion extends Module {
             Item item = stack.getItem();
 
             boolean isHealthPotion = item instanceof SplashPotionItem || item instanceof PotionItem;
-            boolean isFoodItem     = item instanceof FoodItem;
+            boolean isFoodItem     = stack.contains(net.minecraft.component.DataComponentTypes.FOOD);
 
             if (isHealthPotion && hp < (float) (minHp.get() * 2)) {
                 inv.selectedSlot = i;

@@ -43,6 +43,7 @@ public class CommandManager {
         register(new HClipCommand());
         register(new PrefixCommand());
         register(new AntiCheatCommand());
+        register(new HudCommand());
     }
 
     // -------------------------------------------------------------------------

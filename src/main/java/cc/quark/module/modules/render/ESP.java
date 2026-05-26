@@ -152,57 +152,55 @@ public class ESP extends Module {
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
         RenderSystem.disableDepthTest();
-        RenderSystem.setShader(GameRenderer::getRenderTypeLinesShader);
+        RenderSystem.setShader(GameRenderer::getRenderTypeLinesProgram);
         RenderSystem.lineWidth(lineWidth);
 
         matrices.push();
-        BufferBuilder buf = Tessellator.getInstance().getBuffer();
-        buf.begin(VertexFormat.DrawMode.LINES, VertexFormats.LINES);
-        Matrix4f m = matrices.peek().getPositionMatrix();
-        org.joml.Matrix3f nm = matrices.peek().getNormalMatrix();
+        BufferBuilder buf = Tessellator.getInstance().begin(VertexFormat.DrawMode.LINES, VertexFormats.LINES);
+        MatrixStack.Entry entry = matrices.peek();
 
         // Helper lambdas via a small emit call
         // Each of the 8 corners gets 3 L-segments
-        emitCorner(buf, m, nm, x1, y1, z1,  lx,  0,   0,  r, g, b, alpha);
-        emitCorner(buf, m, nm, x1, y1, z1,  0,   ly,  0,  r, g, b, alpha);
-        emitCorner(buf, m, nm, x1, y1, z1,  0,   0,   lz, r, g, b, alpha);
+        emitCorner(buf, entry, x1, y1, z1,  lx,  0,   0,  r, g, b, alpha);
+        emitCorner(buf, entry, x1, y1, z1,  0,   ly,  0,  r, g, b, alpha);
+        emitCorner(buf, entry, x1, y1, z1,  0,   0,   lz, r, g, b, alpha);
 
-        emitCorner(buf, m, nm, x2, y1, z1,  -lx, 0,   0,  r, g, b, alpha);
-        emitCorner(buf, m, nm, x2, y1, z1,  0,   ly,  0,  r, g, b, alpha);
-        emitCorner(buf, m, nm, x2, y1, z1,  0,   0,   lz, r, g, b, alpha);
+        emitCorner(buf, entry, x2, y1, z1,  -lx, 0,   0,  r, g, b, alpha);
+        emitCorner(buf, entry, x2, y1, z1,  0,   ly,  0,  r, g, b, alpha);
+        emitCorner(buf, entry, x2, y1, z1,  0,   0,   lz, r, g, b, alpha);
 
-        emitCorner(buf, m, nm, x1, y2, z1,  lx,  0,   0,  r, g, b, alpha);
-        emitCorner(buf, m, nm, x1, y2, z1,  0,   -ly, 0,  r, g, b, alpha);
-        emitCorner(buf, m, nm, x1, y2, z1,  0,   0,   lz, r, g, b, alpha);
+        emitCorner(buf, entry, x1, y2, z1,  lx,  0,   0,  r, g, b, alpha);
+        emitCorner(buf, entry, x1, y2, z1,  0,   -ly, 0,  r, g, b, alpha);
+        emitCorner(buf, entry, x1, y2, z1,  0,   0,   lz, r, g, b, alpha);
 
-        emitCorner(buf, m, nm, x2, y2, z1,  -lx, 0,   0,  r, g, b, alpha);
-        emitCorner(buf, m, nm, x2, y2, z1,  0,   -ly, 0,  r, g, b, alpha);
-        emitCorner(buf, m, nm, x2, y2, z1,  0,   0,   lz, r, g, b, alpha);
+        emitCorner(buf, entry, x2, y2, z1,  -lx, 0,   0,  r, g, b, alpha);
+        emitCorner(buf, entry, x2, y2, z1,  0,   -ly, 0,  r, g, b, alpha);
+        emitCorner(buf, entry, x2, y2, z1,  0,   0,   lz, r, g, b, alpha);
 
-        emitCorner(buf, m, nm, x1, y1, z2,  lx,  0,   0,  r, g, b, alpha);
-        emitCorner(buf, m, nm, x1, y1, z2,  0,   ly,  0,  r, g, b, alpha);
-        emitCorner(buf, m, nm, x1, y1, z2,  0,   0,   -lz,r, g, b, alpha);
+        emitCorner(buf, entry, x1, y1, z2,  lx,  0,   0,  r, g, b, alpha);
+        emitCorner(buf, entry, x1, y1, z2,  0,   ly,  0,  r, g, b, alpha);
+        emitCorner(buf, entry, x1, y1, z2,  0,   0,   -lz,r, g, b, alpha);
 
-        emitCorner(buf, m, nm, x2, y1, z2,  -lx, 0,   0,  r, g, b, alpha);
-        emitCorner(buf, m, nm, x2, y1, z2,  0,   ly,  0,  r, g, b, alpha);
-        emitCorner(buf, m, nm, x2, y1, z2,  0,   0,   -lz,r, g, b, alpha);
+        emitCorner(buf, entry, x2, y1, z2,  -lx, 0,   0,  r, g, b, alpha);
+        emitCorner(buf, entry, x2, y1, z2,  0,   ly,  0,  r, g, b, alpha);
+        emitCorner(buf, entry, x2, y1, z2,  0,   0,   -lz,r, g, b, alpha);
 
-        emitCorner(buf, m, nm, x1, y2, z2,  lx,  0,   0,  r, g, b, alpha);
-        emitCorner(buf, m, nm, x1, y2, z2,  0,   -ly, 0,  r, g, b, alpha);
-        emitCorner(buf, m, nm, x1, y2, z2,  0,   0,   -lz,r, g, b, alpha);
+        emitCorner(buf, entry, x1, y2, z2,  lx,  0,   0,  r, g, b, alpha);
+        emitCorner(buf, entry, x1, y2, z2,  0,   -ly, 0,  r, g, b, alpha);
+        emitCorner(buf, entry, x1, y2, z2,  0,   0,   -lz,r, g, b, alpha);
 
-        emitCorner(buf, m, nm, x2, y2, z2,  -lx, 0,   0,  r, g, b, alpha);
-        emitCorner(buf, m, nm, x2, y2, z2,  0,   -ly, 0,  r, g, b, alpha);
-        emitCorner(buf, m, nm, x2, y2, z2,  0,   0,   -lz,r, g, b, alpha);
+        emitCorner(buf, entry, x2, y2, z2,  -lx, 0,   0,  r, g, b, alpha);
+        emitCorner(buf, entry, x2, y2, z2,  0,   -ly, 0,  r, g, b, alpha);
+        emitCorner(buf, entry, x2, y2, z2,  0,   0,   -lz,r, g, b, alpha);
 
-        Tessellator.getInstance().draw();
+        BufferRenderer.drawWithGlobalProgram(buf.end());
         matrices.pop();
         RenderSystem.enableDepthTest();
         RenderSystem.disableBlend();
         RenderSystem.lineWidth(1.0f);
     }
 
-    private void emitCorner(BufferBuilder buf, Matrix4f m, org.joml.Matrix3f nm,
+    private void emitCorner(BufferBuilder buf, MatrixStack.Entry entry,
                              double ox, double oy, double oz,
                              double dx, double dy, double dz,
                              float r, float g, float b, float a) {
@@ -210,8 +208,8 @@ public class ESP extends Module {
         float len = (float) Math.sqrt(dx*dx + dy*dy + dz*dz);
         if (len == 0) return;
         float nx = (float)(dx / len), ny = (float)(dy / len), nz = (float)(dz / len);
-        buf.vertex(m, (float)ox, (float)oy, (float)oz).color(r,g,b,a).normal(nm,nx,ny,nz).next();
-        buf.vertex(m, ex, ey, ez)                      .color(r,g,b,a).normal(nm,nx,ny,nz).next();
+        buf.vertex(entry, (float)ox, (float)oy, (float)oz).color(r,g,b,a).normal(entry,nx,ny,nz);
+        buf.vertex(entry, ex, ey, ez)                     .color(r,g,b,a).normal(entry,nx,ny,nz);
     }
 
     /**
@@ -292,19 +290,18 @@ public class ESP extends Module {
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
         RenderSystem.disableDepthTest();
-        RenderSystem.setShader(GameRenderer::getPositionColorShader);
+        RenderSystem.setShader(GameRenderer::getPositionColorProgram);
 
         // Outline rect
         Tessellator tess = Tessellator.getInstance();
-        BufferBuilder buf2 = tess.getBuffer();
-        buf2.begin(VertexFormat.DrawMode.DEBUG_LINE_STRIP, VertexFormats.POSITION_COLOR);
-        Matrix4f sm = screen.peek().getPositionMatrix();
-        buf2.vertex(sm,(float)minSX,(float)minSY,0).color(r,g,b,0.9f).next();
-        buf2.vertex(sm,(float)maxSX,(float)minSY,0).color(r,g,b,0.9f).next();
-        buf2.vertex(sm,(float)maxSX,(float)maxSY,0).color(r,g,b,0.9f).next();
-        buf2.vertex(sm,(float)minSX,(float)maxSY,0).color(r,g,b,0.9f).next();
-        buf2.vertex(sm,(float)minSX,(float)minSY,0).color(r,g,b,0.9f).next();
-        tess.draw();
+        BufferBuilder buf2 = tess.begin(VertexFormat.DrawMode.DEBUG_LINE_STRIP, VertexFormats.POSITION_COLOR);
+        MatrixStack.Entry entry = screen.peek();
+        buf2.vertex(entry,(float)minSX,(float)minSY,0).color(r,g,b,0.9f);
+        buf2.vertex(entry,(float)maxSX,(float)minSY,0).color(r,g,b,0.9f);
+        buf2.vertex(entry,(float)maxSX,(float)maxSY,0).color(r,g,b,0.9f);
+        buf2.vertex(entry,(float)minSX,(float)maxSY,0).color(r,g,b,0.9f);
+        buf2.vertex(entry,(float)minSX,(float)minSY,0).color(r,g,b,0.9f);
+        BufferRenderer.drawWithGlobalProgram(buf2.end());
 
         screen.pop();
         RenderSystem.enableDepthTest();

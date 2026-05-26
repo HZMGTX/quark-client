@@ -88,7 +88,7 @@ public class TriggerBot extends Module {
 
         // Perform the attack
         mc.interactionManager.attackEntity(mc.player, target);
-        mc.player.swingMainHand();
+        mc.player.swingHand(net.minecraft.util.Hand.MAIN_HAND);
 
         lastClick = now;
         // Recompute jittered delay for next attack

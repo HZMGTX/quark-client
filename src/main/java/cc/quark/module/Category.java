@@ -9,6 +9,7 @@ public enum Category {
     RENDER("Render"),
     PLAYER("Player"),
     WORLD("World"),
+    EXPLOIT("Exploit"),
     MISC("Misc");
 
     private final String displayName;

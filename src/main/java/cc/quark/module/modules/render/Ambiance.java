@@ -22,19 +22,19 @@ public class Ambiance extends Module {
 
     @Override
     public void onEnable() {
-        if (mc.options != null) savedGamma = mc.options.gamma.getValue();
+        if (mc.options != null) savedGamma = mc.options.getGamma().getValue();
     }
 
     @Override
     public void onDisable() {
         if (mc.options != null && applyGamma.isEnabled()) {
-            mc.options.gamma.setValue(savedGamma);
+            mc.options.getGamma().setValue(savedGamma);
         }
     }
 
     @EventHandler
     public void onTick(EventTick event) {
         if (mc.options == null) return;
-        if (applyGamma.isEnabled()) mc.options.gamma.setValue(gamma.get());
+        if (applyGamma.isEnabled()) mc.options.getGamma().setValue(gamma.get());
     }
 }

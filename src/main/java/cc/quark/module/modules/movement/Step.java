@@ -49,7 +49,8 @@ public class Step extends Module {
     @Override
     public void onDisable() {
         if (mc.player != null) {
-            mc.player.stepHeight = VANILLA_STEP;
+            net.minecraft.entity.attribute.EntityAttributeInstance attr = mc.player.getAttributeInstance(net.minecraft.entity.attribute.EntityAttributes.GENERIC_STEP_HEIGHT);
+            if (attr != null) attr.setBaseValue(VANILLA_STEP);
         }
     }
 
@@ -71,9 +72,11 @@ public class Step extends Module {
     private void applyStepHeight() {
         float desired = (float) height.get();
         if (onlyUpward.isEnabled()) {
-            mc.player.stepHeight = Math.max(VANILLA_STEP, desired);
+            net.minecraft.entity.attribute.EntityAttributeInstance attr = mc.player.getAttributeInstance(net.minecraft.entity.attribute.EntityAttributes.GENERIC_STEP_HEIGHT);
+            if (attr != null) attr.setBaseValue(Math.max(VANILLA_STEP, desired));
         } else {
-            mc.player.stepHeight = desired;
+            net.minecraft.entity.attribute.EntityAttributeInstance attr = mc.player.getAttributeInstance(net.minecraft.entity.attribute.EntityAttributes.GENERIC_STEP_HEIGHT);
+            if (attr != null) attr.setBaseValue(desired);
         }
     }
 
@@ -97,24 +100,26 @@ public class Step extends Module {
         switch (smoothPhase) {
             case 1 -> {
                 smoothCurrent = VANILLA_STEP + (target - VANILLA_STEP) * 0.5f;
-                mc.player.stepHeight = smoothCurrent;
+                net.minecraft.entity.attribute.EntityAttributeInstance attr = mc.player.getAttributeInstance(net.minecraft.entity.attribute.EntityAttributes.GENERIC_STEP_HEIGHT);
+                if (attr != null) attr.setBaseValue(smoothCurrent);
                 smoothPhase  = 2;
             }
             case 2 -> {
                 smoothCurrent = target;
-                mc.player.stepHeight = smoothCurrent;
+                net.minecraft.entity.attribute.EntityAttributeInstance attr = mc.player.getAttributeInstance(net.minecraft.entity.attribute.EntityAttributes.GENERIC_STEP_HEIGHT);
+                if (attr != null) attr.setBaseValue(smoothCurrent);
                 smoothPhase  = 3;
             }
             case 3 -> {
-                mc.player.stepHeight = VANILLA_STEP;
+                net.minecraft.entity.attribute.EntityAttributeInstance attr = mc.player.getAttributeInstance(net.minecraft.entity.attribute.EntityAttributes.GENERIC_STEP_HEIGHT);
+                if (attr != null) attr.setBaseValue(VANILLA_STEP);
                 smoothCurrent = VANILLA_STEP;
                 smoothPhase  = 0;
             }
             default -> {
-                // idle â€” keep at vanilla or set base step height
-                mc.player.stepHeight = onlyUpward.isEnabled()
-                        ? Math.max(VANILLA_STEP, target)
-                        : VANILLA_STEP;
+                // idle — keep at vanilla or set base step height
+                net.minecraft.entity.attribute.EntityAttributeInstance attr = mc.player.getAttributeInstance(net.minecraft.entity.attribute.EntityAttributes.GENERIC_STEP_HEIGHT);
+                if (attr != null) attr.setBaseValue(onlyUpward.isEnabled() ? VANILLA_STEP : (float) height.get());
             }
         }
     }

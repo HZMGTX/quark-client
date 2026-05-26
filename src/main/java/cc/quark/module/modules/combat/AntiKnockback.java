@@ -31,7 +31,7 @@ public class AntiKnockback extends Module {
         if (!(event.getPacket() instanceof EntityVelocityUpdateS2CPacket pkt)) return;
 
         // Only apply to packets targeting the local player
-        if (pkt.getId() != mc.player.getId()) return;
+        if (pkt.getEntityId() != mc.player.getId()) return;
 
         // Cancel to completely suppress knockback when both multipliers are zero
         if (horizontal.get() == 0.0 && vertical.get() == 0.0) {

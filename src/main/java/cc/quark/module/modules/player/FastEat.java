@@ -39,9 +39,9 @@ public class FastEat extends Module {
         if (!mc.player.isUsingItem()) return;
 
         // Only apply to food items
-        if (!mc.player.getActiveItem().isFood()) return;
+        if (!mc.player.getActiveItem().contains(net.minecraft.component.DataComponentTypes.FOOD)) return;
 
-        int maxUseTicks = mc.player.getActiveItem().getMaxUseTime();
+        int maxUseTicks = mc.player.getActiveItem().getMaxUseTime(mc.player);
         int usedTicks = mc.player.getItemUseTimeLeft();
 
         // If more than 5 ticks remaining, force finish by sending stop then restart
@@ -56,7 +56,9 @@ public class FastEat extends Module {
             // Immediately resend use item to restart the use timer at server
             mc.player.networkHandler.sendPacket(new PlayerInteractItemC2SPacket(
                     Hand.MAIN_HAND,
-                    mc.player.networkHandler.method_12710() // sequence/action counter
+                    mc.player.getInventory().selectedSlot,
+                    mc.player.getYaw(),
+                    mc.player.getPitch()
             ));
 
             // Set client use time to 0 so it completes immediately next tick

@@ -40,7 +40,10 @@ public class ItemESP extends Module {
             Item item = ie.getStack().getItem();
             if (!filter.getValue().equals("All") && !isValuable(item)) continue;
             int color = getColor(item);
-            RenderUtil.drawESPBox(event.getMatrixStack(), ie.getBoundingBox(), color);
+            float cr = ((color >> 16) & 0xFF) / 255.0f;
+            float cg = ((color >> 8) & 0xFF) / 255.0f;
+            float cb = (color & 0xFF) / 255.0f;
+            RenderUtil.drawESPBox(event.getMatrixStack(), ie.getBoundingBox(), cr, cg, cb, 0.85f, 1.5f);
         }
     }
 

@@ -12,6 +12,8 @@ import net.minecraft.block.entity.*;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
+import net.minecraft.util.math.ChunkPos;
+import net.minecraft.world.chunk.WorldChunk;
 
 public class StorageESP extends Module {
 
@@ -40,24 +42,37 @@ public class StorageESP extends Module {
         if (mc.player == null || mc.world == null) return;
         MatrixStack matrices = event.getMatrixStack();
 
-        mc.world.blockEntities.forEach(be -> {
-            if (mc.player.getPos().distanceTo(be.getPos().toCenterPos()) > range.getValue()) return;
-            int color = getColor(be);
-            if (color == 0) return;
-            BlockPos pos = be.getPos();
-            Box box = new Box(pos.getX(), pos.getY(), pos.getZ(),
-                              pos.getX() + 1, pos.getY() + 1, pos.getZ() + 1);
-            RenderUtil.drawESPBox(matrices, box, color);
-        });
+        int chunkRadius = (range.getValue() >> 4) + 1;
+        ChunkPos playerChunk = new ChunkPos(mc.player.getBlockPos());
+
+        for (int cx = playerChunk.x - chunkRadius; cx <= playerChunk.x + chunkRadius; cx++) {
+            for (int cz = playerChunk.z - chunkRadius; cz <= playerChunk.z + chunkRadius; cz++) {
+                WorldChunk chunk = mc.world.getChunkManager().getWorldChunk(cx, cz);
+                if (chunk == null) continue;
+
+                for (BlockEntity be : chunk.getBlockEntities().values()) {
+                    if (mc.player.getPos().distanceTo(be.getPos().toCenterPos()) > range.getValue()) continue;
+                    int color = getColor(be);
+                    if (color == 0) continue;
+                    BlockPos pos = be.getPos();
+                    Box box = new Box(pos.getX(), pos.getY(), pos.getZ(),
+                                      pos.getX() + 1, pos.getY() + 1, pos.getZ() + 1);
+                    float r = ((color >> 16) & 0xFF) / 255.0f;
+                    float g = ((color >> 8) & 0xFF) / 255.0f;
+                    float b = (color & 0xFF) / 255.0f;
+                    RenderUtil.drawESPBox(matrices, box, r, g, b, 0.85f, 1.5f);
+                }
+            }
+        }
     }
 
     private int getColor(BlockEntity be) {
-        if (be instanceof ChestBlockEntity && chests.getValue()) return 0xFFFFAA00;
-        if (be instanceof BarrelBlockEntity && chests.getValue()) return 0xFFAA7700;
-        if (be instanceof ShulkerBoxBlockEntity && shulkers.getValue()) return 0xFFAA55FF;
-        if (be instanceof FurnaceBlockEntity && furnaces.getValue()) return 0xFFFF5500;
-        if (be instanceof BlastFurnaceBlockEntity && furnaces.getValue()) return 0xFFFF7700;
-        if (be instanceof HopperBlockEntity) return 0xFF888888;
+        if (be instanceof ChestBlockEntity && chests.getValue()) return 0xFFAA00;
+        if (be instanceof BarrelBlockEntity && chests.getValue()) return 0xAA7700;
+        if (be instanceof ShulkerBoxBlockEntity && shulkers.getValue()) return 0xAA55FF;
+        if (be instanceof FurnaceBlockEntity && furnaces.getValue()) return 0xFF5500;
+        if (be instanceof BlastFurnaceBlockEntity && furnaces.getValue()) return 0xFF7700;
+        if (be instanceof HopperBlockEntity) return 0x888888;
         return 0;
     }
 }

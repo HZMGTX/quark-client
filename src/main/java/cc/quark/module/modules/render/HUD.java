@@ -6,6 +6,7 @@ import cc.quark.event.events.EventRender2D;
 import cc.quark.module.Category;
 import cc.quark.module.Module;
 import cc.quark.setting.BoolSetting;
+import cc.quark.setting.IntSetting;
 import cc.quark.setting.ModeSetting;
 import cc.quark.util.RenderUtil;
 import net.minecraft.client.gui.DrawContext;
@@ -50,6 +51,14 @@ public class HUD extends Module {
     private final BoolSetting potionEffects = register(new BoolSetting(
             "Potion Effects", "Show active potion effects", true));
 
+    // Position settings (saved automatically)
+    public final IntSetting wmX = register(new IntSetting("Watermark X", "X pos", 5, 0, 3000));
+    public final IntSetting wmY = register(new IntSetting("Watermark Y", "Y pos", 5, 0, 3000));
+    public final IntSetting listX = register(new IntSetting("List X", "X pos from right", 2, 0, 3000));
+    public final IntSetting listY = register(new IntSetting("List Y", "Y pos", 5, 0, 3000));
+    public final IntSetting coordsX = register(new IntSetting("Coords X", "X pos", 3, 0, 3000));
+    public final IntSetting coordsY = register(new IntSetting("Coords Y", "Y pos from bottom", 30, 0, 3000));
+
     // Previous position for BPS calculation
     private double prevX, prevZ;
     private double bps;
@@ -76,48 +85,61 @@ public class HUD extends Module {
 
         // ---- Watermark ----
         if (watermark.isEnabled()) {
-            String wmText = Quark.MOD_NAME + " §7v" + Quark.VERSION;
-            int wmColor = getAccentColor(0);
-            ctx.drawTextWithShadow(mc.textRenderer, wmText, 3, 3, wmColor);
+            String wmText = "Quark.cc §7v" + Quark.VERSION;
+            int padding = mc.textRenderer.fontHeight / 2;
+            int wmWidth = mc.textRenderer.getWidth(wmText) + padding * 2;
+            int wmHeight = mc.textRenderer.fontHeight + padding;
+            int renderX = wmX.getValue();
+            int renderY = wmY.getValue();
+            
+            // Sleek flat background
+            ctx.fill(renderX, renderY, renderX + wmWidth, renderY + wmHeight, 0xAA181818);
+            // Accent border top
+            ctx.fill(renderX, renderY, renderX + wmWidth, renderY + 1, cc.quark.gui.ClickGUI.getAccentColor());
+            
+            cc.quark.util.RenderUtil.drawCustomText(ctx, wmText, renderX + padding, renderY + padding / 2 + 1, 0xFFFFFFFF);
         }
 
         // ---- Module List (right side) ----
         if (moduleList.isEnabled()) {
             List<Module> enabled = Quark.getInstance().getModuleManager().getEnabledModules();
-            // getEnabledModules() already sorts by name length ascending; reverse for descending
-            int yOffset = 3;
+            int yOffset = listY.getValue();
+            int paddingH = mc.textRenderer.fontHeight / 3;
+            int elementHeight = mc.textRenderer.fontHeight + paddingH * 2;
+            int rightOffset = listX.getValue();
+            
             for (int i = enabled.size() - 1; i >= 0; i--) {
                 Module mod = enabled.get(i);
                 if (!mod.isVisible()) continue;
                 if (mod == this) continue; // Don't list HUD itself
                 String modName = mod.getName();
                 int textWidth = mc.textRenderer.getWidth(modName);
-                int x = screenW - textWidth - 3;
+                int x = screenW - textWidth - paddingH - rightOffset;
                 int color = getAccentColor((float)(enabled.size() - 1 - i) / Math.max(1, enabled.size() - 1));
 
-                // Draw a dark background bar
-                ctx.fill(screenW - textWidth - 5, yOffset - 1,
-                        screenW, yOffset + 9, 0x55000000);
-                // Colored left accent bar
-                ctx.fill(screenW - textWidth - 5, yOffset - 1,
-                        screenW - textWidth - 3, yOffset + 9, color | 0xFF000000);
-                ctx.drawTextWithShadow(mc.textRenderer, modName, x, yOffset, 0xFFFFFFFF);
-                yOffset += 11;
+                // Dark background
+                ctx.fill(screenW - textWidth - paddingH * 2 - 2 - rightOffset, yOffset - 1, screenW - rightOffset, yOffset - 1 + elementHeight, 0x88181818);
+                // Right accent bar
+                ctx.fill(screenW - 2 - rightOffset, yOffset - 1, screenW - rightOffset, yOffset - 1 + elementHeight, color);
+                
+                cc.quark.util.RenderUtil.drawCustomText(ctx, modName, x, yOffset + paddingH, color);
+                yOffset += elementHeight;
             }
         }
 
         // ---- Coordinates / FPS / BPS (bottom-left) ----
         if (coordinates.isEnabled()) {
-            int y = screenH - 30;
+            int renderX = coordsX.getValue();
+            int y = screenH - coordsY.getValue();
             String coordStr = String.format("XYZ: %.1f / %.1f / %.1f",
                     player.getX(), player.getY(), player.getZ());
-            ctx.drawTextWithShadow(mc.textRenderer, coordStr, 3, y, 0xFFFFFFFF);
+            cc.quark.util.RenderUtil.drawCustomText(ctx, coordStr, renderX, y, 0xFFFFFFFF);
 
             String fpsStr = "FPS: " + mc.getCurrentFps();
-            ctx.drawTextWithShadow(mc.textRenderer, fpsStr, 3, y + 10, 0xFFAAAAAA);
+            cc.quark.util.RenderUtil.drawCustomText(ctx, fpsStr, renderX, y + 10, 0xFFAAAAAA);
 
             String bpsStr = String.format("BPS: %.2f", bps);
-            ctx.drawTextWithShadow(mc.textRenderer, bpsStr, 3, y + 20, 0xFFAAAAAA);
+            cc.quark.util.RenderUtil.drawCustomText(ctx, bpsStr, renderX, y + 20, 0xFFAAAAAA);
         }
 
         // ---- Ping ----
@@ -128,7 +150,7 @@ public class HUD extends Module {
                 if (entry != null) {
                     int ping = entry.getLatency();
                     String pingStr = "Ping: " + ping + "ms";
-                    ctx.drawTextWithShadow(mc.textRenderer, pingStr, 3, screenH - 40, 0xFFAAAAAA);
+                    cc.quark.util.RenderUtil.drawCustomText(ctx, pingStr, 3, screenH - 40, 0xFFAAAAAA);
                 }
             }
         }
@@ -166,7 +188,7 @@ public class HUD extends Module {
             // Fill
             ctx.fill(x, y, x + filledW, y + 4, barColor);
             // Label
-            ctx.drawTextWithShadow(mc.textRenderer, names[i].substring(0, 1),
+            cc.quark.util.RenderUtil.drawCustomText(ctx, names[i].substring(0, 1),
                     x + 13, y + 6, 0xFFCCCCCC);
         }
     }
@@ -176,12 +198,12 @@ public class HUD extends Module {
         int y = screenH / 2 - 40;
 
         for (StatusEffectInstance effect : player.getStatusEffects()) {
-            String name = effect.getEffectType().getName().getString();
+            String name = effect.getEffectType().value().getName().getString();
             int amp = effect.getAmplifier() + 1;
             int dur = effect.getDuration() / 20; // convert ticks to seconds
             String line = name + (amp > 1 ? " " + (amp) : "")
                     + " §7(" + formatDuration(dur) + ")§r";
-            ctx.drawTextWithShadow(mc.textRenderer, line, x, y, 0xFFFFFFFF);
+            cc.quark.util.RenderUtil.drawCustomText(ctx, line, x, y, 0xFFFFFFFF);
             y += 11;
         }
     }
@@ -209,7 +231,7 @@ public class HUD extends Module {
                 int b = (int)(0xFF - t * 0x7F);
                 yield (r << 16) | (g << 8) | b;
             }
-            default -> 0x5599FF; // static blue
+            default -> cc.quark.gui.ClickGUI.getAccentColor(); // Dynamic fallback to ClickGuiModule setting
         };
     }
 }

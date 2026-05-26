@@ -23,13 +23,5 @@ public class MixinPlayerInteractHandler {
         if (event.isCancelled()) ci.cancel();
     }
 
-    @ModifyReturnValue(method = "getReachDistance", at = @At("RETURN"))
-    private float modifyReach(float original) {
-        if (Quark.getInstance() == null) return original;
-        Reach reach = Quark.getInstance().getModuleManager().getModule(Reach.class);
-        if (reach != null && reach.isEnabled()) {
-            return (float) reach.getCurrentReach();
-        }
-        return original;
-    }
+    // Reach is an attribute in 1.21.1
 }

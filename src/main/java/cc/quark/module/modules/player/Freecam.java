@@ -145,7 +145,9 @@ public class Freecam extends Module {
         }
 
         @Override
-        protected void initDataTracker() {}
+        protected void initDataTracker(net.minecraft.entity.data.DataTracker.Builder builder) {
+            // Freecam entity has no special data
+        }
 
         @Override
         protected void readCustomDataFromNbt(net.minecraft.nbt.NbtCompound nbt) {}

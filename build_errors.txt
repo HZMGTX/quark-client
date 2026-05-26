@@ -1,0 +1,441 @@
+﻿
+> Configure project :
+Fabric Loom: 1.5.8
+
+> Task :compileJava FAILED
+.\gradlew : C:\Users\liamh\Documents\GitHub\Minecraft-Hack-Client\src\main\java\cc\quark\mixin\MixinAbstractClientPlaye
+rEntity.java:14: warning: Unable to determine descriptor for @Inject target method
+At line:1 char:1
++ .\gradlew compileJava 2>&1 | Out-File -FilePath ".\build_errors.txt"  ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (C:\Users\liamh\...t target method:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+    @Inject(method = "isUsingElytra", at = @At("RETURN"), cancellable = true)
+    ^
+C:\Users\liamh\Documents\GitHub\Minecraft-Hack-Client\src\main\java\cc\quark\mixin\MixinClientPlayerEntity.java:66: 
+warning: Unable to determine descriptor for @Inject target method
+    @Inject(method = "jump", at = @At("HEAD"), cancellable = true)
+    ^
+C:\Users\liamh\Documents\GitHub\Minecraft-Hack-Client\src\main\java\cc\quark\mixin\MixinClientPlayerEntity.java:80: 
+warning: Unable to determine descriptor for @Inject target method
+    @Inject(method = "sendChatMessage", at = @At("HEAD"), cancellable = true)
+    ^
+C:\Users\liamh\Documents\GitHub\Minecraft-Hack-Client\src\main\java\cc\quark\gui\ClickGUI.java:127: error: an enum 
+switch case label must be the unqualified name of an enumeration constant
+            case EXPLOIT  -> 0xFFAA55FF;
+                 ^
+C:\Users\liamh\Documents\GitHub\Minecraft-Hack-Client\src\main\java\cc\quark\module\modules\combat\AutoCrystal.java:216
+: error: cannot find symbol
+        mc.player.swingMainHand();
+                 ^
+  symbol:   method swingMainHand()
+  location: variable player of type ClientPlayerEntity
+C:\Users\liamh\Documents\GitHub\Minecraft-Hack-Client\src\main\java\cc\quark\module\modules\combat\AutoPot.java:144: 
+error: cannot find symbol
+        mc.player.swingMainHand();
+                 ^
+  symbol:   method swingMainHand()
+  location: variable player of type ClientPlayerEntity
+C:\Users\liamh\Documents\GitHub\Minecraft-Hack-Client\src\main\java\cc\quark\module\modules\combat\AutoTotem.java:43: 
+error: cannot find symbol
+        MinecraftClient mc = net.minecraft.client.MinecraftClient.getInstance();
+        ^
+  symbol:   class MinecraftClient
+  location: class AutoTotem
+C:\Users\liamh\Documents\GitHub\Minecraft-Hack-Client\src\main\java\cc\quark\module\modules\combat\KillAura.java:104: 
+error: incompatible types: Box cannot be converted to VoxelShape
+                        entity.getBoundingBox(),
+                                             ^
+C:\Users\liamh\Documents\GitHub\Minecraft-Hack-Client\src\main\java\cc\quark\module\modules\combat\KillAura.java:142: 
+error: cannot find symbol
+                mc.player.swingMainHand();
+                         ^
+  symbol:   method swingMainHand()
+  location: variable player of type ClientPlayerEntity
+C:\Users\liamh\Documents\GitHub\Minecraft-Hack-Client\src\main\java\cc\quark\module\modules\combat\TriggerBot.java:91: 
+error: cannot find symbol
+        mc.player.swingMainHand();
+                 ^
+  symbol:   method swingMainHand()
+  location: variable player of type ClientPlayerEntity
+C:\Users\liamh\Documents\GitHub\Minecraft-Hack-Client\src\main\java\cc\quark\module\modules\combat\Velocity.java:47: 
+error: cannot find symbol
+        if (packet.getEntityId() != mc.player.getId()) return;
+                  ^
+  symbol:   method getEntityId()
+  location: variable packet of type EntityVelocityUpdateS2CPacket
+C:\Users\liamh\Documents\GitHub\Minecraft-Hack-Client\src\main\java\cc\quark\module\modules\combat\Velocity.java:63: 
+error: cannot find symbol
+                        packet.getEntityId(), velX, velY, velZ));
+                              ^
+  symbol:   method getEntityId()
+  location: variable packet of type EntityVelocityUpdateS2CPacket
+C:\Users\liamh\Documents\GitHub\Minecraft-Hack-Client\src\main\java\cc\quark\module\modules\combat\Velocity.java:69: 
+error: cannot find symbol
+                        packet.getEntityId(), 0, 0, 0));
+                              ^
+  symbol:   method getEntityId()
+  location: variable packet of type EntityVelocityUpdateS2CPacket
+C:\Users\liamh\Documents\GitHub\Minecraft-Hack-Client\src\main\java\cc\quark\module\modules\exploit\AntiAim.java:23: 
+error: cannot find symbol
+        super("AntiAim", "Sends fake rotations to the server to confuse aim-assist and hit detection", 
+Category.EXPLOIT);
+                                                                                                               ^
+  symbol:   variable EXPLOIT
+  location: class Category
+C:\Users\liamh\Documents\GitHub\Minecraft-Hack-Client\src\main\java\cc\quark\module\modules\exploit\AntiCheat.java:25: 
+error: cannot find symbol
+        super("AntiCheat", "Adapts bypass behaviour for common anti-cheat plugins.", Category.EXPLOIT);
+                                                                                             ^
+  symbol:   variable EXPLOIT
+  location: class Category
+C:\Users\liamh\Documents\GitHub\Minecraft-Hack-Client\src\main\java\cc\quark\module\modules\exploit\AntiCrash.java:24: 
+error: cannot find symbol
+        super("AntiCrash", "Blocks crash-exploit packets before they can freeze/kick you", Category.EXPLOIT);
+                                                                                                   ^
+  symbol:   variable EXPLOIT
+  location: class Category
+C:\Users\liamh\Documents\GitHub\Minecraft-Hack-Client\src\main\java\cc\quark\module\modules\exploit\AntiCrash.java:30: 
+error: cannot find symbol
+            if (pkt.getPower() > maxExplosionPower.get()) {
+                   ^
+  symbol:   method getPower()
+  location: variable pkt of type ExplosionS2CPacket
+C:\Users\liamh\Documents\GitHub\Minecraft-Hack-Client\src\main\java\cc\quark\module\modules\exploit\AutoReconnect.java:
+24: error: cannot find symbol
+        super("AutoReconnect", "Automatically reconnects to the last server after being disconnected", 
+Category.EXPLOIT);
+                                                                                                               ^
+  symbol:   variable EXPLOIT
+  location: class Category
+C:\Users\liamh\Documents\GitHub\Minecraft-Hack-Client\src\main\java\cc\quark\module\modules\exploit\AutoReconnect.java:
+47: error: no suitable method found for connect(Screen,MinecraftClient,ServerAddress,ServerInfo,boolean,<null>)
+                    ConnectScreen.connect(mc.currentScreen, mc, addr, lastServer, false, null);
+                                 ^
+    method ConnectScreen.connect(Screen,MinecraftClient,ServerAddress,ServerInfo,boolean) is not applicable
+      (actual and formal argument lists differ in length)
+    method ConnectScreen.connect(MinecraftClient,ServerAddress,ServerInfo) is not applicable
+      (actual and formal argument lists differ in length)
+C:\Users\liamh\Documents\GitHub\Minecraft-Hack-Client\src\main\java\cc\quark\module\modules\exploit\AutoWalk.java:16: 
+error: cannot find symbol
+        super("AutoWalk", "Automatically walks in a direction", Category.EXPLOIT, 0);
+                                                                        ^
+  symbol:   variable EXPLOIT
+  location: class Category
+C:\Users\liamh\Documents\GitHub\Minecraft-Hack-Client\src\main\java\cc\quark\module\modules\exploit\BoatFly.java:17: 
+error: cannot find symbol
+        super("BoatFly", "Fly using a boat exploit", Category.EXPLOIT, 0);
+                                                             ^
+  symbol:   variable EXPLOIT
+  location: class Category
+C:\Users\liamh\Documents\GitHub\Minecraft-Hack-Client\src\main\java\cc\quark\module\modules\exploit\ChatSpammer.java:24
+: error: cannot find symbol
+        super("ChatSpammer", "Sends a preset chat message at a configurable interval", Category.EXPLOIT);
+                                                                                               ^
+  symbol:   variable EXPLOIT
+  location: class Category
+C:\Users\liamh\Documents\GitHub\Minecraft-Hack-Client\src\main\java\cc\quark\module\modules\exploit\DeSync.java:22: 
+error: cannot find symbol
+        super("DeSync", "Sends fake position packets to desync your server-side hitbox", Category.EXPLOIT);
+                                                                                                 ^
+  symbol:   variable EXPLOIT
+  location: class Category
+C:\Users\liamh\Documents\GitHub\Minecraft-Hack-Client\src\main\java\cc\quark\module\modules\exploit\Disabler.java:18: 
+error: cannot find symbol
+        super("Disabler", "Attempts to confuse or disable anti-cheat", Category.EXPLOIT, 0);
+                                                                               ^
+  symbol:   variable EXPLOIT
+  location: class Category
+C:\Users\liamh\Documents\GitHub\Minecraft-Hack-Client\src\main\java\cc\quark\module\modules\exploit\FastUse.java:22: 
+error: cannot find symbol
+        super("FastUse", "Releases certain items early so their effect triggers sooner", Category.EXPLOIT);
+                                                                                                 ^
+  symbol:   variable EXPLOIT
+  location: class Category
+C:\Users\liamh\Documents\GitHub\Minecraft-Hack-Client\src\main\java\cc\quark\module\modules\exploit\HighwayBuilder.java
+:27: error: cannot find symbol
+        super("HighwayBuilder", "Automatically places floor blocks ahead of you for highway building", 
+Category.EXPLOIT);
+                                                                                                               ^
+  symbol:   variable EXPLOIT
+  location: class Category
+C:\Users\liamh\Documents\GitHub\Minecraft-Hack-Client\src\main\java\cc\quark\module\modules\exploit\LagSwitch.java:24: 
+error: cannot find symbol
+        super("LagSwitch", "Simulate lag by dropping movement packets", Category.EXPLOIT, 0);
+                                                                                ^
+  symbol:   variable EXPLOIT
+  location: class Category
+C:\Users\liamh\Documents\GitHub\Minecraft-Hack-Client\src\main\java\cc\quark\module\modules\exploit\NameProtect.java:12
+: error: cannot find symbol
+        super("NameProtect", "Hides your username client-side", Category.EXPLOIT, 0);
+                                                                        ^
+  symbol:   variable EXPLOIT
+  location: class Category
+C:\Users\liamh\Documents\GitHub\Minecraft-Hack-Client\src\main\java\cc\quark\module\modules\exploit\NoGround.java:16: 
+error: cannot find symbol
+        super("NoGround", "Spoofs the on-ground flag sent to the server ΓÇö confuses anti-cheat movement checks", 
+Category.EXPLOIT);
+                                                                                                                       
+ ^
+  symbol:   variable EXPLOIT
+  location: class Category
+C:\Users\liamh\Documents\GitHub\Minecraft-Hack-Client\src\main\java\cc\quark\module\modules\exploit\PacketFly.java:27: 
+error: cannot find symbol
+        super("PacketFly", "Exploits packet ordering to fly in survival.", Category.EXPLOIT);
+                                                                                   ^
+  symbol:   variable EXPLOIT
+  location: class Category
+C:\Users\liamh\Documents\GitHub\Minecraft-Hack-Client\src\main\java\cc\quark\module\modules\exploit\PortalGod.java:19: 
+error: cannot find symbol
+        super("PortalGod", "Prevents portal effects and teleportation", Category.EXPLOIT, 0);
+                                                                                ^
+  symbol:   variable EXPLOIT
+  location: class Category
+C:\Users\liamh\Documents\GitHub\Minecraft-Hack-Client\src\main\java\cc\quark\module\modules\exploit\PortalGod.java:43: 
+error: cannot find symbol
+            if (pkt.getReason() == GameStateChangeS2CPacket.ENTER_CREDITS_REACHED_END) {
+                                                           ^
+  symbol:   variable ENTER_CREDITS_REACHED_END
+  location: class GameStateChangeS2CPacket
+C:\Users\liamh\Documents\GitHub\Minecraft-Hack-Client\src\main\java\cc\quark\module\modules\exploit\Spoofer.java:25: 
+error: cannot find symbol
+        super("Spoofer", "Spoofs client information sent to servers.", Category.EXPLOIT);
+                                                                               ^
+  symbol:   variable EXPLOIT
+  location: class Category
+C:\Users\liamh\Documents\GitHub\Minecraft-Hack-Client\src\main\java\cc\quark\module\modules\exploit\Timer.java:29: 
+error: cannot find symbol
+        super("Timer", "Speeds up or slows down the game timer.", Category.EXPLOIT);
+                                                                          ^
+  symbol:   variable EXPLOIT
+  location: class Category
+C:\Users\liamh\Documents\GitHub\Minecraft-Hack-Client\src\main\java\cc\quark\module\modules\movement\Spider.java:69: 
+error: cannot find symbol
+            if (!mc.world.getBlockCollisions(mc.player, check).toList().isEmpty()) {
+                                                              ^
+  symbol:   method toList()
+  location: interface Iterable<VoxelShape>
+C:\Users\liamh\Documents\GitHub\Minecraft-Hack-Client\src\main\java\cc\quark\module\modules\movement\Step.java:52: 
+error: stepHeight has private access in Entity
+            mc.player.stepHeight = VANILLA_STEP;
+                     ^
+C:\Users\liamh\Documents\GitHub\Minecraft-Hack-Client\src\main\java\cc\quark\module\modules\movement\Step.java:74: 
+error: stepHeight has private access in Entity
+            mc.player.stepHeight = Math.max(VANILLA_STEP, desired);
+                     ^
+C:\Users\liamh\Documents\GitHub\Minecraft-Hack-Client\src\main\java\cc\quark\module\modules\movement\Step.java:76: 
+error: stepHeight has private access in Entity
+            mc.player.stepHeight = desired;
+                     ^
+C:\Users\liamh\Documents\GitHub\Minecraft-Hack-Client\src\main\java\cc\quark\module\modules\movement\Step.java:100: 
+error: stepHeight has private access in Entity
+                mc.player.stepHeight = smoothCurrent;
+                         ^
+C:\Users\liamh\Documents\GitHub\Minecraft-Hack-Client\src\main\java\cc\quark\module\modules\movement\Step.java:105: 
+error: stepHeight has private access in Entity
+                mc.player.stepHeight = smoothCurrent;
+                         ^
+C:\Users\liamh\Documents\GitHub\Minecraft-Hack-Client\src\main\java\cc\quark\module\modules\movement\Step.java:109: 
+error: stepHeight has private access in Entity
+                mc.player.stepHeight = VANILLA_STEP;
+                         ^
+C:\Users\liamh\Documents\GitHub\Minecraft-Hack-Client\src\main\java\cc\quark\module\modules\movement\Step.java:115: 
+error: stepHeight has private access in Entity
+                mc.player.stepHeight = onlyUpward.isEnabled()
+                         ^
+C:\Users\liamh\Documents\GitHub\Minecraft-Hack-Client\src\main\java\cc\quark\module\modules\player\AutoRespawn.java:27:
+ error: cannot find symbol
+                    new ClientCommandC2SPacket(mc.player, ClientCommandC2SPacket.Mode.PERFORM_RESPAWN)
+                                                                                     ^
+  symbol:   variable PERFORM_RESPAWN
+  location: class Mode
+C:\Users\liamh\Documents\GitHub\Minecraft-Hack-Client\src\main\java\cc\quark\module\modules\player\FastEat.java:59: 
+error: cannot find symbol
+                    mc.player.networkHandler.method_12710() // sequence/action counter
+                                            ^
+  symbol:   method method_12710()
+  location: variable networkHandler of type ClientPlayNetworkHandler
+C:\Users\liamh\Documents\GitHub\Minecraft-Hack-Client\src\main\java\cc\quark\module\modules\render\Ambiance.java:25: 
+error: gamma has private access in GameOptions
+        if (mc.options != null) savedGamma = mc.options.gamma.getValue();
+                                                       ^
+C:\Users\liamh\Documents\GitHub\Minecraft-Hack-Client\src\main\java\cc\quark\module\modules\render\Ambiance.java:31: 
+error: gamma has private access in GameOptions
+            mc.options.gamma.setValue(savedGamma);
+                      ^
+C:\Users\liamh\Documents\GitHub\Minecraft-Hack-Client\src\main\java\cc\quark\module\modules\render\Ambiance.java:38: 
+error: gamma has private access in GameOptions
+        if (applyGamma.isEnabled()) mc.options.gamma.setValue(gamma.get());
+                                              ^
+C:\Users\liamh\Documents\GitHub\Minecraft-Hack-Client\src\main\java\cc\quark\module\modules\render\ChestESP.java:40: 
+error: cannot find symbol
+        for (BlockEntity be : mc.world.blockEntities) {
+                                      ^
+  symbol:   variable blockEntities
+  location: variable world of type ClientWorld
+C:\Users\liamh\Documents\GitHub\Minecraft-Hack-Client\src\main\java\cc\quark\module\modules\render\Crosshair.java:40: 
+error: cannot find symbol
+        DrawContext ctx = event.getContext();
+                               ^
+  symbol:   method getContext()
+  location: variable event of type EventRender2D
+C:\Users\liamh\Documents\GitHub\Minecraft-Hack-Client\src\main\java\cc\quark\module\modules\render\ESP.java:155: 
+error: invalid method reference
+        RenderSystem.setShader(GameRenderer::getRenderTypeLinesShader);
+                               ^
+  cannot find symbol
+    symbol:   method getRenderTypeLinesShader()
+    location: class GameRenderer
+C:\Users\liamh\Documents\GitHub\Minecraft-Hack-Client\src\main\java\cc\quark\module\modules\render\ESP.java:295: 
+error: invalid method reference
+        RenderSystem.setShader(GameRenderer::getPositionColorShader);
+                               ^
+  cannot find symbol
+    symbol:   method getPositionColorShader()
+    location: class GameRenderer
+C:\Users\liamh\Documents\GitHub\Minecraft-Hack-Client\src\main\java\cc\quark\module\modules\render\FOVChanger.java:22: 
+error: fov has private access in GameOptions
+        if (mc.options != null) savedFov = mc.options.fov.getValue();
+                                                     ^
+C:\Users\liamh\Documents\GitHub\Minecraft-Hack-Client\src\main\java\cc\quark\module\modules\render\FOVChanger.java:27: 
+error: fov has private access in GameOptions
+        if (mc.options != null) mc.options.fov.setValue(savedFov);
+                                          ^
+C:\Users\liamh\Documents\GitHub\Minecraft-Hack-Client\src\main\java\cc\quark\module\modules\render\FOVChanger.java:27: 
+error: incompatible types: double cannot be converted to Integer
+        if (mc.options != null) mc.options.fov.setValue(savedFov);
+                                                        ^
+C:\Users\liamh\Documents\GitHub\Minecraft-Hack-Client\src\main\java\cc\quark\module\modules\render\FOVChanger.java:33: 
+error: fov has private access in GameOptions
+        mc.options.fov.setValue((double) fov.get());
+                  ^
+C:\Users\liamh\Documents\GitHub\Minecraft-Hack-Client\src\main\java\cc\quark\module\modules\render\FOVChanger.java:33: 
+error: incompatible types: double cannot be converted to Integer
+        mc.options.fov.setValue((double) fov.get());
+                                ^
+C:\Users\liamh\Documents\GitHub\Minecraft-Hack-Client\src\main\java\cc\quark\module\modules\render\HoleESP.java:101: 
+error: cannot find symbol
+        Block b = mc.world.getBlockState(pos).getBlock();
+        ^
+  symbol:   class Block
+  location: class HoleESP
+C:\Users\liamh\Documents\GitHub\Minecraft-Hack-Client\src\main\java\cc\quark\module\modules\render\ItemESP.java:43: 
+error: method drawESPBox in class RenderUtil cannot be applied to given types;
+            RenderUtil.drawESPBox(event.getMatrixStack(), ie.getBoundingBox(), color);
+                      ^
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 9.0.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/8.9/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+1 actionable task: 1 executed
+  required: MatrixStack,Box,float,float,float,float,float
+  found:    MatrixStack,Box,int
+  reason: actual and formal argument lists differ in length
+C:\Users\liamh\Documents\GitHub\Minecraft-Hack-Client\src\main\java\cc\quark\module\modules\render\Nametags.java:78: 
+error: unconditional patterns in instanceof are not supported in -source 17
+        if (showHealth.isEnabled() && entity instanceof LivingEntity le) {
+                                             ^
+  (use -source 21 or higher to enable unconditional patterns in instanceof)
+C:\Users\liamh\Documents\GitHub\Minecraft-Hack-Client\src\main\java\cc\quark\module\modules\render\PotionHUD.java:38: 
+error: cannot find symbol
+        DrawContext ctx = event.getContext();
+                               ^
+  symbol:   method getContext()
+  location: variable event of type EventRender2D
+C:\Users\liamh\Documents\GitHub\Minecraft-Hack-Client\src\main\java\cc\quark\module\modules\render\StorageESP.java:43: 
+error: cannot find symbol
+        mc.world.blockEntities.forEach(be -> {
+                ^
+  symbol:   variable blockEntities
+  location: variable world of type ClientWorld
+C:\Users\liamh\Documents\GitHub\Minecraft-Hack-Client\src\main\java\cc\quark\module\modules\render\StorageESP.java:50: 
+error: method drawESPBox in class RenderUtil cannot be applied to given types;
+            RenderUtil.drawESPBox(matrices, box, color);
+                      ^
+  required: MatrixStack,Box,float,float,float,float,float
+  found:    MatrixStack,Box,int
+  reason: actual and formal argument lists differ in length
+C:\Users\liamh\Documents\GitHub\Minecraft-Hack-Client\src\main\java\cc\quark\module\modules\render\WeatherChanger.java:
+26: error: cannot find symbol
+        if (weather.is("Clear") && (reason == GameStateChangeS2CPacket.BEGIN_RAINING
+                                                                      ^
+  symbol:   variable BEGIN_RAINING
+  location: class GameStateChangeS2CPacket
+C:\Users\liamh\Documents\GitHub\Minecraft-Hack-Client\src\main\java\cc\quark\module\modules\render\WeatherChanger.java:
+30: error: cannot find symbol
+        } else if (weather.is("Rain") && reason == GameStateChangeS2CPacket.STOP_RAINING) {
+                                                                           ^
+  symbol:   variable STOP_RAINING
+  location: class GameStateChangeS2CPacket
+C:\Users\liamh\Documents\GitHub\Minecraft-Hack-Client\src\main\java\cc\quark\module\modules\render\WeatherChanger.java:
+32: error: cannot find symbol
+        } else if (weather.is("Thunder") && reason == GameStateChangeS2CPacket.STOP_RAINING) {
+                                                                              ^
+  symbol:   variable STOP_RAINING
+  location: class GameStateChangeS2CPacket
+C:\Users\liamh\Documents\GitHub\Minecraft-Hack-Client\src\main\java\cc\quark\util\BlockUtil.java:28: error: cannot 
+find symbol
+        return mc.world.getBlockState(pos).getMaterial().isReplaceable();
+                                          ^
+  symbol:   method getMaterial()
+  location: class BlockState
+C:\Users\liamh\Documents\GitHub\Minecraft-Hack-Client\src\main\java\cc\quark\util\BlockUtil.java:46: error: cannot 
+find symbol
+        return block instanceof OreBlock ||
+                                ^
+  symbol:   class OreBlock
+  location: class BlockUtil
+C:\Users\liamh\Documents\GitHub\Minecraft-Hack-Client\src\main\java\cc\quark\util\InventoryUtil.java:117: error: 
+cannot find symbol
+            if (stack.getItem() instanceof FoodItem food) {
+                                           ^
+  symbol:   class FoodItem
+  location: class InventoryUtil
+C:\Users\liamh\Documents\GitHub\Minecraft-Hack-Client\src\main\java\cc\quark\util\RenderUtil.java:43: error: invalid 
+method reference
+        RenderSystem.setShader(GameRenderer::getRenderTypeLinesShader);
+                               ^
+  cannot find symbol
+    symbol:   method getRenderTypeLinesShader()
+    location: class GameRenderer
+C:\Users\liamh\Documents\GitHub\Minecraft-Hack-Client\src\main\java\cc\quark\util\RenderUtil.java:96: error: invalid 
+method reference
+        RenderSystem.setShader(GameRenderer::getPositionColorShader);
+                               ^
+  cannot find symbol
+    symbol:   method getPositionColorShader()
+    location: class GameRenderer
+C:\Users\liamh\Documents\GitHub\Minecraft-Hack-Client\src\main\java\cc\quark\util\RenderUtil.java:154: error: invalid 
+method reference
+        RenderSystem.setShader(GameRenderer::getRenderTypeLinesShader);
+                               ^
+  cannot find symbol
+    symbol:   method getRenderTypeLinesShader()
+    location: class GameRenderer
+C:\Users\liamh\Documents\GitHub\Minecraft-Hack-Client\src\main\java\cc\quark\util\RenderUtil.java:204: error: cannot 
+find symbol
+        return WorldRenderer.getArrowDirection(mc.getEntityRenderDispatcher(), worldPos.x, worldPos.y, worldPos.z);
+                            ^
+  symbol:   method getArrowDirection(EntityRenderDispatcher,double,double,double)
+  location: class WorldRenderer
+Note: C:\Users\liamh\Documents\GitHub\Minecraft-Hack-Client\src\main\java\cc\quark\module\modules\exploit\HighwayBuilde
+r.java uses or overrides a deprecated API.
+Note: Recompile with -Xlint:deprecation for details.
+Note: Some messages have been simplified; recompile with -Xdiags:verbose to get full output
+69 errors
+3 warnings
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':compileJava'.
+> Compilation failed; see the compiler error output for details.
+
+* Try:
+> Run with --info option to get more log output.
+> Run with --scan to get full insights.
+
+BUILD FAILED in 3s

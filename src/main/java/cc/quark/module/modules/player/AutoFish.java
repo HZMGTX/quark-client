@@ -91,7 +91,7 @@ public class AutoFish extends Module {
             if (bobber == null) return;
 
             // Check if velocity update is for our bobber
-            if (pkt.getId() != bobber.getId()) return;
+            if (pkt.getEntityId() != bobber.getId()) return;
 
             // Bobber velocity spike means fish caught
             double vy = pkt.getVelocityY() / 8000.0;

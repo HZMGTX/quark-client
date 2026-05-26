@@ -8,7 +8,7 @@ import cc.quark.setting.BoolSetting;
 import cc.quark.setting.EnumSetting;
 import cc.quark.setting.IntSetting;
 import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.item.FoodComponent;
+import net.minecraft.component.type.FoodComponent;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
@@ -111,11 +111,11 @@ public class AutoEat extends Module {
         // Check hotbar first
         for (int i = 0; i < 9; i++) {
             ItemStack stack = player.getInventory().getStack(i);
-            if (!stack.isFood()) continue;
+            if (!stack.contains(net.minecraft.component.DataComponentTypes.FOOD)) continue;
             if (isJunkFood(stack.getItem())) continue;
-            FoodComponent food = stack.getItem().getFoodComponent();
+            FoodComponent food = stack.get(net.minecraft.component.DataComponentTypes.FOOD);
             if (food == null) continue;
-            int nutrition = food.getHunger();
+            int nutrition = food.nutrition();
             if (nutrition > bestNutrition) {
                 bestNutrition = nutrition;
                 bestSlot = i;
@@ -126,11 +126,11 @@ public class AutoEat extends Module {
         // Check main inventory (slots 9-35)
         for (int i = 9; i < 36; i++) {
             ItemStack stack = player.getInventory().getStack(i);
-            if (!stack.isFood()) continue;
+            if (!stack.contains(net.minecraft.component.DataComponentTypes.FOOD)) continue;
             if (isJunkFood(stack.getItem())) continue;
-            FoodComponent food = stack.getItem().getFoodComponent();
+            FoodComponent food = stack.get(net.minecraft.component.DataComponentTypes.FOOD);
             if (food == null) continue;
-            int nutrition = food.getHunger();
+            int nutrition = food.nutrition();
             if (nutrition > bestNutrition) {
                 bestNutrition = nutrition;
                 bestSlot = i;

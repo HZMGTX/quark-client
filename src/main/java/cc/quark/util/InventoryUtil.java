@@ -6,6 +6,7 @@ import net.minecraft.enchantment.EnchantmentHelper;
 import net.minecraft.enchantment.Enchantments;
 import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.item.*;
+import net.minecraft.component.type.FoodComponent;
 import net.minecraft.screen.slot.SlotActionType;
 
 public class InventoryUtil {
@@ -114,9 +115,12 @@ public class InventoryUtil {
         int bestFood = 0;
         for (int i = 0; i < 36; i++) {
             ItemStack stack = mc.player.getInventory().getStack(i);
-            if (stack.getItem() instanceof FoodItem food) {
-                int hunger = food.getFoodComponent().getHunger();
-                if (hunger > bestFood) { bestFood = hunger; best = stack; }
+            if (stack.contains(net.minecraft.component.DataComponentTypes.FOOD)) {
+                net.minecraft.component.type.FoodComponent fc = stack.get(net.minecraft.component.DataComponentTypes.FOOD);
+                if (fc != null) {
+                    int hunger = fc.nutrition();
+                    if (hunger > bestFood) { bestFood = hunger; best = stack; }
+                }
             }
         }
         return best;

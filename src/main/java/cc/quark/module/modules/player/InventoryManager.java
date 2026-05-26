@@ -123,15 +123,15 @@ public class InventoryManager extends Module {
                 }
             } else {
                 // Food slot: find best food
-                if (!current.isFood()) {
+                if (!current.contains(net.minecraft.component.DataComponentTypes.FOOD)) {
                     int bestNutrition = -1;
                     for (int j = 9; j < 36; j++) {
                         ItemStack stack = mc.player.getInventory().getStack(j);
-                        if (!stack.isFood()) continue;
-                        FoodComponent food = stack.getItem().getFoodComponent();
+                        if (!stack.contains(net.minecraft.component.DataComponentTypes.FOOD)) continue;
+                        net.minecraft.component.type.FoodComponent food = stack.get(net.minecraft.component.DataComponentTypes.FOOD);
                         if (food == null) continue;
-                        if (food.getHunger() > bestNutrition) {
-                            bestNutrition = food.getHunger();
+                        if (food.nutrition() > bestNutrition) {
+                            bestNutrition = food.nutrition();
                             bestInvSlot = j;
                         }
                     }
@@ -209,16 +209,16 @@ public class InventoryManager extends Module {
     }
 
     private int itemValue(ItemStack stack) {
-        if (stack.getItem() instanceof SwordItem s) return 1000 + (int)(s.getAttackDamage() * 10);
+        if (stack.getItem() instanceof net.minecraft.item.SwordItem s) return 1000;
         if (stack.getItem() instanceof PickaxeItem) return 900;
         if (stack.getItem() instanceof AxeItem) return 850;
         if (stack.getItem() instanceof ShovelItem) return 800;
         if (stack.getItem() instanceof ArmorItem a) return 700 + a.getProtection();
         if (stack.getItem() instanceof BowItem) return 600;
         if (stack.getItem() instanceof CrossbowItem) return 590;
-        if (stack.isFood()) {
-            FoodComponent food = stack.getItem().getFoodComponent();
-            return food != null ? 400 + food.getHunger() : 400;
+        if (stack.contains(net.minecraft.component.DataComponentTypes.FOOD)) {
+            net.minecraft.component.type.FoodComponent food = stack.get(net.minecraft.component.DataComponentTypes.FOOD);
+            return food != null ? 400 + food.nutrition() : 400;
         }
         return stack.getCount();
     }

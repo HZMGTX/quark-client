@@ -66,7 +66,7 @@ public class Spider extends Module {
         Box expandedE = new Box(bb.minX,           bb.minY, bb.minZ, bb.maxX + expand, bb.maxY, bb.maxZ);
 
         for (Box check : new Box[]{expandedN, expandedS, expandedW, expandedE}) {
-            if (!mc.world.getBlockCollisions(mc.player, check).toList().isEmpty()) {
+            if (mc.world.getBlockCollisions(mc.player, check).iterator().hasNext()) {
                 return true;
             }
         }

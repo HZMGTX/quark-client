@@ -8,10 +8,11 @@
     "MixinGameRenderer",
     "MixinEntity",
     "MixinPlayerInteractHandler",
-    "MixinAbstractClientPlayerEntity",
     "MixinInGameHud",
     "MixinLivingEntity",
-    "MixinClientConnection"
+    "MixinClientConnection",
+    "MixinClientPlayNetworkHandler",
+    "MixinKeyboard"
   ],
   "injectors": {
     "defaultRequire": 1

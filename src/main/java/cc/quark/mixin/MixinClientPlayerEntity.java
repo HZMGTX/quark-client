@@ -59,31 +59,4 @@ public abstract class MixinClientPlayerEntity {
         instance.getEventBus().post(new EventPostMotion());
     }
 
-    /**
-     * Fires EventJump before the player actually jumps.
-     * Cancelling the event prevents the jump.
-     */
-    @Inject(method = "jump", at = @At("HEAD"), cancellable = true)
-    private void onJump(CallbackInfo ci) {
-        Quark instance = Quark.getInstance();
-        if (instance == null) return;
-        EventJump event = new EventJump();
-        instance.getEventBus().post(event);
-        if (event.isCancelled()) ci.cancel();
-    }
-
-    /**
-     * Intercepts outgoing chat messages to handle commands.
-     * If the CommandManager consumes the message (it starts with the prefix),
-     * we cancel the packet so nothing is sent to the server.
-     */
-    @Inject(method = "sendChatMessage", at = @At("HEAD"), cancellable = true)
-    private void onSendChatMessage(String message, CallbackInfo ci) {
-        Quark instance = Quark.getInstance();
-        if (instance == null) return;
-        CommandManager cm = instance.getCommandManager();
-        if (cm != null && cm.onChat(message)) {
-            ci.cancel();
-        }
-    }
 }

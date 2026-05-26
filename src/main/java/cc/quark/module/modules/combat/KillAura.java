@@ -36,6 +36,9 @@ public class KillAura extends Module {
 
     private final BoolSetting rotations = register(new BoolSetting(
             "Rotations", "Rotate toward target before attacking", true));
+            
+    private final IntSetting turnSpeed = register(new IntSetting(
+            "Turn Speed", "Max degrees to turn per tick (smooths aim)", 45, 10, 180));
 
     private final BoolSetting throughWalls = register(new BoolSetting(
             "Through Walls", "Attack through solid blocks", false));
@@ -43,8 +46,8 @@ public class KillAura extends Module {
     private final BoolSetting onlyPlayers = register(new BoolSetting(
             "Only Players", "Only target other players", false));
 
-    private final IntSetting attackDelay = register(new IntSetting(
-            "Attack Delay", "Ticks between attacks (0 = every tick)", 10, 0, 20));
+    private final DoubleSetting cooldownPct = register(new DoubleSetting(
+            "Cooldown %", "How full the 1.9+ attack bar must be", 100.0, 10.0, 100.0));
 
     private final EnumSetting<SortMode> sortMode = register(new EnumSetting<>(
             "Sort Mode", "How to prioritize targets", SortMode.DISTANCE));
@@ -58,6 +61,8 @@ public class KillAura extends Module {
     // State
     private int ticksSinceLastAttack = 0;
 
+    private LivingEntity currentTarget = null;
+
     public KillAura() {
         super("KillAura", "Automatically attacks nearby entities", Category.COMBAT);
     }
@@ -65,14 +70,15 @@ public class KillAura extends Module {
     @Override
     public void onEnable() {
         ticksSinceLastAttack = 0;
+        currentTarget = null;
     }
 
     @EventHandler
     public void onTick(EventTick event) {
         if (mc.player == null || mc.world == null || mc.interactionManager == null) return;
 
-        ticksSinceLastAttack++;
-        if (ticksSinceLastAttack < attackDelay.get()) return;
+        // 1.9+ Cooldown check instead of fixed ticks
+        if (mc.player.getAttackCooldownProgress(0.0f) < (cooldownPct.get() / 100.0)) return;
 
         // Collect valid targets
         List<LivingEntity> targets = new ArrayList<>();
@@ -97,22 +103,16 @@ public class KillAura extends Module {
 
             // Line-of-sight check (unless throughWalls is enabled)
             if (!throughWalls.isEnabled()) {
-                if (mc.world.raycastBlock(
-                        mc.player.getEyePos(),
-                        entity.getEyePos(),
-                        mc.player.getBlockPos(),
-                        entity.getBoundingBox(),
-                        entity) != null) {
-                    // Simple visibility approximation: if there's a block between eyes, skip
-                    // Use basic distance-based LOS from world
-                    if (!mc.player.canSee(entity)) continue;
-                }
+                if (!mc.player.canSee(entity)) continue;
             }
 
             targets.add(living);
         }
 
-        if (targets.isEmpty()) return;
+        if (targets.isEmpty()) {
+            currentTarget = null;
+            return;
+        }
 
         // Sort
         switch (sortMode.get()) {
@@ -122,27 +122,51 @@ public class KillAura extends Module {
         }
 
         int count = Math.min(maxTargets.get(), targets.size());
+        
+        if (count > 0) {
+            currentTarget = targets.get(0);
+        }
 
         for (int i = 0; i < count; i++) {
             LivingEntity target = targets.get(i);
 
-            // Rotate to target
+            // Rotate to target (Smooth)
             if (rotations.isEnabled()) {
                 Vec3d eyePos = target.getEyePos();
-                float yaw   = RotationUtil.getYaw(eyePos);
-                float pitch = RotationUtil.getPitch(eyePos);
-                mc.player.setYaw(yaw);
-                mc.player.setPitch(MathHelper.clamp(pitch, -90f, 90f));
+                float targetYaw   = RotationUtil.getYaw(eyePos);
+                float targetPitch = RotationUtil.getPitch(eyePos);
+                
+                float maxTurn = turnSpeed.get();
+                float currentYaw = mc.player.getYaw();
+                float currentPitch = mc.player.getPitch();
+                
+                float yawDiff = MathHelper.wrapDegrees(targetYaw - currentYaw);
+                float pitchDiff = MathHelper.wrapDegrees(targetPitch - currentPitch);
+                
+                if (yawDiff > maxTurn) yawDiff = maxTurn;
+                if (yawDiff < -maxTurn) yawDiff = -maxTurn;
+                if (pitchDiff > maxTurn) pitchDiff = maxTurn;
+                if (pitchDiff < -maxTurn) pitchDiff = -maxTurn;
+                
+                mc.player.setYaw(currentYaw + yawDiff);
+                mc.player.setPitch(MathHelper.clamp(currentPitch + pitchDiff, -90f, 90f));
+                
+                // Don't attack if we haven't finished turning to face them (within 10 degrees)
+                if (Math.abs(MathHelper.wrapDegrees(targetYaw - mc.player.getYaw())) > 10.0f) {
+                    continue; // Skip attack this tick, just keep turning
+                }
             }
 
             // Attack
             mc.interactionManager.attackEntity(mc.player, target);
 
             if (swing.isEnabled()) {
-                mc.player.swingMainHand();
+                mc.player.swingHand(net.minecraft.util.Hand.MAIN_HAND);
             }
         }
-
-        ticksSinceLastAttack = 0;
+    }
+    
+    public Entity getTarget() {
+        return currentTarget;
     }
 }

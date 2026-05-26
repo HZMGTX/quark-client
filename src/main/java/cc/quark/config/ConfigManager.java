@@ -51,6 +51,8 @@ public class ConfigManager {
         for (Module module : moduleManager.getModules()) {
             saveModule(module);
         }
+        
+        saveGui();
 
         LOGGER.info("Config saved ({} modules).", moduleManager.getModules().size());
     }
@@ -69,6 +71,8 @@ public class ConfigManager {
         for (Module module : moduleManager.getModules()) {
             if (loadModule(module)) loaded++;
         }
+        
+        loadGui();
 
         LOGGER.info("Config loaded ({}/{} modules).", loaded, moduleManager.getModules().size());
     }
@@ -126,6 +130,49 @@ public class ConfigManager {
         } catch (Exception e) {
             LOGGER.warn("Failed to load module {}: {}", module.getName(), e.getMessage());
             return false;
+        }
+    }
+
+    private void saveGui() {
+        Path file = configDir.resolve("ClickGUI.json");
+        JsonObject root = new JsonObject();
+        
+        for (cc.quark.gui.components.CategoryPanel panel : cc.quark.gui.ClickGUI.getPanels()) {
+            JsonObject panelObj = new JsonObject();
+            panelObj.addProperty("x", panel.getX());
+            panelObj.addProperty("y", panel.getY());
+            root.add(panel.getCategory().name(), panelObj);
+        }
+        
+        try (Writer writer = Files.newBufferedWriter(file, StandardCharsets.UTF_8)) {
+            GSON.toJson(root, writer);
+        } catch (IOException e) {
+            LOGGER.error("Failed to save ClickGUI layout: {}", e.getMessage());
+        }
+    }
+
+    private void loadGui() {
+        Path file = configDir.resolve("ClickGUI.json");
+        if (!Files.exists(file)) return;
+
+        try (Reader reader = Files.newBufferedReader(file, StandardCharsets.UTF_8)) {
+            JsonObject root = JsonParser.parseReader(reader).getAsJsonObject();
+            
+            // If panels aren't initialized yet, we must initialize them to load positions
+            if (cc.quark.gui.ClickGUI.getPanels().isEmpty()) {
+                // We create a dummy GUI screen to force init
+                new cc.quark.gui.ClickGUI().init(MinecraftClient.getInstance(), 800, 600);
+            }
+
+            for (cc.quark.gui.components.CategoryPanel panel : cc.quark.gui.ClickGUI.getPanels()) {
+                if (root.has(panel.getCategory().name())) {
+                    JsonObject panelObj = root.getAsJsonObject(panel.getCategory().name());
+                    if (panelObj.has("x")) panel.setX(panelObj.get("x").getAsInt());
+                    if (panelObj.has("y")) panel.setY(panelObj.get("y").getAsInt());
+                }
+            }
+        } catch (Exception e) {
+            LOGGER.warn("Failed to load ClickGUI layout: {}", e.getMessage());
         }
     }
 

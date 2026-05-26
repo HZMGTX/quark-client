@@ -40,7 +40,6 @@ public class AutoTotem extends Module {
 
     @EventHandler
     public void onTick(EventTick event) {
-        MinecraftClient mc = net.minecraft.client.MinecraftClient.getInstance();
         if (mc.player == null || mc.world == null || mc.interactionManager == null) return;
 
         float health = mc.player.getHealth();
@@ -51,7 +50,7 @@ public class AutoTotem extends Module {
                 mc.player.getOffHandStack().getItem() == Items.TOTEM_OF_UNDYING) return;
 
         // Find a totem slot in inventory (hotbar 0-8, main 9-35)
-        int totemSlot = findTotemSlot(mc);
+        int totemSlot = findTotemSlot();
         if (totemSlot == -1) return;
 
         int syncId = mc.player.playerScreenHandler.syncId;
@@ -71,7 +70,7 @@ public class AutoTotem extends Module {
      * Scans hotbar (0-8) then main inventory (9-35) for a Totem of Undying.
      * Returns the container slot index, or -1 if none found.
      */
-    private int findTotemSlot(net.minecraft.client.MinecraftClient mc) {
+    private int findTotemSlot() {
         for (int i = 0; i <= 35; i++) {
             var stack = mc.player.playerScreenHandler.getSlot(i).getStack();
             if (stack.getItem() == Items.TOTEM_OF_UNDYING) {

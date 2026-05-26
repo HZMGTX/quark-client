@@ -213,7 +213,7 @@ public class AutoCrystal extends Module {
                 PlayerInteractEntityC2SPacket.attack(crystal, mc.player.isSneaking()));
         mc.getNetworkHandler().sendPacket(
                 new HandSwingC2SPacket(Hand.MAIN_HAND));
-        mc.player.swingMainHand();
+        mc.player.swingHand(Hand.MAIN_HAND);
     }
 
     // -------------------------------------------------------------------------

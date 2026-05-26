@@ -5,6 +5,7 @@ import cc.quark.event.events.EventRender3D;
 import cc.quark.module.Category;
 import cc.quark.module.Module;
 import cc.quark.util.RenderUtil;
+import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.BlockState;
 import net.minecraft.util.math.BlockPos;

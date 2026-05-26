@@ -74,12 +74,14 @@ public abstract class Module {
     public final void enable() {
         if (enabled) return;
         enabled = true;
+        cc.quark.Quark.getInstance().getEventBus().subscribe(this);
         onEnable();
     }
 
     public final void disable() {
         if (!enabled) return;
         enabled = false;
+        cc.quark.Quark.getInstance().getEventBus().unsubscribe(this);
         onDisable();
     }
 

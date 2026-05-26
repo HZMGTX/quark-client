@@ -75,8 +75,8 @@ public class Nametags extends Module {
         String name = entity.getDisplayName().getString();
         sb.append(name);
 
-        if (showHealth.isEnabled() && entity instanceof LivingEntity le) {
-            float hp = le.getHealth();
+        if (showHealth.isEnabled()) {
+            float hp = entity.getHealth();
             // Color based on health percentage
             String hpStr = String.format("%.1f", hp);
             sb.append(" §c").append(hpStr).append("§r hp");

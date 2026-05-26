@@ -7,27 +7,33 @@ import cc.quark.module.Module;
 import cc.quark.setting.BoolSetting;
 import cc.quark.setting.DoubleSetting;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.component.type.PotionContentsComponent;
 import net.minecraft.entity.effect.StatusEffect;
+import net.minecraft.entity.effect.StatusEffectInstance;
 import net.minecraft.entity.effect.StatusEffects;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
-import net.minecraft.registry.entry.RegistryEntry;
+import net.minecraft.component.DataComponentTypes;
+import net.minecraft.component.type.PotionContentsComponent;
 import net.minecraft.util.Hand;
+import net.minecraft.registry.entry.RegistryEntry;
+
+import java.util.List;
 
 /**
- * AutoPot - automatically throws splash/lingering potions when the player's health
+ * AutoPot - automatically throws splash/lingering potions when the player's
+ * health
  * is below a configurable threshold or when specific buffs are desired.
  *
- * <p>Supports:
+ * <p>
+ * Supports:
  * <ul>
- *   <li>Splash Potion of Healing (instant health)</li>
- *   <li>Splash Potion of Speed (movement buff)</li>
- *   <li>Splash Potion of Fire Resistance</li>
+ * <li>Splash Potion of Healing (instant health)</li>
+ * <li>Splash Potion of Speed (movement buff)</li>
+ * <li>Splash Potion of Fire Resistance</li>
  * </ul>
  *
- * <p>After throwing, the module restores the previously held hotbar slot so the
+ * <p>
+ * After throwing, the module restores the previously held hotbar slot so the
  * player is not left holding a potion.
  */
 public class AutoPot extends Module {
@@ -75,7 +81,8 @@ public class AutoPot extends Module {
     @EventHandler
     public void onTick(EventTick event) {
         MinecraftClient mc = MinecraftClient.getInstance();
-        if (mc.player == null || mc.world == null || mc.interactionManager == null) return;
+        if (mc.player == null || mc.world == null || mc.interactionManager == null)
+            return;
 
         if (cooldown > 0) {
             cooldown--;
@@ -136,7 +143,7 @@ public class AutoPot extends Module {
 
         // Right-click to throw
         mc.interactionManager.interactItem(mc.player, Hand.MAIN_HAND);
-        mc.player.swingMainHand();
+        mc.player.swingHand(Hand.MAIN_HAND);
 
         // Restore pitch
         mc.player.setPitch(savedPitch);
@@ -159,47 +166,43 @@ public class AutoPot extends Module {
     }
 
     /**
-     * Searches the hotbar (slots 0-8) for a splash or lingering potion of the given type.
+     * Searches the hotbar (slots 0-8) for a splash or lingering potion of the given
+     * type.
      * Returns the slot index, or -1 if not found.
      */
     private int findPotionSlot(MinecraftClient mc, PotionType type) {
         for (int i = 0; i < 9; i++) {
             ItemStack stack = mc.player.getInventory().getStack(i);
-            if (stack.isEmpty()) continue;
+            if (stack.isEmpty())
+                continue;
 
             // Must be a splash or lingering potion
             if (stack.getItem() != Items.SPLASH_POTION && stack.getItem() != Items.LINGERING_POTION) {
                 continue;
             }
 
-            if (isPotionOfType(stack, type)) return i;
+            if (isPotionOfType(stack, type))
+                return i;
         }
         return -1;
     }
 
     /**
-     * Returns true if the given item stack is a potion that provides the requested effect.
+     * Returns true if the given item stack is a potion that provides the requested
+     * effect.
      */
     private boolean isPotionOfType(ItemStack stack, PotionType type) {
-        PotionContentsComponent contents = stack.get(DataComponentTypes.POTION_CONTENTS);
-        if (contents == null) return false;
-
-        StatusEffect targetEffect = switch (type) {
-            case HEALING        -> StatusEffects.INSTANT_HEALTH.value();
-            case SPEED          -> StatusEffects.SPEED.value();
-            case FIRE_RESISTANCE -> StatusEffects.FIRE_RESISTANCE.value();
+        RegistryEntry<StatusEffect> targetEffect = switch (type) {
+            case HEALING -> StatusEffects.INSTANT_HEALTH;
+            case SPEED -> StatusEffects.SPEED;
+            case FIRE_RESISTANCE -> StatusEffects.FIRE_RESISTANCE;
         };
 
-        // Check custom effects first
-        for (var customEffect : contents.customEffects()) {
-            if (customEffect.getEffectType().value() == targetEffect) return true;
-        }
-
-        // Check potion registry effects
-        if (contents.potion().isPresent()) {
-            var potion = contents.potion().get().value();
-            for (var effect : potion.getEffects()) {
-                if (effect.getEffectType().value() == targetEffect) return true;
+        PotionContentsComponent contents = stack.get(DataComponentTypes.POTION_CONTENTS);
+        if (contents != null) {
+            for (StatusEffectInstance effect : contents.getEffects()) {
+                if (effect.getEffectType() == targetEffect)
+                    return true;
             }
         }
 

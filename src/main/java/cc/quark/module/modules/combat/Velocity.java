@@ -60,13 +60,13 @@ public class Velocity extends Module {
 
                 // Replace packet with scaled velocity
                 event.setPacket(new EntityVelocityUpdateS2CPacket(
-                        packet.getEntityId(), velX, velY, velZ));
+                        packet.getEntityId(), new net.minecraft.util.math.Vec3d(velX / 8000.0, velY / 8000.0, velZ / 8000.0)));
             }
 
             case JUMP -> {
                 // Cancel horizontal knockback; replace with zero-horizontal, zero-vertical packet
                 event.setPacket(new EntityVelocityUpdateS2CPacket(
-                        packet.getEntityId(), 0, 0, 0));
+                        packet.getEntityId(), net.minecraft.util.math.Vec3d.ZERO));
                 // Jump to visually handle the hit
                 if (mc.player.isOnGround()) {
                     mc.player.jump();

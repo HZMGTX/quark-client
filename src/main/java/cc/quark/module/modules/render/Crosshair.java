@@ -37,7 +37,7 @@ public class Crosshair extends Module {
     @EventHandler
     public void onRender2D(EventRender2D event) {
         if (mc.player == null || mc.options.getPerspective().isFirstPerson() == false) return;
-        DrawContext ctx = event.getContext();
+        DrawContext ctx = event.getDrawContext();
         int sw = ctx.getScaledWindowWidth();
         int sh = ctx.getScaledWindowHeight();
         int cx = sw / 2;

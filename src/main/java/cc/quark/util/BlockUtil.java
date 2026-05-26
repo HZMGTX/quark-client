@@ -25,7 +25,7 @@ public class BlockUtil {
 
     public static boolean isReplaceable(BlockPos pos) {
         if (mc.world == null) return false;
-        return mc.world.getBlockState(pos).getMaterial().isReplaceable();
+        return mc.world.getBlockState(pos).isReplaceable();
     }
 
     public static boolean canPlaceBlockAt(BlockPos pos) {
@@ -43,7 +43,7 @@ public class BlockUtil {
     }
 
     public static boolean isOre(Block block) {
-        return block instanceof OreBlock ||
+        return block instanceof ExperienceDroppingBlock ||
                block == Blocks.DIAMOND_ORE || block == Blocks.DEEPSLATE_DIAMOND_ORE ||
                block == Blocks.EMERALD_ORE || block == Blocks.DEEPSLATE_EMERALD_ORE ||
                block == Blocks.GOLD_ORE || block == Blocks.DEEPSLATE_GOLD_ORE ||

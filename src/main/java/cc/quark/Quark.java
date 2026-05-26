@@ -81,26 +81,12 @@ public class Quark implements ModInitializer, ClientModInitializer {
             LOGGER.warn("Could not load config (first run?): {}", ex.getMessage());
         }
 
-        // Register the ClickGUI keybind.
-        guiKeyBinding = KeyBindingHelper.registerKeyBinding(new KeyBinding(
-                "key.quark.opengui",
-                InputUtil.Type.KEYSYM,
-                GLFW.GLFW_KEY_RIGHT_SHIFT,
-                MOD_NAME
-        ));
-
         // Subscribe self to receive EventKey from the mixin.
         eventBus.subscribe(this);
 
         // Hook into Fabric's client tick to drive ModuleManager & keybinds.
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (client.player == null || client.world == null) return;
-
-            // Process GUI keybind presses.
-            while (guiKeyBinding.wasPressed()) {
-                openGui(client);
-            }
-
             moduleManager.onTick();
         });
 

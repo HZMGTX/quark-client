@@ -5,7 +5,6 @@ import cc.quark.event.events.EventTick;
 import cc.quark.module.Category;
 import cc.quark.module.Module;
 import net.minecraft.client.gui.screen.DeathScreen;
-import net.minecraft.network.packet.c2s.play.ClientCommandC2SPacket;
 
 /**
  * AutoRespawn - automatically respawns the player when the death screen appears.
@@ -22,10 +21,8 @@ public class AutoRespawn extends Module {
 
         // Check if the current screen is the death screen
         if (mc.currentScreen instanceof DeathScreen) {
-            // Send respawn packet directly without needing to click a button
-            mc.player.networkHandler.sendPacket(
-                    new ClientCommandC2SPacket(mc.player, ClientCommandC2SPacket.Mode.PERFORM_RESPAWN)
-            );
+            // Request respawn by calling the player method
+            mc.player.requestRespawn();
             mc.setScreen(null);
         }
     }

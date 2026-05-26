@@ -57,6 +57,9 @@ public class EventBus {
      */
     public void subscribe(Object listener) {
         if (listener == null) return;
+        
+        // Prevent duplicate subscriptions
+        unsubscribe(listener);
 
         for (Method method : listener.getClass().getMethods()) {
             if (!method.isAnnotationPresent(EventHandler.class)) continue;

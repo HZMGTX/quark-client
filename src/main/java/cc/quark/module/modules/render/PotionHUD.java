@@ -35,7 +35,7 @@ public class PotionHUD extends Module {
     @EventHandler
     public void onRender2D(EventRender2D event) {
         if (mc.player == null) return;
-        DrawContext ctx = event.getContext();
+        DrawContext ctx = event.getDrawContext();
         int sw = ctx.getScaledWindowWidth();
         int sh = ctx.getScaledWindowHeight();
 
@@ -51,11 +51,11 @@ public class PotionHUD extends Module {
 
         int i = 0;
         for (StatusEffectInstance effect : effects) {
-            String name = effect.getEffectType().getName().getString();
+            String name = effect.getEffectType().value().getName().getString();
             int amp = effect.getAmplifier() + 1;
             int dur = effect.getDuration() / 20;
             String durStr = dur > 600 ? "**:**" : String.format("%d:%02d", dur / 60, dur % 60);
-            boolean bad = effect.getEffectType().isBeneficial() == false;
+            boolean bad = effect.getEffectType().value().isBeneficial() == false;
             int color = bad ? 0xFFFF5555 : 0xFF55FF55;
             String text = compact.getValue()
                 ? name.substring(0, Math.min(name.length(), 8)) + " " + amp

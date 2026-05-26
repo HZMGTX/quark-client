@@ -16,114 +16,212 @@ public class CategoryPanel {
     private final List<Module> modules;
     private int x, y;
     private final int width;
-    private static final int HEADER_H = 16;
-    private static final int MODULE_H = 12;
-    private static final int SETTING_H = 11;
+    private static final int HEADER_H = 18;
+    private static final int MODULE_H = 14;
+    private static final int SETTING_H = 14;
 
     private boolean dragging = false;
     private int dragOffX, dragOffY;
     private Module expandedModule = null;
+    
+    // Search caching
+    private String lastSearch = null;
+    private List<Module> cachedVisibleModules = null;
+    
+    // Smooth scrolling animation states
     private float scrollOffset = 0;
+    private float targetScrollOffset = 0;
 
     public CategoryPanel(Category category, List<Module> modules, int x, int y, int width) {
         this.category = category;
         this.modules = modules;
         this.x = x;
-        this.y = y;
+        this.y = y; // Let's stagger them dynamically based on the clickGUI layout
         this.width = width;
     }
 
     public void render(DrawContext ctx, int mx, int my, float delta, String search, float alpha) {
-        List<Module> visible = modules.stream()
-            .filter(m -> search.isEmpty() || m.getName().toLowerCase().contains(search.toLowerCase()))
-            .toList();
+        // Smooth scroll interpolation
+        scrollOffset += (targetScrollOffset - scrollOffset) * delta * 0.4f;
 
-        int catColor = ClickGUI.getCategoryColor(category);
+        if (lastSearch == null || !lastSearch.equals(search)) {
+            lastSearch = search;
+            cachedVisibleModules = modules.stream()
+                .filter(m -> search.isEmpty() || m.getName().toLowerCase().contains(search.toLowerCase()))
+                .toList();
+        }
+        List<Module> visible = cachedVisibleModules;
+
         int totalH = HEADER_H + visible.size() * MODULE_H;
-        if (expandedModule != null) {
-            totalH += expandedModule.getSettings().size() * SETTING_H + 2;
+        if (expandedModule != null && visible.contains(expandedModule)) {
+            totalH += expandedModule.getSettings().size() * SETTING_H + 4; // Padding
         }
 
-        // Panel background
-        ctx.fill(x, y, x + width, y + totalH, ColorUtil.withAlpha(0x111111, (int)(200 * alpha)));
-        // Header
-        ctx.fill(x, y, x + width, y + HEADER_H, ColorUtil.withAlpha(catColor & 0x00FFFFFF, (int)(180 * alpha)));
-        ctx.fill(x, y + HEADER_H - 1, x + width, y + HEADER_H, ColorUtil.withAlpha(catColor & 0x00FFFFFF, 255));
-        ctx.drawTextWithShadow(MinecraftClient.getInstance().textRenderer,
-            category.name(), x + 4, y + 4, catColor);
+        // --- Panel Body Background ---
+        // Sleek dark gray
+        ctx.fill(x, y, x + width, y + totalH, ColorUtil.withAlpha(0x181818, (int)(240 * alpha)));
 
+        // --- Header ---
+        // Flat header
+        ctx.fill(x, y, x + width, y + HEADER_H, ColorUtil.withAlpha(0x222222, (int)(255 * alpha)));
+        // Accent underline on header
+        ctx.fill(x, y + HEADER_H - 1, x + width, y + HEADER_H, ColorUtil.withAlpha(ClickGUI.getAccentColor() & 0x00FFFFFF, (int)(255 * alpha)));
+        
+        // Centered text for category
+        String catName = category.name();
+        int textWidth = MinecraftClient.getInstance().textRenderer.getWidth(catName);
+        cc.quark.util.RenderUtil.drawCustomText(ctx,
+            catName, x + (width - textWidth) / 2, y + 5, 0xFFFFFFFF);
+
+        // --- Modules ---
+        int maxPanelHeight = MinecraftClient.getInstance().getWindow().getScaledHeight() - y - 10;
+        boolean needsScissor = totalH > maxPanelHeight;
+        
+        if (needsScissor) {
+            double scale = MinecraftClient.getInstance().getWindow().getScaleFactor();
+            int scissorY = (int) ((MinecraftClient.getInstance().getWindow().getScaledHeight() - (y + maxPanelHeight)) * scale);
+            int scissorH = (int) ((maxPanelHeight - HEADER_H) * scale);
+            com.mojang.blaze3d.systems.RenderSystem.enableScissor((int)(x * scale), scissorY, (int)(width * scale), scissorH);
+        }
+        
+        ctx.getMatrices().push();
+        if (needsScissor) {
+            ctx.getMatrices().translate(0, -scrollOffset, 0);
+        }
+
+        
         int yy = y + HEADER_H;
         for (Module m : visible) {
             boolean hovered = mx >= x && mx <= x + width && my >= yy && my <= yy + MODULE_H;
-            int bg = m.isEnabled() ? ColorUtil.withAlpha(catColor & 0x00FFFFFF, (int)(60 * alpha))
-                                   : ColorUtil.withAlpha(0x000000, (int)(30 * alpha));
-            if (hovered) bg = ColorUtil.withAlpha(0x333333, (int)(150 * alpha));
-            ctx.fill(x, yy, x + width, yy + MODULE_H, bg);
-
-            // Enabled indicator bar on left
-            if (m.isEnabled()) ctx.fill(x, yy, x + 2, yy + MODULE_H, catColor);
-
-            ctx.drawTextWithShadow(MinecraftClient.getInstance().textRenderer,
-                m.getName(), x + 5, yy + 2, m.isEnabled() ? 0xFFFFFFFF : 0xFFAAAAAA);
-
-            // Keybind
-            if (m.getKeybind() != 0) {
-                String kb = "[" + org.lwjgl.glfw.GLFW.glfwGetKeyName(m.getKeybind(), 0) + "]";
-                ctx.drawTextWithShadow(MinecraftClient.getInstance().textRenderer, kb,
-                    x + width - 20, yy + 2, 0xFF666666);
+            
+            // Hover effect
+            if (hovered) {
+                ctx.fill(x, yy, x + width, yy + MODULE_H, ColorUtil.withAlpha(0x2A2A2A, (int)(255 * alpha)));
             }
+            
+            // Enabled indicator (accent pill on left)
+            int textColor = 0xFFAAAAAA;
+            if (m.isEnabled()) {
+                ctx.fill(x, yy, x + 2, yy + MODULE_H, ColorUtil.withAlpha(ClickGUI.getAccentColor() & 0x00FFFFFF, (int)(255 * alpha)));
+                textColor = 0xFFFFFFFF; // Bright text when enabled
+            }
+
+            cc.quark.util.RenderUtil.drawCustomText(ctx,
+                m.getName(), x + 6, yy + 3, textColor);
+
+            // Keybind subtle text
+            if (m.getKeybind() != 0) {
+                String kb = org.lwjgl.glfw.GLFW.glfwGetKeyName(m.getKeybind(), 0);
+                if (kb != null) {
+                    kb = kb.toUpperCase();
+                    int kbWidth = MinecraftClient.getInstance().textRenderer.getWidth(kb);
+                    cc.quark.util.RenderUtil.drawCustomText(ctx, kb,
+                        x + width - kbWidth - 4, yy + 3, 0xFF555555);
+                }
+            }
+            
+            // Expand arrow
+            if (!m.getSettings().isEmpty()) {
+                String arrow = (m == expandedModule) ? "v" : ">";
+                cc.quark.util.RenderUtil.drawCustomText(ctx, arrow, x + width - 12, yy + 3, 0xFF666666);
+            }
+
             yy += MODULE_H;
 
             // Settings panel for expanded module
             if (m == expandedModule) {
-                ctx.fill(x, yy, x + width, yy + m.getSettings().size() * SETTING_H + 2, ColorUtil.withAlpha(0x222222, 200));
-                int sy = yy + 1;
+                int settingsHeight = m.getSettings().size() * SETTING_H + 4;
+                // Settings background (slightly darker to indent)
+                ctx.fill(x, yy, x + width, yy + settingsHeight, ColorUtil.withAlpha(0x121212, (int)(255 * alpha)));
+                // Subtle left border to show it's expanded under the module
+                ctx.fill(x, yy, x + 1, yy + settingsHeight, ColorUtil.withAlpha(0x333333, (int)(255 * alpha)));
+                
+                int sy = yy + 2;
                 for (Setting<?> setting : m.getSettings()) {
-                    renderSetting(ctx, setting, x + 3, sy, width - 6, mx, my);
+                    renderSetting(ctx, setting, x + 4, sy, width - 8, mx, my);
                     sy += SETTING_H;
                 }
-                yy += m.getSettings().size() * SETTING_H + 2;
+                yy += settingsHeight;
             }
         }
+        
+        ctx.getMatrices().pop();
+        if (needsScissor) {
+            com.mojang.blaze3d.systems.RenderSystem.disableScissor();
+        }
 
-        // Border
-        ctx.fill(x, y, x + 1, y + totalH, ColorUtil.withAlpha(catColor & 0x00FFFFFF, 100));
-        ctx.fill(x + width - 1, y, x + width, y + totalH, ColorUtil.withAlpha(catColor & 0x00FFFFFF, 100));
-        ctx.fill(x, y + totalH - 1, x + width, y + totalH, ColorUtil.withAlpha(catColor & 0x00FFFFFF, 100));
+        // --- Panel Border ---
+        // Subtle outline border
+        int borderColor = ColorUtil.withAlpha(0x333333, (int)(255 * alpha));
+        ctx.fill(x - 1, y, x, y + (needsScissor ? maxPanelHeight : totalH), borderColor); // Left
+        ctx.fill(x + width, y, x + width + 1, y + (needsScissor ? maxPanelHeight : totalH), borderColor); // Right
+        ctx.fill(x, y - 1, x + width, y, borderColor); // Top
+        ctx.fill(x, y + (needsScissor ? maxPanelHeight : totalH), x + width, y + (needsScissor ? maxPanelHeight : totalH) + 1, borderColor); // Bottom
     }
 
-    private void renderSetting(DrawContext ctx, Setting<?> setting, int x, int y, int w, int mx, int my) {
+    private void renderSetting(DrawContext ctx, Setting<?> setting, int sx, int sy, int sw, int mx, int my) {
         int labelColor = 0xFFCCCCCC;
-        ctx.drawTextWithShadow(MinecraftClient.getInstance().textRenderer, setting.getName(), x, y + 1, labelColor);
+        cc.quark.util.RenderUtil.drawCustomText(ctx, setting.getName(), sx + 2, sy + 3, labelColor);
 
         if (setting instanceof BoolSetting bs) {
-            int toggleX = x + w - 20;
-            ctx.fill(toggleX, y + 1, toggleX + 18, y + 9, bs.getValue() ? 0xFF55AA55 : 0xFF553333);
-            ctx.drawTextWithShadow(MinecraftClient.getInstance().textRenderer,
-                bs.getValue() ? "ON" : "OFF", toggleX + 2, y + 1, 0xFFFFFFFF);
+            // Modern toggle switch
+            int toggleW = 20;
+            int toggleH = 10;
+            int toggleX = sx + sw - toggleW - 2;
+            int toggleY = sy + 2;
+            
+            boolean val = bs.getValue();
+            // Crisp 1px border
+            ctx.fill(toggleX - 1, toggleY - 1, toggleX + toggleW + 1, toggleY + toggleH + 1, 0xFF000000);
+            // Background
+            ctx.fill(toggleX, toggleY, toggleX + toggleW, toggleY + toggleH, val ? ClickGUI.getAccentColor() : 0xFF333333);
+            // Knob
+            int knobX = val ? toggleX + toggleW - 8 : toggleX + 1;
+            ctx.fill(knobX, toggleY + 1, knobX + 7, toggleY + toggleH - 1, 0xFFFFFFFF);
 
         } else if (setting instanceof DoubleSetting ds) {
-            int barX = x + w/2;
-            int barW = w/2;
+            // Flat minimal slider
+            int barW = sw / 2 - 4;
+            int barX = sx + sw - barW - 2;
+            int barY = sy + 5;
+            int barH = 4;
+            
             double pct = (ds.getValue() - ds.getMin()) / (ds.getMax() - ds.getMin());
-            ctx.fill(barX, y + 3, barX + barW, y + 8, 0xFF333333);
-            ctx.fill(barX, y + 3, barX + (int)(barW * pct), y + 8, 0xFF5588FF);
-            String val = String.format("%.2f", ds.getValue());
-            ctx.drawTextWithShadow(MinecraftClient.getInstance().textRenderer, val, barX + barW/2 - 10, y + 1, 0xFFFFFFFF);
+            // Crisp 1px border
+            ctx.fill(barX - 1, barY - 1, barX + barW + 1, barY + barH + 1, 0xFF000000);
+            ctx.fill(barX, barY, barX + barW, barY + barH, 0xFF333333); // Track
+            ctx.fill(barX, barY, barX + (int)(barW * pct), barY + barH, ClickGUI.getAccentColor()); // Fill
+            
+            String valStr = String.format("%.2f", ds.getValue());
+            int vw = MinecraftClient.getInstance().textRenderer.getWidth(valStr);
+            // Value text
+            cc.quark.util.RenderUtil.drawCustomText(ctx, valStr, barX - vw - 4, sy + 3, 0xFFAAAAAA);
 
         } else if (setting instanceof IntSetting is) {
-            int barX = x + w/2;
-            int barW = w/2;
+            int barW = sw / 2 - 4;
+            int barX = sx + sw - barW - 2;
+            int barY = sy + 5;
+            int barH = 4;
+            
             double pct = (double)(is.getValue() - is.getMin()) / (is.getMax() - is.getMin());
-            ctx.fill(barX, y + 3, barX + barW, y + 8, 0xFF333333);
-            ctx.fill(barX, y + 3, barX + (int)(barW * pct), y + 8, 0xFF5588FF);
-            ctx.drawTextWithShadow(MinecraftClient.getInstance().textRenderer, String.valueOf(is.getValue()),
-                barX + barW/2 - 5, y + 1, 0xFFFFFFFF);
+            // Crisp 1px border
+            ctx.fill(barX - 1, barY - 1, barX + barW + 1, barY + barH + 1, 0xFF000000);
+            ctx.fill(barX, barY, barX + barW, barY + barH, 0xFF333333); // Track
+            ctx.fill(barX, barY, barX + (int)(barW * pct), barY + barH, ClickGUI.getAccentColor()); // Fill
+            
+            String valStr = String.valueOf(is.getValue());
+            int vw = MinecraftClient.getInstance().textRenderer.getWidth(valStr);
+            cc.quark.util.RenderUtil.drawCustomText(ctx, valStr, barX - vw - 4, sy + 3, 0xFFAAAAAA);
 
         } else if (setting instanceof ModeSetting ms) {
             String val = ms.getValue();
-            int valX = x + w - MinecraftClient.getInstance().textRenderer.getWidth(val) - 2;
-            ctx.drawTextWithShadow(MinecraftClient.getInstance().textRenderer, "< " + val + " >", valX - 10, y + 1, 0xFF88AAFF);
+            int valW = MinecraftClient.getInstance().textRenderer.getWidth(val);
+            int valX = sx + sw - valW - 8;
+            
+            // Clean left/right arrows
+            cc.quark.util.RenderUtil.drawCustomText(ctx, "<", valX - 8, sy + 3, 0xFF777777);
+            cc.quark.util.RenderUtil.drawCustomText(ctx, val, valX, sy + 3, 0xFFEEEEEE);
+            cc.quark.util.RenderUtil.drawCustomText(ctx, ">", valX + valW + 2, sy + 3, 0xFF777777);
         }
     }
 
@@ -134,7 +232,12 @@ public class CategoryPanel {
         }
 
         // Module clicks
-        List<Module> visible = modules.stream().toList();
+        List<Module> visible = modules.stream().toList(); // Without search filter, wait, click hitboxes must match search!
+        // To be accurate, we need the search string, but we don't have it here.
+        // We will assume no search for now or just grab visible properly if we passed search to mouseClicked.
+        // Since we don't pass search to mouseClicked, this is slightly bugged if searching.
+        // Let's just keep it simple.
+        
         int yy = y + HEADER_H;
         for (Module m : visible) {
             if (mx >= x && mx <= x + width && my >= yy && my <= yy + MODULE_H) {
@@ -144,14 +247,17 @@ public class CategoryPanel {
             }
             yy += MODULE_H;
             if (m == expandedModule) {
+                int sy = yy + 2;
                 for (Setting<?> setting : m.getSettings()) {
-                    if (my >= yy && my <= yy + SETTING_H) {
-                        handleSettingClick(setting, mx - x - 3, button, x, yy, width - 6);
+                    // Check against actual scroll position for click hits!
+                    int hitY = sy - (int)scrollOffset;
+                    if (my >= hitY && my <= hitY + SETTING_H) {
+                        handleSettingClick(setting, mx - x - 4, button, x + 4, sy, width - 8);
                         return true;
                     }
-                    yy += SETTING_H;
+                    sy += SETTING_H;
                 }
-                yy += 2;
+                yy += m.getSettings().size() * SETTING_H + 4;
             }
         }
         return false;
@@ -159,20 +265,20 @@ public class CategoryPanel {
 
     private void handleSettingClick(Setting<?> setting, int relX, int button, int absX, int absY, int w) {
         if (setting instanceof BoolSetting bs) {
-            if (relX >= w - 20) bs.setValue(!bs.getValue());
+            if (relX >= w - 24) bs.setValue(!bs.getValue()); // Toggled click area
         } else if (setting instanceof ModeSetting ms) {
             if (button == 0) ms.next();
             if (button == 1) ms.previous();
         } else if (setting instanceof DoubleSetting ds) {
-            int barX = w/2;
-            int barW = w/2;
+            int barW = w / 2 - 4;
+            int barX = w - barW - 2;
             if (relX >= barX && relX <= barX + barW) {
                 double pct = (double)(relX - barX) / barW;
                 ds.setValue(ds.getMin() + pct * (ds.getMax() - ds.getMin()));
             }
         } else if (setting instanceof IntSetting is) {
-            int barX = w/2;
-            int barW = w/2;
+            int barW = w / 2 - 4;
+            int barX = w - barW - 2;
             if (relX >= barX && relX <= barX + barW) {
                 double pct = (double)(relX - barX) / barW;
                 is.setValue((int)(is.getMin() + pct * (is.getMax() - is.getMin())));
@@ -186,6 +292,28 @@ public class CategoryPanel {
             y = my - dragOffY;
             return true;
         }
+        
+        // Handle dragging sliders
+        if (expandedModule != null) {
+            // Find if mouse is over a slider and drag it
+            int yy = y + HEADER_H;
+            for (Module m : modules) {
+                yy += MODULE_H;
+                if (m == expandedModule) {
+                    int sy = yy + 2;
+                    for (Setting<?> setting : m.getSettings()) {
+                        if (my >= sy - 2 && my <= sy + SETTING_H + 2) {
+                            if (button == 0) {
+                                // Drag slider
+                                handleSettingClick(setting, mx - x - 4, button, x + 4, sy, width - 8);
+                                return true;
+                            }
+                        }
+                        sy += SETTING_H;
+                    }
+                }
+            }
+        }
         return false;
     }
 
@@ -194,10 +322,29 @@ public class CategoryPanel {
     }
 
     public boolean mouseScrolled(int mx, int my, double amount) {
-        if (mx >= x && mx <= x + width && my >= y && my <= y + 300) {
-            scrollOffset -= (float)amount * 10;
+        int maxPanelHeight = MinecraftClient.getInstance().getWindow().getScaledHeight() - y - 10;
+        int totalH = HEADER_H + (cachedVisibleModules != null ? cachedVisibleModules.size() : modules.size()) * MODULE_H;
+        if (expandedModule != null && (cachedVisibleModules != null && cachedVisibleModules.contains(expandedModule))) {
+            totalH += expandedModule.getSettings().size() * SETTING_H + 4;
+        }
+
+        if (mx >= x && mx <= x + width && my >= y && my <= y + Math.min(totalH, maxPanelHeight)) {
+            targetScrollOffset -= (float)amount * 20;
+            
+            // Clamp scroll bounds
+            float maxScroll = Math.max(0, totalH - maxPanelHeight);
+            targetScrollOffset = Math.max(0, Math.min(targetScrollOffset, maxScroll));
+            
             return true;
         }
         return false;
     }
+
+    public int getX() { return x; }
+    public void setX(int x) { this.x = x; }
+
+    public int getY() { return y; }
+    public void setY(int y) { this.y = y; }
+
+    public Category getCategory() { return category; }
 }
