@@ -1,0 +1,13 @@
+plugins {
+    id "dev.kikugie.stonecutter"
+}
+
+// The version the IDE/build currently compiles against.
+// Switch with: ./gradlew "Set active project to <version>"
+stonecutter active "1.21.1" /* [SC] DO NOT EDIT */
+
+// Build every registered version in one go: ./gradlew chiseledBuild
+stonecutter registerChiseled tasks.register("chiseledBuild", stonecutter.chiseled) {
+    group = "project"
+    ofTask("build")
+}

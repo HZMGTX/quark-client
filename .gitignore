@@ -1,6 +1,9 @@
 .gradle/
 build/
 run/
+versions/*/build/
+versions/*/run/
+.stonecutter/
 *.class
 *.jar
 !gradle/wrapper/gradle-wrapper.jar
