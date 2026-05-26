@@ -78,11 +78,48 @@ public class GhostManager {
             activeProfile = AntiCheatProfile.AAC;
         } else if (addr.contains("cubecraft")) {
             activeProfile = AntiCheatProfile.MATRIX;
-        } else if (addr.contains("minemen") || addr.contains("mmc")) {
+        } else if (addr.contains("minemen") || addr.contains("mcc")) {
             activeProfile = AntiCheatProfile.GRIM;
         } else if (addr.contains("pvp.land") || addr.contains("intave")) {
             activeProfile = AntiCheatProfile.INTAVE;
+        } else if (addr.contains("lunar") || addr.contains("lc.")) {
+            activeProfile = AntiCheatProfile.GRIM;
+        } else if (addr.contains("badlion")) {
+            activeProfile = AntiCheatProfile.GRIM;
+        } else if (addr.contains("nethergames")) {
+            activeProfile = AntiCheatProfile.GRIM;
+        } else if (addr.contains("minehut")) {
+            activeProfile = AntiCheatProfile.NCP;
+        } else if (addr.contains("aternos")) {
+            activeProfile = AntiCheatProfile.NCP;
+        } else if (addr.contains("realms")) {
+            activeProfile = AntiCheatProfile.VANILLA;
+        } else if (addr.contains("veltpvp")) {
+            activeProfile = AntiCheatProfile.VERUS;
+        } else if (addr.contains("gommehd") || addr.contains("gomme")) {
+            activeProfile = AntiCheatProfile.MATRIX;
+        } else if (addr.contains("mcpvp")) {
+            activeProfile = AntiCheatProfile.NCP;
+        } else if (addr.contains("funcraft")) {
+            activeProfile = AntiCheatProfile.AAC;
         }
+        // Note: if server brand contains "BungeeCord", "Velocity", "spigot", or "paper",
+        // we keep the current profile as-is (handled by not changing activeProfile).
+    }
+
+    /**
+     * Returns the safe reach limit (in blocks) for the currently active anti-cheat profile.
+     */
+    public float getReachLimit() {
+        return switch (activeProfile) {
+            case WATCHDOG -> 3.2f;
+            case GRIM     -> 3.0f;
+            case AAC      -> 3.1f;
+            case MATRIX   -> 3.15f;
+            case INTAVE   -> 3.0f;
+            case VERUS    -> 3.0f;
+            default       -> 3.5f;
+        };
     }
 
     public void onChatMessage(String message) {

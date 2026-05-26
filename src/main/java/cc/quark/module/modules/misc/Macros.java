@@ -58,16 +58,7 @@ public class Macros extends Module {
             case "Toggle KillAura" -> toggleModule("KillAura");
             case "Toggle Speed"    -> toggleModule("Speed");
             case "Toggle Flight"   -> toggleModule("Flight");
-            case "Open GUI"        -> mc.execute(() -> {
-                try {
-                    Class<?> guiClass = Class.forName("cc.quark.gui.ClickGuiScreen");
-                    net.minecraft.client.gui.screen.Screen scr =
-                        (net.minecraft.client.gui.screen.Screen) guiClass.getDeclaredConstructor().newInstance();
-                    mc.setScreen(scr);
-                } catch (Exception e) {
-                    Quark.LOGGER.warn("[Macros] Could not open GUI: {}", e.getMessage());
-                }
-            });
+            case "Open GUI"        -> mc.execute(() -> mc.setScreen(new cc.quark.gui.ClickGUI()));
             default -> {}
         }
     }

@@ -5,8 +5,8 @@ import cc.quark.event.events.EventTick;
 import cc.quark.module.Category;
 import cc.quark.module.Module;
 import cc.quark.setting.BoolSetting;
-import net.minecraft.client.util.InputUtil;
 import net.minecraft.util.math.Vec3d;
+import org.lwjgl.glfw.GLFW;
 
 public class GuiMove extends Module {
 
@@ -29,15 +29,16 @@ public class GuiMove extends Module {
 
         long window = mc.getWindow().getHandle();
 
-        boolean forward  = isKeyDown(window, mc.options.forwardKey);
-        boolean backward = isKeyDown(window, mc.options.backKey);
-        boolean left     = isKeyDown(window, mc.options.leftKey);
-        boolean right    = isKeyDown(window, mc.options.rightKey);
-        boolean jump     = allowJump.isEnabled() && isKeyDown(window, mc.options.jumpKey);
+        boolean forward  = keyDown(window, mc.options.forwardKey.getDefaultKey().getCode());
+        boolean backward = keyDown(window, mc.options.backKey.getDefaultKey().getCode());
+        boolean left     = keyDown(window, mc.options.leftKey.getDefaultKey().getCode());
+        boolean right    = keyDown(window, mc.options.rightKey.getDefaultKey().getCode());
+        boolean jump     = allowJump.isEnabled()
+                        && keyDown(window, mc.options.jumpKey.getDefaultKey().getCode());
 
         if (!forward && !backward && !left && !right && !jump) return;
 
-        float yaw  = (float) Math.toRadians(mc.player.getYaw());
+        float yaw    = (float) Math.toRadians(mc.player.getYaw());
         double moveX = 0;
         double moveZ = 0;
 
@@ -46,20 +47,14 @@ public class GuiMove extends Module {
         if (left)     { moveX -= Math.cos(yaw) * 0.15; moveZ -= Math.sin(yaw) * 0.15; }
         if (right)    { moveX += Math.cos(yaw) * 0.15; moveZ += Math.sin(yaw) * 0.15; }
 
-        Vec3d current = mc.player.getVelocity();
+        Vec3d cur = mc.player.getVelocity();
         mc.player.setVelocity(
-                current.x + moveX,
-                jump && mc.player.isOnGround() ? 0.42 : current.y,
-                current.z + moveZ);
+                cur.x + moveX,
+                jump && mc.player.isOnGround() ? 0.42 : cur.y,
+                cur.z + moveZ);
     }
 
-    private boolean isKeyDown(long window, net.minecraft.client.option.KeyBinding binding) {
-        InputUtil.Key key = binding.getDefaultKey();
-        if (key.getCategory() == InputUtil.Type.KEYSYM) {
-            int code = key.getCode();
-            if (code < 0) return false;
-            return InputUtil.isKeyOrMouseButtonPressed(window, code);
-        }
-        return false;
+    private boolean keyDown(long window, int code) {
+        return code >= 0 && GLFW.glfwGetKey(window, code) == GLFW.GLFW_PRESS;
     }
 }
