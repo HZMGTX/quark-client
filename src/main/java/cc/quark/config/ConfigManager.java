@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -77,6 +78,123 @@ public class ConfigManager {
         loadGui();
 
         LOGGER.info("Config loaded ({}/{} modules).", loaded, moduleManager.getModules().size());
+    }
+
+    // -------------------------------------------------------------------------
+    // Profile API
+    // -------------------------------------------------------------------------
+
+    public void saveProfile(String name) {
+        Path profileDir = getProfileDir(name);
+        try {
+            Files.createDirectories(profileDir);
+        } catch (IOException e) {
+            LOGGER.error("Could not create profile directory '{}': {}", name, e.getMessage());
+            return;
+        }
+        for (Module module : moduleManager.getModules()) {
+            saveModuleTo(module, profileDir);
+        }
+        LOGGER.info("Profile '{}' saved.", name);
+    }
+
+    public void loadProfile(String name) {
+        Path profileDir = getProfileDir(name);
+        if (!Files.isDirectory(profileDir)) {
+            LOGGER.warn("Profile '{}' not found.", name);
+            return;
+        }
+        Module.silent = true;
+        for (Module module : moduleManager.getModules()) {
+            loadModuleFrom(module, profileDir);
+        }
+        Module.silent = false;
+        LOGGER.info("Profile '{}' loaded.", name);
+    }
+
+    public List<String> listProfiles() {
+        Path profilesRoot = getProfilesRoot();
+        List<String> names = new ArrayList<>();
+        if (!Files.isDirectory(profilesRoot)) return names;
+        try (DirectoryStream<Path> stream = Files.newDirectoryStream(profilesRoot)) {
+            for (Path entry : stream) {
+                if (Files.isDirectory(entry)) {
+                    names.add(entry.getFileName().toString());
+                }
+            }
+        } catch (IOException e) {
+            LOGGER.error("Failed to list profiles: {}", e.getMessage());
+        }
+        return names;
+    }
+
+    public boolean deleteProfile(String name) {
+        Path profileDir = getProfileDir(name);
+        if (!Files.isDirectory(profileDir)) return false;
+        try {
+            try (var walk = Files.walk(profileDir)) {
+                walk.sorted(java.util.Comparator.reverseOrder())
+                        .map(Path::toFile)
+                        .forEach(File::delete);
+            }
+            LOGGER.info("Profile '{}' deleted.", name);
+            return true;
+        } catch (IOException e) {
+            LOGGER.error("Failed to delete profile '{}': {}", name, e.getMessage());
+            return false;
+        }
+    }
+
+    private Path getProfilesRoot() {
+        File gameDir = MinecraftClient.getInstance().runDirectory;
+        return gameDir.toPath().resolve("quark").resolve("profiles");
+    }
+
+    private Path getProfileDir(String name) {
+        return getProfilesRoot().resolve(name);
+    }
+
+    private void saveModuleTo(Module module, Path dir) {
+        Path file = dir.resolve(module.getName() + ".json");
+        JsonObject root = new JsonObject();
+        root.addProperty("enabled", module.isEnabled());
+        root.addProperty("keybind", module.getKeybind());
+        JsonObject settingsObj = new JsonObject();
+        for (Setting<?> setting : module.getSettings()) {
+            settingsObj.add(setting.getName(), settingToJson(setting));
+        }
+        root.add("settings", settingsObj);
+        try (Writer writer = Files.newBufferedWriter(file, StandardCharsets.UTF_8)) {
+            GSON.toJson(root, writer);
+        } catch (IOException e) {
+            LOGGER.error("Failed to save module {} to profile: {}", module.getName(), e.getMessage());
+        }
+    }
+
+    private void loadModuleFrom(Module module, Path dir) {
+        Path file = dir.resolve(module.getName() + ".json");
+        if (!Files.exists(file)) return;
+        try (Reader reader = Files.newBufferedReader(file, StandardCharsets.UTF_8)) {
+            JsonObject root = JsonParser.parseReader(reader).getAsJsonObject();
+            if (root.has("enabled")) {
+                boolean shouldEnable = root.get("enabled").getAsBoolean();
+                if (shouldEnable && !module.isEnabled()) module.enable();
+                else if (!shouldEnable && module.isEnabled()) module.disable();
+            }
+            if (root.has("keybind")) {
+                module.setKeybind(root.get("keybind").getAsInt());
+            }
+            if (root.has("settings")) {
+                JsonObject settingsObj = root.getAsJsonObject("settings");
+                for (Setting<?> setting : module.getSettings()) {
+                    if (settingsObj.has(setting.getName())) {
+                        applySettingJson(setting, settingsObj.get(setting.getName()));
+                    }
+                }
+            }
+        } catch (Exception e) {
+            LOGGER.warn("Failed to load module {} from profile: {}", module.getName(), e.getMessage());
+        }
     }
 
     // -------------------------------------------------------------------------

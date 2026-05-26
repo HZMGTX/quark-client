@@ -41,6 +41,7 @@ public class CommandManager {
         register(new BindCommand(moduleManager));
         register(new FriendCommand(friendManager));
         register(new ConfigCommand(configManager));
+        register(new ProfileCommand(configManager));
         register(new VClipCommand());
         register(new HClipCommand());
         register(new PrefixCommand());
