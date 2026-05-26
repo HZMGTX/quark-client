@@ -18,7 +18,6 @@ public class ClickGUI extends Screen {
     private String searchQuery = "";
     private float alpha = 0f;
     private static final int PANEL_WIDTH = 130;
-    private long cursorBlink = System.currentTimeMillis();
     // Global accent color fetched from ClickGuiModule
     public static int getAccentColor() {
         cc.quark.module.Module mod = Quark.getInstance().getModuleManager().getModule("ClickGUI");

@@ -9,12 +9,11 @@ import cc.quark.setting.BoolSetting;
 import cc.quark.setting.DoubleSetting;
 import cc.quark.setting.IntSetting;
 import cc.quark.setting.ModeSetting;
-import cc.quark.util.ColorUtil;
 import cc.quark.util.RenderUtil;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.mob.HostileEntity;
-import net.minecraft.entity.passive.PassiveEntity;
+import net.minecraft.entity.passive.AnimalEntity;
 import net.minecraft.entity.player.PlayerEntity;
 
 public class Radar extends Module {
@@ -75,7 +74,7 @@ public class Radar extends Module {
 
             boolean isPlayer = entity instanceof PlayerEntity;
             boolean isHostile = entity instanceof HostileEntity;
-            boolean isPassive = entity instanceof PassiveEntity;
+            boolean isPassive = entity instanceof AnimalEntity;
 
             if (isPlayer && !players.isEnabled()) continue;
             if ((isHostile || isPassive) && !mobs.isEnabled()) continue;
