@@ -131,17 +131,22 @@ public class HUD extends Module {
 
         // ---- Watermark ----
         if (watermark.isEnabled()) {
-            String wmText = "Quark.cc §7v" + Quark.VERSION;
-            int padding   = mc.textRenderer.fontHeight / 2;
-            int wmWidth   = mc.textRenderer.getWidth(wmText) + padding * 2;
-            int wmHeight  = mc.textRenderer.fontHeight + padding;
-            int renderX   = wmX.getValue();
-            int renderY   = wmY.getValue();
+            String nameText    = "Quark.cc";
+            String versionText = " v" + Quark.VERSION;
+            int padding        = mc.textRenderer.fontHeight / 2;
+            int nameWidth      = mc.textRenderer.getWidth(nameText);
+            int versionWidth   = mc.textRenderer.getWidth(versionText);
+            int wmWidth        = nameWidth + versionWidth + padding * 2;
+            int wmHeight       = mc.textRenderer.fontHeight + padding;
+            int renderX        = wmX.getValue();
+            int renderY        = wmY.getValue();
 
-            ctx.fill(renderX, renderY, renderX + wmWidth, renderY + wmHeight, 0xAA181818);
+            int accentFull  = (cc.quark.gui.ClickGUI.getAccentColor() & 0x00FFFFFF) | 0xAA000000;
+            cc.quark.util.RenderUtil.drawGradientRect(ctx, renderX, renderY, renderX + wmWidth, renderY + wmHeight, accentFull, 0x00000000);
             ctx.fill(renderX, renderY, renderX + wmWidth, renderY + 1, cc.quark.gui.ClickGUI.getAccentColor());
 
-            cc.quark.util.RenderUtil.drawCustomText(ctx, wmText, renderX + padding, renderY + padding / 2 + 1, 0xFFFFFFFF);
+            cc.quark.util.RenderUtil.drawCustomText(ctx, nameText, renderX + padding, renderY + padding / 2 + 1, 0xFFFFFFFF);
+            cc.quark.util.RenderUtil.drawCustomText(ctx, versionText, renderX + padding + nameWidth, renderY + padding / 2 + 1, 0xFFAAAAAA);
         }
 
         // ---- Module List (right side) ----
@@ -157,7 +162,11 @@ public class HUD extends Module {
                 if (!mod.isVisible()) continue;
                 if (mod == this) continue;
                 String modName  = mod.getName();
-                int textWidth   = mc.textRenderer.getWidth(modName);
+                String suffix   = mod.getSuffix();
+                String suffixStr = suffix != null ? " [" + suffix + "]" : "";
+                int nameWidth   = mc.textRenderer.getWidth(modName);
+                int suffixWidth = suffix != null ? mc.textRenderer.getWidth(suffixStr) : 0;
+                int textWidth   = nameWidth + suffixWidth;
                 int x           = screenW - textWidth - paddingH - rightOffset;
                 int color       = getAccentColor((float)(enabled.size() - 1 - i) / Math.max(1, enabled.size() - 1));
 
@@ -167,6 +176,9 @@ public class HUD extends Module {
                          screenW - rightOffset, yOffset - 1 + elementHeight, color);
 
                 cc.quark.util.RenderUtil.drawCustomText(ctx, modName, x, yOffset + paddingH, color);
+                if (suffix != null) {
+                    cc.quark.util.RenderUtil.drawCustomText(ctx, suffixStr, x + nameWidth, yOffset + paddingH, 0xFF888888);
+                }
                 yOffset += elementHeight;
             }
         }

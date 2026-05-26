@@ -7,6 +7,7 @@ import cc.quark.event.EventHandler;
 import cc.quark.event.events.EventKey;
 import cc.quark.friend.FriendManager;
 import cc.quark.module.ModuleManager;
+import cc.quark.waypoint.WaypointManager;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
@@ -35,11 +36,12 @@ public class Quark implements ModInitializer, ClientModInitializer {
     private static Quark instance;
 
     // Core subsystems
-    private EventBus       eventBus;
-    private ModuleManager  moduleManager;
-    private ConfigManager  configManager;
-    private FriendManager  friendManager;
-    private CommandManager commandManager;
+    private EventBus        eventBus;
+    private ModuleManager   moduleManager;
+    private ConfigManager   configManager;
+    private FriendManager   friendManager;
+    private WaypointManager waypointManager;
+    private CommandManager  commandManager;
 
     /** GLFW keybind to open / close the ClickGUI (default: Right Shift). */
     private KeyBinding guiKeyBinding;
@@ -65,11 +67,17 @@ public class Quark implements ModInitializer, ClientModInitializer {
         instance = this;
 
         // Boot order matters: EventBus first, then managers that subscribe.
-        eventBus       = new EventBus();
-        friendManager  = new FriendManager();
-        moduleManager  = new ModuleManager();
-        configManager  = new ConfigManager(moduleManager);
-        commandManager = new CommandManager(moduleManager, configManager, friendManager);
+        eventBus        = new EventBus();
+        friendManager   = new FriendManager();
+        moduleManager   = new ModuleManager();
+        configManager   = new ConfigManager(moduleManager);
+        waypointManager = new WaypointManager();
+        try {
+            waypointManager.load();
+        } catch (Exception ex) {
+            LOGGER.warn("Could not load waypoints (first run?): {}", ex.getMessage());
+        }
+        commandManager = new CommandManager(moduleManager, configManager, friendManager, waypointManager);
 
         // Init modules (registers them with the event bus).
         moduleManager.init();

@@ -54,6 +54,8 @@ public abstract class Module {
     // Lifecycle hooks â€” override in subclasses
     // -------------------------------------------------------------------------
 
+    public String getSuffix() { return null; }
+
     /** Called once when the module is turned on. */
     public void onEnable() {}
 
