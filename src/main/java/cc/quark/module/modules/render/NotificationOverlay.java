@@ -78,9 +78,10 @@ public class NotificationOverlay extends Module {
             n.ticks--;
             if (n.ticks <= 0) { it.remove(); continue; }
 
-            // animate slide-in: lerp slideX toward 0
-            n.slideX += (0f - n.slideX) * Math.min(1f, delta * 0.25f);
-            if (n.slideX < 0.5f) n.slideX = 0f;
+            // animate slide-in: lerp slideX toward 0, slide out in last 20 ticks
+            float targetSlide = n.ticks < 20 ? 200f * (1f - n.ticks / 20f) : 0f;
+            n.slideX += (targetSlide - n.slideX) * Math.min(1f, delta * 0.25f);
+            if (n.ticks >= 20 && n.slideX < 0.5f) n.slideX = 0f;
 
             // fade-out in last 20 ticks
             float alpha = n.ticks < 20 ? n.ticks / 20f : 1f;

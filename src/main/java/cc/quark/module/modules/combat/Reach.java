@@ -41,6 +41,11 @@ public class Reach extends Module {
     }
 
     @Override
+    public String getSuffix() {
+        return String.format("%.1f", reach.get());
+    }
+
+    @Override
     public void onEnable() {
         updateStatics();
     }

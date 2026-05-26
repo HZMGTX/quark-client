@@ -4,24 +4,27 @@ import cc.quark.event.EventHandler;
 import cc.quark.event.events.EventTick;
 import cc.quark.module.Category;
 import cc.quark.module.Module;
+import cc.quark.setting.BoolSetting;
 import cc.quark.setting.ModeSetting;
 
-/**
- * Jesus â€” allows the player to walk on water (and optionally lava).
- *
- * <p>Modes:
- * <ul>
- *   <li>Vanilla â€” rapidly pushes the player up when they touch a liquid surface.</li>
- *   <li>Packet  â€” exploits packet-based timing to stay on top of liquids.</li>
- * </ul>
- */
+import java.util.Random;
+
 public class Jesus extends Module {
 
-    private final ModeSetting mode;
+    private final ModeSetting mode = register(new ModeSetting(
+            "Mode", "Walking technique", "Vanilla", "Vanilla", "Packet"));
+
+    private final BoolSetting lava = register(new BoolSetting(
+            "Lava", "Also walk on lava", false));
+
+    private final BoolSetting bob = register(new BoolSetting(
+            "Bob", "Subtle bobbing animation on the surface", false));
+
+    private int tickCounter = 0;
+    private final Random random = new Random();
 
     public Jesus() {
         super("Jesus", "Walk on water like Jesus.", Category.MOVEMENT);
-        mode = modeSetting("Mode", "Walking technique.", "Vanilla", "Vanilla", "Packet");
     }
 
     @EventHandler
@@ -29,31 +32,50 @@ public class Jesus extends Module {
         if (mc.player == null || mc.world == null) return;
 
         boolean inWater = mc.player.isTouchingWater();
-        boolean inLava  = mc.player.isInLava();
+        boolean inLava = mc.player.isInLava();
 
-        if (!inWater && !inLava) return;
+        if (!inWater && !(lava.isEnabled() && inLava)) return;
+
+        boolean sneaking = mc.options.sneakKey.isPressed();
+
+        if (sneaking) return;
+
+        tickCounter++;
+
+        double bobOffset = 0.0;
+        if (bob.isEnabled()) {
+            bobOffset = Math.sin(tickCounter * 0.2) * 0.01;
+        }
 
         switch (mode.get()) {
             case "Vanilla" -> {
-                // Push up quickly so the player skims the surface
-                if (mc.player.getVelocity().y < 0.1) {
+                double vy = mc.player.getVelocity().y;
+                if (vy < 0.1) {
                     mc.player.setVelocity(
                             mc.player.getVelocity().x,
-                            0.11,
-                            mc.player.getVelocity().z
-                    );
+                            0.11 + bobOffset,
+                            mc.player.getVelocity().z);
+                } else if (bob.isEnabled()) {
+                    mc.player.setVelocity(
+                            mc.player.getVelocity().x,
+                            vy + bobOffset,
+                            mc.player.getVelocity().z);
                 }
                 mc.player.fallDistance = 0;
             }
+
             case "Packet" -> {
-                // Send on-ground=true packet every other tick to fool server
                 mc.player.setVelocity(
                         mc.player.getVelocity().x,
-                        0.05,
-                        mc.player.getVelocity().z
-                );
+                        0.0 + bobOffset,
+                        mc.player.getVelocity().z);
                 mc.player.fallDistance = 0;
             }
         }
+    }
+
+    @Override
+    public void onDisable() {
+        tickCounter = 0;
     }
 }

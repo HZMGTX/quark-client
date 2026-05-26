@@ -149,4 +149,8 @@ public class Quark implements ModInitializer, ClientModInitializer {
     public CommandManager getCommandManager() {
         return commandManager;
     }
+
+    public WaypointManager getWaypointManager() {
+        return waypointManager;
+    }
 }

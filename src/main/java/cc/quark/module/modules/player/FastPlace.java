@@ -4,18 +4,12 @@ import cc.quark.event.EventHandler;
 import cc.quark.event.events.EventTick;
 import cc.quark.module.Category;
 import cc.quark.module.Module;
+import cc.quark.setting.BoolSetting;
 import cc.quark.setting.IntSetting;
 import net.minecraft.client.network.ClientPlayerInteractionManager;
 
 import java.lang.reflect.Field;
 
-/**
- * FastPlace - removes the right-click delay between block placements.
- *
- * Vanilla Minecraft enforces a 4-tick cooldown between uses of items/blocks
- * (itemUseCooldown in ClientPlayerInteractionManager). We reset this to 0
- * every tick so blocks can be placed as fast as possible.
- */
 public class FastPlace extends Module {
 
     public static FastPlace INSTANCE;
@@ -23,17 +17,16 @@ public class FastPlace extends Module {
     private final IntSetting delay = register(new IntSetting(
             "Delay", "Ticks between placements (0 = no delay)", 0, 0, 5));
 
-    // Cached reflection field for itemUseCooldown
+    private final BoolSetting onHold = register(new BoolSetting(
+            "On Hold", "Only reduce delay while right-click is held", true));
+
     private static Field itemUseCooldownField;
 
     static {
         try {
-            // Field is named differently in obfuscated vs. deobfuscated;
-            // use a known mapped name from Yarn 1.20.4 mappings.
             itemUseCooldownField = ClientPlayerInteractionManager.class.getDeclaredField("itemUseCooldown");
             itemUseCooldownField.setAccessible(true);
         } catch (NoSuchFieldException e) {
-            // Try alternate name used in some mappings
             try {
                 itemUseCooldownField = ClientPlayerInteractionManager.class.getDeclaredField("field_3684");
                 itemUseCooldownField.setAccessible(true);
@@ -53,6 +46,8 @@ public class FastPlace extends Module {
         if (mc.interactionManager == null) return;
         if (itemUseCooldownField == null) return;
 
+        if (onHold.isEnabled() && !mc.options.useKey.isPressed()) return;
+
         try {
             int current = (int) itemUseCooldownField.get(mc.interactionManager);
             if (current > delay.get()) {
@@ -63,9 +58,6 @@ public class FastPlace extends Module {
         }
     }
 
-    /**
-     * Returns current configured delay. Used by MixinPlayerInteractHandler.
-     */
     public int getDelay() {
         return delay.get();
     }

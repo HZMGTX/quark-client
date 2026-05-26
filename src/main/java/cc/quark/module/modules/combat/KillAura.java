@@ -85,6 +85,11 @@ public class KillAura extends Module {
     }
 
     @Override
+    public String getSuffix() {
+        return String.format("%.1f", range.get());
+    }
+
+    @Override
     public void onEnable() {
         ticksSinceLastAttack = 0;
         lastAttackMs = 0L;

@@ -8,7 +8,7 @@ import cc.quark.util.ColorUtil;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 
-import java.util.List;
+import java.util.*;
 
 public class CategoryPanel {
 
@@ -23,6 +23,8 @@ public class CategoryPanel {
     private boolean dragging = false;
     private int dragOffX, dragOffY;
     private Module expandedModule = null;
+    private Module lastClickedModule = null;
+    private long lastModuleClickTime = 0;
 
     // Search caching
     private String lastSearch = null;
@@ -42,6 +44,9 @@ public class CategoryPanel {
     private int contextMenuX = 0;
     private int contextMenuY = 0;
     private static final String[] CONTEXT_OPTIONS = {"Toggle", "Bind key", "Info"};
+
+    // Favorites: pinned module names, shared across all panels
+    private static final Set<String> favorites = new HashSet<>();
 
     // Tooltip state (Task 1)
     private Module tooltipModule = null;
@@ -70,6 +75,8 @@ public class CategoryPanel {
             lastSearch = search;
             cachedVisibleModules = modules.stream()
                 .filter(m -> search.isEmpty() || fuzzyMatch(m.getName(), search))
+                .sorted(Comparator.<Module, Integer>comparing(m -> favorites.contains(m.getName()) ? 0 : 1)
+                    .thenComparing(Module::getName))
                 .toList();
         }
         List<Module> visible = cachedVisibleModules;
@@ -147,14 +154,31 @@ public class CategoryPanel {
                 textColor = ClickGUI.getAccentColor();
             }
 
-            cc.quark.util.RenderUtil.drawCustomText(ctx, m.getName(), x + 6, yy + 3, textColor);
+            if (favorites.contains(m.getName())) {
+                cc.quark.util.RenderUtil.drawCustomText(ctx, "★", x + 4, yy + 3, 0xFFFFAA00);
+                cc.quark.util.RenderUtil.drawCustomText(ctx, m.getName(), x + 13, yy + 3, textColor);
+            } else {
+                cc.quark.util.RenderUtil.drawCustomText(ctx, m.getName(), x + 6, yy + 3, textColor);
+            }
 
             if (m.getKeybind() != 0) {
                 String kb = org.lwjgl.glfw.GLFW.glfwGetKeyName(m.getKeybind(), 0);
                 if (kb != null) {
                     kb = kb.toUpperCase();
                     int kbWidth = MinecraftClient.getInstance().textRenderer.getWidth(kb);
-                    cc.quark.util.RenderUtil.drawCustomText(ctx, kb, x + width - kbWidth - 4, yy + 3, 0xFF555555);
+                    int badgeX  = x + width - kbWidth - 8;
+                    int badgeY  = yy + 2;
+                    int badgeW  = kbWidth + 6;
+                    int badgeH  = MODULE_H - 4;
+                    // pill background
+                    ctx.fill(badgeX, badgeY, badgeX + badgeW, badgeY + badgeH,
+                             ColorUtil.withAlpha(0x222222, (int)(255 * alpha)));
+                    // pill border
+                    ctx.fill(badgeX,               badgeY,               badgeX + badgeW, badgeY + 1,               ColorUtil.withAlpha(0x444444, (int)(255 * alpha)));
+                    ctx.fill(badgeX,               badgeY + badgeH - 1,  badgeX + badgeW, badgeY + badgeH,          ColorUtil.withAlpha(0x444444, (int)(255 * alpha)));
+                    ctx.fill(badgeX,               badgeY + 1,           badgeX + 1,      badgeY + badgeH - 1,      ColorUtil.withAlpha(0x444444, (int)(255 * alpha)));
+                    ctx.fill(badgeX + badgeW - 1,  badgeY + 1,           badgeX + badgeW, badgeY + badgeH - 1,      ColorUtil.withAlpha(0x444444, (int)(255 * alpha)));
+                    cc.quark.util.RenderUtil.drawCustomText(ctx, kb, badgeX + 3, badgeY + 2, 0xFFFFFFFF);
                 }
             }
 
@@ -368,8 +392,19 @@ public class CategoryPanel {
         for (Module m : visible) {
             if (mx >= x && mx <= x + width && my >= yy && my <= yy + MODULE_H) {
                 if (button == 0) {
-                    // click on arrow area → expand/collapse settings; elsewhere → toggle module
-                    if (!m.getSettings().isEmpty() && mx >= x + width - 14) {
+                    long now = System.currentTimeMillis();
+                    boolean isDoubleClick = (m == lastClickedModule) && (now - lastModuleClickTime < 350);
+                    lastClickedModule   = m;
+                    lastModuleClickTime = now;
+                    if (isDoubleClick) {
+                        // double-click: toggle favorite
+                        if (favorites.contains(m.getName())) {
+                            favorites.remove(m.getName());
+                        } else {
+                            favorites.add(m.getName());
+                        }
+                        lastSearch = null; // force re-sort
+                    } else if (!m.getSettings().isEmpty() && mx >= x + width - 14) {
                         expandedModule = (m == expandedModule) ? null : m;
                     } else {
                         m.toggle();
@@ -492,6 +527,13 @@ public class CategoryPanel {
 
     public void dismissContextMenu() {
         contextMenuModule = null;
+    }
+
+    public List<Module> getVisibleModules(String search) {
+        if (search == null || search.isEmpty()) return modules;
+        return modules.stream()
+            .filter(m -> fuzzyMatch(m.getName(), search))
+            .toList();
     }
 
     public int getX() { return x; }

@@ -5,8 +5,8 @@ import cc.quark.event.events.EventTick;
 import cc.quark.module.Category;
 import cc.quark.module.Module;
 import cc.quark.setting.BoolSetting;
+import cc.quark.setting.DoubleSetting;
 import cc.quark.setting.EnumSetting;
-import cc.quark.setting.IntSetting;
 import net.minecraft.client.network.ClientPlayerEntity;
 //? if mc >= "1.20.5" {
 import net.minecraft.component.type.FoodComponent;
@@ -17,20 +17,20 @@ import net.minecraft.item.Items;
 import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.util.Hand;
 
-/**
- * AutoEat - automatically eats the best food when health or hunger drops below threshold.
- */
 public class AutoEat extends Module {
 
     public enum Priority {
         HEALTH, HUNGER
     }
 
-    private final IntSetting healthThreshold = register(new IntSetting(
-            "Health", "Eat when health is at or below this value (half-hearts)", 14, 1, 18));
+    private final DoubleSetting eatAtHealth = register(new DoubleSetting(
+            "Eat At Health", "Eat when health is at or below this value (hearts)", 7.0, 1.0, 20.0));
 
-    private final IntSetting hungerThreshold = register(new IntSetting(
-            "Hunger", "Eat when hunger is at or below this value", 15, 1, 20));
+    private final DoubleSetting eatAtHunger = register(new DoubleSetting(
+            "Eat At Hunger", "Eat when hunger is at or below this value", 15.0, 1.0, 20.0));
+
+    private final BoolSetting bestFood = register(new BoolSetting(
+            "Best Food", "Prioritize the most nutritious food", true));
 
     private final BoolSetting instant = register(new BoolSetting(
             "Instant", "Force instant food use (use with FastEat)", false));
@@ -38,12 +38,9 @@ public class AutoEat extends Module {
     private final EnumSetting<Priority> priority = register(new EnumSetting<>(
             "Priority", "Whether to trigger on Health or Hunger threshold first", Priority.HUNGER));
 
-    // Slot of the food item we moved to the hotbar (-1 = none)
-    private int originalHotbarSlot = -1;
     private int savedSlot = -1;
     private boolean eating = false;
 
-    // Items that are NOT worth eating
     private static boolean isJunkFood(Item item) {
         return item == Items.ROTTEN_FLESH
                 || item == Items.SPIDER_EYE
@@ -76,15 +73,14 @@ public class AutoEat extends Module {
         boolean shouldEat = false;
 
         if (priority.get() == Priority.HUNGER) {
-            if (player.getHungerManager().getFoodLevel() <= hungerThreshold.get()) shouldEat = true;
-            if (player.getHealth() <= healthThreshold.get()) shouldEat = true;
+            if (player.getHungerManager().getFoodLevel() <= (int) eatAtHunger.get()) shouldEat = true;
+            if (player.getHealth() <= (float) eatAtHealth.get()) shouldEat = true;
         } else {
-            if (player.getHealth() <= healthThreshold.get()) shouldEat = true;
-            if (player.getHungerManager().getFoodLevel() <= hungerThreshold.get()) shouldEat = true;
+            if (player.getHealth() <= (float) eatAtHealth.get()) shouldEat = true;
+            if (player.getHungerManager().getFoodLevel() <= (int) eatAtHunger.get()) shouldEat = true;
         }
 
         if (!shouldEat) {
-            // Stop eating and restore slot
             if (eating) {
                 mc.options.useKey.setPressed(false);
                 eating = false;
@@ -96,54 +92,54 @@ public class AutoEat extends Module {
             return;
         }
 
-        // Try to eat with already-held food first
-        if (eating && player.isUsingItem()) {
+        if (player.isUsingItem()) {
             if (instant.isEnabled()) {
-                // Force finish using
                 mc.interactionManager.stopUsingItem(player);
             }
-            return; // Already eating
+            return;
         }
 
-        // Find the best food in inventory
         int bestSlot = -1;
         boolean bestIsHotbar = false;
         int bestNutrition = -1;
 
-        for (int i = 0; i < 9; i++) {
-            ItemStack stack = player.getInventory().getStack(i);
-            int nutrition = getFoodNutrition(stack);
-            if (nutrition <= 0 || isJunkFood(stack.getItem())) continue;
-            if (nutrition > bestNutrition) { bestNutrition = nutrition; bestSlot = i; bestIsHotbar = true; }
-        }
-        for (int i = 9; i < 36; i++) {
-            ItemStack stack = player.getInventory().getStack(i);
-            int nutrition = getFoodNutrition(stack);
-            if (nutrition <= 0 || isJunkFood(stack.getItem())) continue;
-            if (nutrition > bestNutrition) { bestNutrition = nutrition; bestSlot = i; bestIsHotbar = false; }
+        if (bestFood.isEnabled()) {
+            for (int i = 0; i < 9; i++) {
+                ItemStack stack = player.getInventory().getStack(i);
+                int nutrition = getFoodNutrition(stack);
+                if (nutrition <= 0 || isJunkFood(stack.getItem())) continue;
+                if (nutrition > bestNutrition) { bestNutrition = nutrition; bestSlot = i; bestIsHotbar = true; }
+            }
+            for (int i = 9; i < 36; i++) {
+                ItemStack stack = player.getInventory().getStack(i);
+                int nutrition = getFoodNutrition(stack);
+                if (nutrition <= 0 || isJunkFood(stack.getItem())) continue;
+                if (nutrition > bestNutrition) { bestNutrition = nutrition; bestSlot = i; bestIsHotbar = false; }
+            }
+        } else {
+            for (int i = 0; i < 9; i++) {
+                ItemStack stack = player.getInventory().getStack(i);
+                int nutrition = getFoodNutrition(stack);
+                if (nutrition <= 0 || isJunkFood(stack.getItem())) continue;
+                bestSlot = i;
+                bestIsHotbar = true;
+                break;
+            }
         }
 
-        if (bestSlot == -1) return; // No food found
+        if (bestSlot == -1) return;
 
         if (bestIsHotbar) {
-            // Just switch to that hotbar slot
-            if (savedSlot == -1) {
-                savedSlot = player.getInventory().selectedSlot;
-            }
+            if (savedSlot == -1) savedSlot = player.getInventory().selectedSlot;
             player.getInventory().selectedSlot = bestSlot;
         } else {
-            // Move food from inventory to hotbar slot 8 (last slot)
-            if (savedSlot == -1) {
-                savedSlot = player.getInventory().selectedSlot;
-            }
-            // Swap inventory slot to hotbar slot 8
+            if (savedSlot == -1) savedSlot = player.getInventory().selectedSlot;
             mc.interactionManager.clickSlot(
                     player.currentScreenHandler.syncId,
-                    bestSlot, // slot index in container (shifted by 0 in player inv)
-                    8, // hotbar slot 8 as swap target
+                    bestSlot,
+                    8,
                     SlotActionType.SWAP,
-                    player
-            );
+                    player);
             player.getInventory().selectedSlot = 8;
         }
 

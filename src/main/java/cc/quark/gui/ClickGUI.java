@@ -18,6 +18,7 @@ public class ClickGUI extends Screen {
     private String searchQuery = "";
     private float alpha = 0f;
     private static final int PANEL_WIDTH = 130;
+    private long cursorBlink = System.currentTimeMillis();
     // Global accent color fetched from ClickGuiModule
     public static int getAccentColor() {
         cc.quark.module.Module mod = Quark.getInstance().getModuleManager().getModule("ClickGUI");
@@ -77,16 +78,37 @@ public class ClickGUI extends Screen {
         context.getMatrices().translate(-centerX, -centerY, 0);
 
         // Modern flat search bar
-        int sbWidth = 200;
+        int sbWidth = 250;
         int sbX = centerX - (sbWidth / 2);
         int sbY = 20; // Above the panels
-        
+
         context.fill(sbX, sbY, sbX + sbWidth, sbY + 18, ColorUtil.withAlpha(0x101010, 255));
         context.fill(sbX, sbY + 17, sbX + sbWidth, sbY + 18, getAccentColor()); // Accent underline
-        
-        String search = searchQuery.isEmpty() ? "Search modules..." : searchQuery;
+
+        // Clear button [×] on right side
+        int clearBtnX = sbX + sbWidth - 14;
+        boolean clearHovered = mouseX >= clearBtnX && mouseX <= clearBtnX + 12
+                && mouseY >= sbY + 2 && mouseY <= sbY + 16;
+        context.fill(clearBtnX - 1, sbY + 2, clearBtnX + 12, sbY + 16,
+                     ColorUtil.withAlpha(clearHovered ? 0x333333 : 0x1A1A1A, 255));
+        cc.quark.util.RenderUtil.drawCustomText(context, "×", clearBtnX + 1, sbY + 5, 0xFF888888);
+
+        // Blinking cursor
+        long nowMs = System.currentTimeMillis();
+        boolean showCursor = !searchQuery.isEmpty() && ((nowMs / 500) % 2 == 0);
+        String displayText = searchQuery.isEmpty() ? "Search modules..." : searchQuery + (showCursor ? "|" : "");
         int searchColor = searchQuery.isEmpty() ? 0xFF888888 : 0xFFFFFFFF;
-        cc.quark.util.RenderUtil.drawCustomText(context, search, sbX + 6, sbY + 5, searchColor);
+        cc.quark.util.RenderUtil.drawCustomText(context, displayText, sbX + 6, sbY + 5, searchColor);
+
+        // Match count below search bar
+        if (!searchQuery.isEmpty()) {
+            int matchCount = 0;
+            for (cc.quark.gui.components.CategoryPanel panel : panels) {
+                matchCount += (int) panel.getVisibleModules(searchQuery).stream().count();
+            }
+            String foundStr = "Found: " + matchCount;
+            cc.quark.util.RenderUtil.drawCustomText(context, foundStr, sbX + 6, sbY + 20, 0xFF888888);
+        }
 
         // Render category panels
         for (CategoryPanel panel : panels) {
@@ -107,6 +129,20 @@ public class ClickGUI extends Screen {
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        // Check clear button click on search bar
+        if (button == 0) {
+            int centerX = this.width / 2;
+            int sbWidth = 250;
+            int sbX = centerX - (sbWidth / 2);
+            int sbY = 20;
+            int clearBtnX = sbX + sbWidth - 14;
+            if (mouseX >= clearBtnX - 1 && mouseX <= clearBtnX + 12
+                    && mouseY >= sbY + 2 && mouseY <= sbY + 16) {
+                searchQuery = "";
+                return true;
+            }
+        }
+
         // Dismiss any open context menus on ALL panels before processing the click.
         // This ensures right-click menus from other panels are closed whenever the
         // user clicks anywhere on screen, not just within the panel that owns the menu.

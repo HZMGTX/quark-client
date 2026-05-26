@@ -378,6 +378,7 @@ public class ModuleManager {
         register(new NotificationOverlay());
         register(new PingDisplay());
         register(new PlayerESP());
+        register(new Radar());
         register(new PlayerTracers());
         register(new PotionHUD());
         register(new ServerBrand());
@@ -469,6 +470,9 @@ public class ModuleManager {
         register(new AntiDetect());
         register(new Panic());
         register(new AutoConfig());
+        register(new Waypoints());
+        register(new StreamerMode());
+        register(new ChatLogger());
 
         generatePlaceholders();
     }

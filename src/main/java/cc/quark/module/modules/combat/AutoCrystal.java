@@ -64,6 +64,11 @@ public class AutoCrystal extends Module {
     }
 
     @Override
+    public String getSuffix() {
+        return String.format("%.1f", minDamage.get());
+    }
+
+    @Override
     public void onEnable() {
         ticksSincePlace = 0;
         ticksSinceBreak = 0;

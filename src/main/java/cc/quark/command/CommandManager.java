@@ -4,6 +4,7 @@ import cc.quark.command.commands.*;
 import cc.quark.config.ConfigManager;
 import cc.quark.friend.FriendManager;
 import cc.quark.module.ModuleManager;
+import cc.quark.waypoint.WaypointManager;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.text.Text;
 import org.slf4j.Logger;
@@ -31,7 +32,8 @@ public class CommandManager {
 
     public CommandManager(ModuleManager moduleManager,
                           ConfigManager configManager,
-                          FriendManager friendManager) {
+                          FriendManager friendManager,
+                          WaypointManager waypointManager) {
 
         // Register all built-in commands.
         register(new HelpCommand(this));
@@ -44,6 +46,9 @@ public class CommandManager {
         register(new PrefixCommand());
         register(new AntiCheatCommand());
         register(new HudCommand());
+        register(new SetCommand(moduleManager));
+        register(new WaypointCommand(waypointManager));
+        register(new ModulesCommand(moduleManager));
     }
 
     // -------------------------------------------------------------------------

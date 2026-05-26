@@ -56,6 +56,11 @@ public class Speed extends Module {
     }
 
     @Override
+    public String getSuffix() {
+        return mode.get().name();
+    }
+
+    @Override
     public void onEnable() {
         ncpPhase      = 0;
         aacToggle     = false;
