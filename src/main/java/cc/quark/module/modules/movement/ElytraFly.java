@@ -8,6 +8,7 @@ import cc.quark.setting.BoolSetting;
 import cc.quark.setting.DoubleSetting;
 import cc.quark.setting.EnumSetting;
 import net.minecraft.item.Items;
+import net.minecraft.network.packet.c2s.play.ClientCommandC2SPacket;
 import net.minecraft.util.math.Vec3d;
 
 public class ElytraFly extends Module {
@@ -51,7 +52,12 @@ public class ElytraFly extends Module {
 
         if (autoLaunch.isEnabled() && hasElytra && !mc.player.isFallFlying()
                 && !mc.player.isOnGround() && mc.player.getVelocity().y < -0.1) {
-            mc.player.setFlag(7, true);
+            if (mc.getNetworkHandler() != null) {
+                mc.getNetworkHandler().sendPacket(
+                        new ClientCommandC2SPacket(
+                                mc.player,
+                                ClientCommandC2SPacket.Mode.START_FALL_FLYING));
+            }
         }
 
         if (!mc.player.isFallFlying()) return;
