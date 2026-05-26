@@ -294,16 +294,48 @@ public class HUD extends Module {
     private void renderPotionEffects(DrawContext ctx, int screenW, int screenH, ClientPlayerEntity player) {
         int x = 3;
         int y = screenH / 2 - 40;
+        int lineH = mc.textRenderer.fontHeight + 2;
 
         for (StatusEffectInstance effect : player.getStatusEffects()) {
-            String name = effect.getEffectType().value().getName().getString();
-            int amp      = effect.getAmplifier() + 1;
+            net.minecraft.entity.effect.StatusEffect eff = effect.getEffectType().value();
+            String name  = eff.getName().getString();
+            int amp      = effect.getAmplifier();
             int dur      = effect.getDuration() / 20;
-            String line  = name + (amp > 1 ? " " + amp : "")
-                    + " §7(" + formatDuration(dur) + ")§r";
-            cc.quark.util.RenderUtil.drawCustomText(ctx, line, x, y, 0xFFFFFFFF);
-            y += 11;
+            String roman = amp > 0 ? " " + toRoman(amp + 1) : "";
+            String durStr = " §7(" + formatDuration(dur) + ")";
+
+            int nameColor;
+            if (eff.isBeneficial()) {
+                nameColor = 0xFF55FF55;
+            } else if (eff.getCategory() == net.minecraft.entity.effect.StatusEffectCategory.NEUTRAL) {
+                nameColor = 0xFFFFFFFF;
+            } else {
+                nameColor = 0xFFFF5555;
+            }
+
+            int bgW = mc.textRenderer.getWidth(name + roman + " (" + formatDuration(dur) + ")") + 6;
+            ctx.fill(x - 2, y - 1, x + bgW, y + mc.textRenderer.fontHeight + 1, 0x88111111);
+
+            cc.quark.util.RenderUtil.drawCustomText(ctx, name + roman, x, y, nameColor);
+            cc.quark.util.RenderUtil.drawCustomText(ctx, durStr, x + mc.textRenderer.getWidth(name + roman), y, 0xFF888888);
+            y += lineH;
         }
+    }
+
+    private String toRoman(int num) {
+        return switch (num) {
+            case 1 -> "I";
+            case 2 -> "II";
+            case 3 -> "III";
+            case 4 -> "IV";
+            case 5 -> "V";
+            case 6 -> "VI";
+            case 7 -> "VII";
+            case 8 -> "VIII";
+            case 9 -> "IX";
+            case 10 -> "X";
+            default -> String.valueOf(num);
+        };
     }
 
     private String formatDuration(int seconds) {
