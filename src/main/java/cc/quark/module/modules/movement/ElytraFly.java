@@ -51,7 +51,7 @@ public class ElytraFly extends Module {
 
         if (autoLaunch.isEnabled() && hasElytra && !mc.player.isFallFlying()
                 && !mc.player.isOnGround() && mc.player.getVelocity().y < -0.1) {
-            mc.player.startGliding();
+            mc.player.setFlag(7, true);
         }
 
         if (!mc.player.isFallFlying()) return;
