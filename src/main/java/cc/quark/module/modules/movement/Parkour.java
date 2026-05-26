@@ -4,18 +4,17 @@ import cc.quark.event.EventHandler;
 import cc.quark.event.events.EventTick;
 import cc.quark.module.Category;
 import cc.quark.module.Module;
+import cc.quark.setting.BoolSetting;
+import cc.quark.setting.DoubleSetting;
 import net.minecraft.util.math.BlockPos;
 
-/**
- * Parkour - automatically jumps when the player reaches the edge of a block while
- * moving, preventing them from falling and enabling fluid parkour without pressing
- * the jump key manually.
- *
- * <p>Jump condition: the player is on the ground, moving horizontally, not sneaking,
- * and the block directly in front-below them (the block in their movement direction)
- * is air (i.e., they are at an edge).
- */
 public class Parkour extends Module {
+
+    private final BoolSetting sprint = register(new BoolSetting(
+            "Sprint", "Keep sprinting while parkour is active", true));
+
+    private final DoubleSetting edgeThreshold = register(new DoubleSetting(
+            "Edge Threshold", "How far from the block edge to trigger jump (blocks)", 0.25, 0.05, 0.5));
 
     public Parkour() {
         super("Parkour", "Automatically jumps at the edge of blocks", Category.MOVEMENT);
@@ -27,25 +26,28 @@ public class Parkour extends Module {
         if (!mc.player.isOnGround()) return;
         if (mc.player.isSneaking()) return;
 
-        // Player must be actively moving
         boolean moving = mc.player.input.movementForward != 0
                       || mc.player.input.movementSideways != 0;
         if (!moving) return;
 
-        // Check if the block in front of the player (in their velocity direction) is missing below
+        if (sprint.isEnabled()) mc.player.setSprinting(true);
+
         double vx = mc.player.getVelocity().x;
         double vz = mc.player.getVelocity().z;
 
         if (Math.abs(vx) < 0.01 && Math.abs(vz) < 0.01) {
-            // Use yaw-based direction instead if velocity is tiny
             float yaw = (float) Math.toRadians(mc.player.getYaw());
             vx = -Math.sin(yaw) * 0.1;
             vz =  Math.cos(yaw) * 0.1;
         }
 
-        // Step 1.5 blocks ahead in the movement direction
-        double checkX = mc.player.getX() + vx * 6;
-        double checkZ = mc.player.getZ() + vz * 6;
+        double len  = Math.sqrt(vx * vx + vz * vz);
+        double normX = vx / len;
+        double normZ = vz / len;
+
+        double thresh = edgeThreshold.get();
+        double checkX = mc.player.getX() + normX * (0.3 + thresh);
+        double checkZ = mc.player.getZ() + normZ * (0.3 + thresh);
         double checkY = mc.player.getY();
 
         BlockPos aheadBelow = new BlockPos(
@@ -53,9 +55,15 @@ public class Parkour extends Module {
                 (int) Math.floor(checkY) - 1,
                 (int) Math.floor(checkZ));
 
-        boolean edgeAhead = mc.world.getBlockState(aheadBelow).isAir();
+        BlockPos standingOn = new BlockPos(
+                (int) Math.floor(mc.player.getX()),
+                (int) Math.floor(checkY) - 1,
+                (int) Math.floor(mc.player.getZ()));
 
-        if (edgeAhead) {
+        boolean currentHasFloor = !mc.world.getBlockState(standingOn).isAir();
+        boolean edgeAhead       = mc.world.getBlockState(aheadBelow).isAir();
+
+        if (currentHasFloor && edgeAhead) {
             mc.player.jump();
         }
     }

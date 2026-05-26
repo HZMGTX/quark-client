@@ -471,6 +471,7 @@ public class ModuleManager {
         // -------- MISC --------
         register(new AntiDetect());
         register(new BetterChat());
+        register(new Macros());
         register(new Panic());
         register(new AutoConfig());
         register(new ServerInfo());

@@ -10,13 +10,19 @@ import net.minecraft.util.math.Vec3d;
 
 public class BunnyHop extends Module {
 
-    private final DoubleSetting boost = register(new DoubleSetting(
-            "Speed Boost", "Horizontal velocity multiplier on each hop", 1.02, 1.0, 1.3));
+    private static final double MAX_HORIZONTAL_SPEED = 0.8;
+
+    private final DoubleSetting speedMultiplier = register(new DoubleSetting(
+            "Speed Multiplier", "Horizontal velocity multiplier per hop", 1.02, 1.0, 2.0));
+
     private final BoolSetting autoSprint = register(new BoolSetting(
             "Auto Sprint", "Keep sprinting while hopping", true));
 
+    private final BoolSetting autoStrafe = register(new BoolSetting(
+            "Auto Strafe", "Apply strafe velocity for additional speed during hops", false));
+
     public BunnyHop() {
-        super("BunnyHop", "Jump immediately on landing to carry momentum (Vape-style)", Category.MOVEMENT);
+        super("BunnyHop", "Jump immediately on landing to carry momentum", Category.MOVEMENT);
     }
 
     @EventHandler
@@ -32,9 +38,30 @@ public class BunnyHop extends Module {
 
         if (mc.player.isOnGround()) {
             mc.player.jump();
+
             Vec3d vel = mc.player.getVelocity();
-            double b = boost.get();
-            mc.player.setVelocity(vel.x * b, vel.y, vel.z * b);
+            double mult = speedMultiplier.get();
+            double newX = vel.x * mult;
+            double newZ = vel.z * mult;
+
+            if (autoStrafe.isEnabled()) {
+                float yaw   = (float) Math.toRadians(mc.player.getYaw());
+                float fwd   = mc.player.input.movementForward;
+                float side  = mc.player.input.movementSideways;
+                double strafeX = -Math.sin(yaw) * fwd * 0.02 + Math.cos(yaw) * side * 0.02;
+                double strafeZ =  Math.cos(yaw) * fwd * 0.02 + Math.sin(yaw) * side * 0.02;
+                newX += strafeX;
+                newZ += strafeZ;
+            }
+
+            double horizontal = Math.sqrt(newX * newX + newZ * newZ);
+            if (horizontal > MAX_HORIZONTAL_SPEED) {
+                double scale = MAX_HORIZONTAL_SPEED / horizontal;
+                newX *= scale;
+                newZ *= scale;
+            }
+
+            mc.player.setVelocity(newX, vel.y, newZ);
         }
     }
 }
