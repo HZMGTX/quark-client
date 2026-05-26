@@ -41,6 +41,12 @@ public class AntiDetect extends Module {
     private final BoolSetting gcdFix = register(new BoolSetting(
             "GCD Fix", "Apply GCD mouse quantization fix to rotations", false));
 
+    private final BoolSetting setBack = register(new BoolSetting(
+            "SetBack", "Restore real yaw/pitch after silent rotation attacks", true));
+
+    private final BoolSetting violationMonitor = register(new BoolSetting(
+            "Violation Monitor", "Monitor violation score and log when high", true));
+
     private final IntSetting violationThreshold = register(new IntSetting(
             "Violation Threshold", "Auto-throttle modules when violation score exceeds this", 60, 10, 100));
 
@@ -56,6 +62,14 @@ public class AntiDetect extends Module {
         syncAll();
     }
 
+    @Override
+    public String getSuffix() {
+        GhostManager ghost = GhostManager.INSTANCE;
+        GhostManager.AntiCheatProfile p = ghost.getActiveProfile();
+        int score = ghost.getViolationScore();
+        return p.name() + (score > 0 ? " !" + score : "");
+    }
+
     @EventHandler
     public void onTick(EventTick event) {
         if (mc.player == null) return;
@@ -63,7 +77,6 @@ public class AntiDetect extends Module {
         syncAll();
 
         if (velocityJitter.isEnabled()) {
-            double jitter = jitterAmount.get() * 0.001;
             double[] noise = GhostManager.INSTANCE.getHumanizer().generateMovementNoise();
             double dx = noise[0] * (jitterAmount.get() / 3.0);
             double dz = noise[1] * (jitterAmount.get() / 3.0);
@@ -73,7 +86,13 @@ public class AntiDetect extends Module {
         GhostManager ghost = GhostManager.INSTANCE;
         ghost.onTick();
 
-        if (ghost.shouldThrottle(violationThreshold.get())) {
+        if (violationMonitor.isEnabled()) {
+            ghost.decrementViolationScore();
+            int score = ghost.getViolationScore();
+            if (score > violationThreshold.get()) {
+                cc.quark.Quark.LOGGER.warn("[AntiDetect] High violation score: {}", score);
+            }
+        } else if (ghost.shouldThrottle(violationThreshold.get())) {
             ghost.decrementViolationScore(1);
         }
     }
@@ -113,5 +132,6 @@ public class AntiDetect extends Module {
 
         RotationManager.INSTANCE.setGcdFix(gcdFix.isEnabled());
         RotationManager.INSTANCE.setSilent(silentRotations.isEnabled());
+        RotationManager.INSTANCE.setSetBack(setBack.isEnabled());
     }
 }

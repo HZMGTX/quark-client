@@ -97,9 +97,8 @@ public class AimAssist extends Module {
             if (onlyPlayers.isEnabled()) {
                 if (!isPlayer) continue;
             } else {
-                if (isPlayer  && Boolean.FALSE.equals(true)) continue;
-                if (isAnimal  && !targetAnimals.isEnabled()) continue;
-                if (isMob     && !targetMobs.isEnabled()) continue;
+                if (isAnimal && !targetAnimals.isEnabled()) continue;
+                if (isMob    && !targetMobs.isEnabled()) continue;
                 if (!isPlayer && !isAnimal && !isMob) continue;
             }
 

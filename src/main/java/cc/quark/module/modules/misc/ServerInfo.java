@@ -82,21 +82,41 @@ public class ServerInfo extends Module {
             }
         }
 
-        int x = 2;
-        int y = 2;
-        int lineH = mc.textRenderer.fontHeight + 1;
+        int sw    = mc.getWindow().getScaledWidth();
+        int lineH = mc.textRenderer.fontHeight + 2;
+        int pad   = 4;
 
-        ctx.drawTextWithShadow(mc.textRenderer, "§7Server: §f" + ip,           x, y, 0xFFFFFFFF); y += lineH;
+        String ipLine      = "§7Server: §f" + ip;
+        String playersLine = "§7Players: §f" + playerCount;
+        String pingLine    = "§7Ping: " + pingColor(ping) + ping + "ms";
+        String tpsLine     = tpsDisplay.isEnabled()
+                ? String.format("§7TPS: §r%.1f", estimatedTps) : null;
+
+        int maxW = mc.textRenderer.getWidth(stripFormat(ipLine));
+        maxW = Math.max(maxW, mc.textRenderer.getWidth(stripFormat(playersLine)));
+        maxW = Math.max(maxW, mc.textRenderer.getWidth(stripFormat(pingLine)));
+        if (tpsLine != null) maxW = Math.max(maxW, mc.textRenderer.getWidth(stripFormat(tpsLine)));
+        if (!motd.isEmpty()) maxW = Math.max(maxW, mc.textRenderer.getWidth(motd));
+
+        int lineCount = 3 + (motd.isEmpty() ? 0 : 1) + (tpsLine != null ? 1 : 0);
+        int boxW = maxW + pad * 2 + 2;
+        int boxH = lineCount * lineH + pad;
+        int bx   = sw - boxW - 4;
+        int by   = 4;
+
+        ctx.fill(bx, by, bx + boxW, by + boxH, 0xBB111111);
+        ctx.fill(bx, by, bx + 2, by + boxH, cc.quark.gui.ClickGUI.getAccentColor());
+
+        int ty = by + pad / 2;
+        ctx.drawTextWithShadow(mc.textRenderer, ipLine,      bx + pad, ty, 0xFFFFFFFF); ty += lineH;
         if (!motd.isEmpty()) {
-            ctx.drawTextWithShadow(mc.textRenderer, "§7MOTD: §f" + motd,       x, y, 0xFFFFFFFF); y += lineH;
+            ctx.drawTextWithShadow(mc.textRenderer, "§7MOTD: §f" + motd, bx + pad, ty, 0xFFFFFFFF); ty += lineH;
         }
-        ctx.drawTextWithShadow(mc.textRenderer, "§7Players: §f" + playerCount, x, y, 0xFFFFFFFF); y += lineH;
-        ctx.drawTextWithShadow(mc.textRenderer, "§7Ping: " + pingColor(ping) + ping + "ms", x, y, 0xFFFFFFFF); y += lineH;
-
-        if (tpsDisplay.isEnabled()) {
-            String tpsStr = String.format("%.1f", estimatedTps);
-            int tpsColor  = estimatedTps >= 19.5 ? 0xFF55FF55 : estimatedTps >= 15.0 ? 0xFFFFFF55 : 0xFFFF5555;
-            ctx.drawTextWithShadow(mc.textRenderer, "§7TPS: §r" + tpsStr, x, y, tpsColor);
+        ctx.drawTextWithShadow(mc.textRenderer, playersLine, bx + pad, ty, 0xFFFFFFFF); ty += lineH;
+        ctx.drawTextWithShadow(mc.textRenderer, pingLine,    bx + pad, ty, 0xFFFFFFFF); ty += lineH;
+        if (tpsLine != null) {
+            int tpsColor = estimatedTps >= 19.5 ? 0xFF55FF55 : estimatedTps >= 15.0 ? 0xFFFFFF55 : 0xFFFF5555;
+            ctx.drawTextWithShadow(mc.textRenderer, tpsLine, bx + pad, ty, tpsColor);
         }
     }
 
@@ -105,7 +125,11 @@ public class ServerInfo extends Module {
         net.minecraft.client.network.ServerInfo si = mc.getCurrentServerEntry();
         String ip = si != null ? si.address : "Singleplayer";
         int players = mc.getNetworkHandler() != null ? mc.getNetworkHandler().getPlayerList().size() : 0;
-        ChatUtil.info("Connected to: §f" + ip + " §7| Players: §f" + players);
+        ChatUtil.info("§7[Server] §f" + ip + " §7| Players: §f" + players);
+    }
+
+    private String stripFormat(String s) {
+        return s.replaceAll("§[0-9a-fk-or]", "");
     }
 
     private String pingColor(int ping) {

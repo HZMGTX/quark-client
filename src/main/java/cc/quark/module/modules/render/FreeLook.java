@@ -1,8 +1,6 @@
 package cc.quark.module.modules.render;
 
-import cc.quark.Quark;
 import cc.quark.event.EventHandler;
-import cc.quark.event.events.EventPostMotion;
 import cc.quark.event.events.EventPreMotion;
 import cc.quark.event.events.EventTick;
 import cc.quark.module.Category;
@@ -23,16 +21,10 @@ public class FreeLook extends Module {
 
     @Override
     public void onEnable() {
-        Quark.getInstance().getEventBus().subscribe(this);
         if (mc.player != null) {
             lockedYaw   = mc.player.getYaw();
             lockedPitch = mc.player.getPitch();
         }
-    }
-
-    @Override
-    public void onDisable() {
-        Quark.getInstance().getEventBus().unsubscribe(this);
     }
 
     @EventHandler
@@ -51,11 +43,6 @@ public class FreeLook extends Module {
             event.setYaw(lockedYaw);
             event.setPitch(lockedPitch);
         }
-    }
-
-    @EventHandler
-    public void onPostMotion(EventPostMotion event) {
-        if (mc.player == null) return;
     }
 
     public float getSavedYaw()   { return lockedYaw;   }
