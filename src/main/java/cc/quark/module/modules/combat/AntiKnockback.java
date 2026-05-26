@@ -7,22 +7,16 @@ import cc.quark.module.Module;
 import cc.quark.setting.DoubleSetting;
 import net.minecraft.network.packet.s2c.play.EntityVelocityUpdateS2CPacket;
 
-/**
- * AntiKnockback â€” reduces or negates knockback received from hits.
- *
- * <p>Intercepts incoming velocity-update packets from the server and scales
- * down the velocity values so the player is knocked back less.
- */
 public class AntiKnockback extends Module {
 
-    private final DoubleSetting horizontal;
-    private final DoubleSetting vertical;
+    private final DoubleSetting horizontal = register(new DoubleSetting(
+            "Horizontal", "Percentage of horizontal knockback to keep (0 = none)", 0.0, 0.0, 100.0));
+
+    private final DoubleSetting vertical = register(new DoubleSetting(
+            "Vertical", "Percentage of vertical knockback to keep (0 = none)", 0.0, 0.0, 100.0));
 
     public AntiKnockback() {
         super("AntiKnockback", "Reduces knockback received from attacks.", Category.COMBAT);
-
-        horizontal = doubleSetting("Horizontal", "Horizontal knockback multiplier (0 = none).", 0.0, 0.0, 1.0);
-        vertical   = doubleSetting("Vertical",   "Vertical knockback multiplier (0 = none).",   0.0, 0.0, 1.0);
     }
 
     @EventHandler
@@ -30,22 +24,16 @@ public class AntiKnockback extends Module {
         if (mc.player == null) return;
         if (!(event.getPacket() instanceof EntityVelocityUpdateS2CPacket pkt)) return;
 
-        // Only apply to packets targeting the local player
         if (pkt.getEntityId() != mc.player.getId()) return;
 
-        // Cancel to completely suppress knockback when both multipliers are zero
-        if (horizontal.get() == 0.0 && vertical.get() == 0.0) {
-            event.cancel();
-            return;
-        }
-
-        // Partial knockback: we need to cancel and re-apply scaled velocity manually.
-        // Since the packet is immutable in 1.20.4, we cancel it and set velocity directly.
         event.cancel();
 
-        double velX = pkt.getVelocityX() / 8000.0 * horizontal.get();
-        double velY = pkt.getVelocityY() / 8000.0 * vertical.get();
-        double velZ = pkt.getVelocityZ() / 8000.0 * horizontal.get();
+        double hMult = horizontal.get() / 100.0;
+        double vMult = vertical.get() / 100.0;
+
+        double velX = pkt.getVelocityX() / 8000.0 * hMult;
+        double velY = pkt.getVelocityY() / 8000.0 * vMult;
+        double velZ = pkt.getVelocityZ() / 8000.0 * hMult;
 
         mc.player.setVelocity(velX, velY, velZ);
     }
