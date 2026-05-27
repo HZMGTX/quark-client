@@ -133,71 +133,80 @@ public class CategoryPanel {
         Module hoveredModule = null;
 
         for (Module m : visible) {
-            boolean hovered = mx >= x && mx <= x + width && my >= yy && my <= yy + MODULE_H;
+            float actualY = yy - scrollOffset;
+            boolean isModuleVisible = !(actualY + MODULE_H < y || actualY > y + displayH);
 
-            if (hovered) {
-                ctx.fill(x, yy, x + width, yy + MODULE_H, ColorUtil.withAlpha(0x2A2A2A, (int)(255 * alpha)));
-                hoveredModule = m;
-            }
+            if (isModuleVisible) {
+                boolean hovered = mx >= x && mx <= x + width && my >= actualY && my <= actualY + MODULE_H;
 
-            int textColor = 0xFFAAAAAA;
-            if (m.isEnabled()) {
-                ctx.fill(x, yy, x + 2, yy + MODULE_H,
-                         ColorUtil.withAlpha(ClickGUI.getAccentColor() & 0x00FFFFFF, (int)(255 * alpha)));
-                textColor = 0xFFFFFFFF;
-            } else if (!search.isEmpty() && fuzzyMatch(m.getName(), search)) {
-                textColor = ClickGUI.getAccentColor();
-            }
-
-            // highlight exact substring matches brighter than fuzzy-only matches
-            if (!search.isEmpty() && m.getName().toLowerCase().contains(search.toLowerCase()) && !m.isEnabled()) {
-                textColor = ClickGUI.getAccentColor();
-            }
-
-            if (favorites.contains(m.getName())) {
-                cc.quark.util.RenderUtil.drawCustomText(ctx, "★", x + 4, yy + 3, 0xFFFFAA00);
-                cc.quark.util.RenderUtil.drawCustomText(ctx, m.getName(), x + 13, yy + 3, textColor);
-            } else {
-                cc.quark.util.RenderUtil.drawCustomText(ctx, m.getName(), x + 6, yy + 3, textColor);
-            }
-
-            if (m.getKeybind() != 0) {
-                String kb = org.lwjgl.glfw.GLFW.glfwGetKeyName(m.getKeybind(), 0);
-                if (kb != null) {
-                    kb = kb.toUpperCase();
-                    int kbWidth = MinecraftClient.getInstance().textRenderer.getWidth(kb);
-                    int badgeX  = x + width - kbWidth - 8;
-                    int badgeY  = yy + 2;
-                    int badgeW  = kbWidth + 6;
-                    int badgeH  = MODULE_H - 4;
-                    // pill background
-                    ctx.fill(badgeX, badgeY, badgeX + badgeW, badgeY + badgeH,
-                             ColorUtil.withAlpha(0x222222, (int)(255 * alpha)));
-                    // pill border
-                    ctx.fill(badgeX,               badgeY,               badgeX + badgeW, badgeY + 1,               ColorUtil.withAlpha(0x444444, (int)(255 * alpha)));
-                    ctx.fill(badgeX,               badgeY + badgeH - 1,  badgeX + badgeW, badgeY + badgeH,          ColorUtil.withAlpha(0x444444, (int)(255 * alpha)));
-                    ctx.fill(badgeX,               badgeY + 1,           badgeX + 1,      badgeY + badgeH - 1,      ColorUtil.withAlpha(0x444444, (int)(255 * alpha)));
-                    ctx.fill(badgeX + badgeW - 1,  badgeY + 1,           badgeX + badgeW, badgeY + badgeH - 1,      ColorUtil.withAlpha(0x444444, (int)(255 * alpha)));
-                    cc.quark.util.RenderUtil.drawCustomText(ctx, kb, badgeX + 3, badgeY + 2, 0xFFFFFFFF);
+                if (hovered) {
+                    ctx.fill(x, yy, x + width, yy + MODULE_H, ColorUtil.withAlpha(0x2A2A2A, (int)(255 * alpha)));
+                    hoveredModule = m;
                 }
-            }
 
-            if (!m.getSettings().isEmpty()) {
-                String arrow = (m == expandedModule) ? "v" : ">";
-                cc.quark.util.RenderUtil.drawCustomText(ctx, arrow, x + width - 12, yy + 3, 0xFF666666);
+                int textColor = 0xFFAAAAAA;
+                if (m.isEnabled()) {
+                    ctx.fill(x, yy, x + 2, yy + MODULE_H,
+                             ColorUtil.withAlpha(ClickGUI.getAccentColor() & 0x00FFFFFF, (int)(255 * alpha)));
+                    textColor = 0xFFFFFFFF;
+                } else if (!search.isEmpty() && fuzzyMatch(m.getName(), search)) {
+                    textColor = ClickGUI.getAccentColor();
+                }
+
+                // highlight exact substring matches brighter than fuzzy-only matches
+                if (!search.isEmpty() && m.getName().toLowerCase().contains(search.toLowerCase()) && !m.isEnabled()) {
+                    textColor = ClickGUI.getAccentColor();
+                }
+
+                if (favorites.contains(m.getName())) {
+                    cc.quark.util.RenderUtil.drawCustomText(ctx, "★", x + 4, yy + 3, 0xFFFFAA00);
+                    cc.quark.util.RenderUtil.drawCustomText(ctx, m.getName(), x + 13, yy + 3, textColor);
+                } else {
+                    cc.quark.util.RenderUtil.drawCustomText(ctx, m.getName(), x + 6, yy + 3, textColor);
+                }
+
+                if (m.getKeybind() != 0) {
+                    String kb = org.lwjgl.glfw.GLFW.glfwGetKeyName(m.getKeybind(), 0);
+                    if (kb != null) {
+                        kb = kb.toUpperCase();
+                        int kbWidth = MinecraftClient.getInstance().textRenderer.getWidth(kb);
+                        int badgeX  = x + width - kbWidth - 8;
+                        int badgeY  = yy + 2;
+                        int badgeW  = kbWidth + 6;
+                        int badgeH  = MODULE_H - 4;
+                        // pill background
+                        ctx.fill(badgeX, badgeY, badgeX + badgeW, badgeY + badgeH,
+                                 ColorUtil.withAlpha(0x222222, (int)(255 * alpha)));
+                        // pill border
+                        ctx.fill(badgeX,               badgeY,               badgeX + badgeW, badgeY + 1,               ColorUtil.withAlpha(0x444444, (int)(255 * alpha)));
+                        ctx.fill(badgeX,               badgeY + badgeH - 1,  badgeX + badgeW, badgeY + badgeH,          ColorUtil.withAlpha(0x444444, (int)(255 * alpha)));
+                        ctx.fill(badgeX,               badgeY + 1,           badgeX + 1,      badgeY + badgeH - 1,      ColorUtil.withAlpha(0x444444, (int)(255 * alpha)));
+                        ctx.fill(badgeX + badgeW - 1,  badgeY + 1,           badgeX + badgeW, badgeY + badgeH - 1,      ColorUtil.withAlpha(0x444444, (int)(255 * alpha)));
+                        cc.quark.util.RenderUtil.drawCustomText(ctx, kb, badgeX + 3, badgeY + 2, 0xFFFFFFFF);
+                    }
+                }
+
+                if (!m.getSettings().isEmpty()) {
+                    String arrow = (m == expandedModule) ? "v" : ">";
+                    cc.quark.util.RenderUtil.drawCustomText(ctx, arrow, x + width - 12, yy + 3, 0xFF666666);
+                }
             }
 
             yy += MODULE_H;
 
             if (m == expandedModule) {
                 int settingsHeight = m.getSettings().size() * SETTING_H + 4;
-                ctx.fill(x, yy, x + width, yy + settingsHeight, ColorUtil.withAlpha(0x121212, (int)(255 * alpha)));
-                ctx.fill(x, yy, x + 1, yy + settingsHeight, ColorUtil.withAlpha(0x333333, (int)(255 * alpha)));
+                boolean isSettingsVisible = !(actualY + MODULE_H + settingsHeight < y || actualY + MODULE_H > y + displayH);
 
-                int sy = yy + 2;
-                for (Setting<?> setting : m.getSettings()) {
-                    renderSetting(ctx, setting, x + 4, sy, width - 8, mx, my);
-                    sy += SETTING_H;
+                if (isSettingsVisible) {
+                    ctx.fill(x, yy, x + width, yy + settingsHeight, ColorUtil.withAlpha(0x121212, (int)(255 * alpha)));
+                    ctx.fill(x, yy, x + 1, yy + settingsHeight, ColorUtil.withAlpha(0x333333, (int)(255 * alpha)));
+
+                    int sy = yy + 2;
+                    for (Setting<?> setting : m.getSettings()) {
+                        renderSetting(ctx, setting, x + 4, sy, width - 8, mx, my);
+                        sy += SETTING_H;
+                    }
                 }
                 yy += settingsHeight;
             }
@@ -390,7 +399,8 @@ public class CategoryPanel {
 
         int yy = y + HEADER_H;
         for (Module m : visible) {
-            if (mx >= x && mx <= x + width && my >= yy && my <= yy + MODULE_H) {
+            float actualY = yy - scrollOffset;
+            if (mx >= x && mx <= x + width && my >= actualY && my <= actualY + MODULE_H) {
                 if (button == 0) {
                     long now = System.currentTimeMillis();
                     boolean isDoubleClick = (m == lastClickedModule) && (now - lastModuleClickTime < 350);

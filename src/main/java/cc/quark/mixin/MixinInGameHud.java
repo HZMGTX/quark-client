@@ -13,8 +13,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public class MixinInGameHud {
 
     @Inject(method = "render", at = @At("RETURN"))
-    private void onRenderReturn(DrawContext context, float tickDelta, CallbackInfo ci) {
+    private void onRenderReturn(DrawContext context, net.minecraft.client.render.RenderTickCounter tickCounter, CallbackInfo ci) {
         if (Quark.getInstance() == null) return;
-        Quark.getInstance().getEventBus().post(new EventRender2D(context, tickDelta));
+        Quark.getInstance().getEventBus().post(new EventRender2D(context, tickCounter.getTickDelta(true)));
     }
 }

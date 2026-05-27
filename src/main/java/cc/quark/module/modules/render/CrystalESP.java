@@ -11,6 +11,7 @@ import cc.quark.setting.DoubleSetting;
 import cc.quark.util.ColorUtil;
 import cc.quark.util.RenderUtil;
 import net.minecraft.client.render.*;
+import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;

@@ -254,7 +254,6 @@ public class RenderUtil {
      */
     public static void drawCustomText(net.minecraft.client.gui.DrawContext ctx, String text, int x, int y, int color) {
         net.minecraft.text.MutableText mutableText = net.minecraft.text.Text.literal(text);
-        mutableText.setStyle(net.minecraft.text.Style.EMPTY.withFont(net.minecraft.util.Identifier.of("quark", "inter")));
         ctx.drawTextWithShadow(mc.textRenderer, mutableText, x, y, color);
     }
 
@@ -263,7 +262,6 @@ public class RenderUtil {
      */
     public static void drawCustomTextNoShadow(net.minecraft.client.gui.DrawContext ctx, String text, int x, int y, int color) {
         net.minecraft.text.MutableText mutableText = net.minecraft.text.Text.literal(text);
-        mutableText.setStyle(net.minecraft.text.Style.EMPTY.withFont(net.minecraft.util.Identifier.of("quark", "inter")));
         ctx.drawText(mc.textRenderer, mutableText, x, y, color, false);
     }
 

@@ -18,11 +18,19 @@ public class ClickGUI extends Screen {
     private String searchQuery = "";
     private float alpha = 0f;
     private static final int PANEL_WIDTH = 130;
+    private float currentScale = 1.0f;
+    private static cc.quark.module.modules.render.ClickGuiModule cachedClickGuiModule;
+
     // Global accent color fetched from ClickGuiModule
     public static int getAccentColor() {
-        cc.quark.module.Module mod = Quark.getInstance().getModuleManager().getModule("ClickGUI");
-        if (mod instanceof cc.quark.module.modules.render.ClickGuiModule cgm) {
-            return cgm.getAccentColor();
+        if (cachedClickGuiModule == null) {
+            cc.quark.module.Module mod = Quark.getInstance().getModuleManager().getModule("ClickGUI");
+            if (mod instanceof cc.quark.module.modules.render.ClickGuiModule cgm) {
+                cachedClickGuiModule = cgm;
+            }
+        }
+        if (cachedClickGuiModule != null) {
+            return cachedClickGuiModule.getAccentColor();
         }
         return 0xFF00AAFF; // Fallback
     }
@@ -53,7 +61,14 @@ public class ClickGUI extends Screen {
     }
 
     @Override
+    public void renderBackground(DrawContext context, int mouseX, int mouseY, float delta) {
+        // Disable Minecraft 1.21 native background blur to fix massive lag
+    }
+
+    @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
+        super.render(context, mouseX, mouseY, delta);
+        
         alpha = Math.min(1f, alpha + delta * 0.15f);
 
         int screenW = context.getScaledWindowWidth();
@@ -64,7 +79,10 @@ public class ClickGUI extends Screen {
 
         // --- Scale-In Animation Matrix ---
         float ease = alpha == 1.0f ? 1.0f : 1.0f - (float)Math.pow(2, -10 * alpha);
-        float animScale = 0.8f + (0.2f * ease);
+        float baseScale = 0.8f + (0.2f * ease);
+
+        // Remove the automatic fitScale which makes the UI weird and microscopic
+        currentScale = baseScale;
 
         context.getMatrices().push();
         
@@ -72,7 +90,7 @@ public class ClickGUI extends Screen {
         int centerX = screenW / 2;
         int centerY = screenH / 2;
         context.getMatrices().translate(centerX, centerY, 0);
-        context.getMatrices().scale(animScale, animScale, 1.0f);
+        context.getMatrices().scale(currentScale, currentScale, 1.0f);
         // Translate back
         context.getMatrices().translate(-centerX, -centerY, 0);
 
@@ -122,12 +140,25 @@ public class ClickGUI extends Screen {
         cc.quark.util.RenderUtil.drawCustomText(context, watermark, wmX, wmY, getAccentColor());
 
         context.getMatrices().pop();
+    }
 
-        super.render(context, mouseX, mouseY, delta);
+    private double unscaleX(double mouseX) {
+        if (currentScale == 1.0f) return mouseX;
+        int centerX = this.width / 2;
+        return (mouseX - centerX) / currentScale + centerX;
+    }
+
+    private double unscaleY(double mouseY) {
+        if (currentScale == 1.0f) return mouseY;
+        int centerY = this.height / 2;
+        return (mouseY - centerY) / currentScale + centerY;
     }
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        double unscaledX = unscaleX(mouseX);
+        double unscaledY = unscaleY(mouseY);
+
         // Check clear button click on search bar
         if (button == 0) {
             int centerX = this.width / 2;
@@ -135,8 +166,8 @@ public class ClickGUI extends Screen {
             int sbX = centerX - (sbWidth / 2);
             int sbY = 20;
             int clearBtnX = sbX + sbWidth - 14;
-            if (mouseX >= clearBtnX - 1 && mouseX <= clearBtnX + 12
-                    && mouseY >= sbY + 2 && mouseY <= sbY + 16) {
+            if (unscaledX >= clearBtnX - 1 && unscaledX <= clearBtnX + 12
+                    && unscaledY >= sbY + 2 && unscaledY <= sbY + 16) {
                 searchQuery = "";
                 return true;
             }
@@ -150,15 +181,21 @@ public class ClickGUI extends Screen {
         }
 
         for (CategoryPanel panel : panels) {
-            if (panel.mouseClicked((int)mouseX, (int)mouseY, button)) return true;
+            if (panel.mouseClicked((int)unscaledX, (int)unscaledY, button)) return true;
         }
         return super.mouseClicked(mouseX, mouseY, button);
     }
 
     @Override
     public boolean mouseDragged(double mouseX, double mouseY, int button, double deltaX, double deltaY) {
+        double unscaledX = unscaleX(mouseX);
+        double unscaledY = unscaleY(mouseY);
+        // We scale deltaX/deltaY to match the unscaled coordinates so dragging distance is consistent
+        double unscaledDeltaX = deltaX / currentScale;
+        double unscaledDeltaY = deltaY / currentScale;
+        
         for (CategoryPanel panel : panels) {
-            if (panel.mouseDragged((int)mouseX, (int)mouseY, button, (int)deltaX, (int)deltaY)) return true;
+            if (panel.mouseDragged((int)unscaledX, (int)unscaledY, button, (int)unscaledDeltaX, (int)unscaledDeltaY)) return true;
         }
         return super.mouseDragged(mouseX, mouseY, button, deltaX, deltaY);
     }
@@ -177,8 +214,11 @@ public class ClickGUI extends Screen {
 
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
+        double unscaledX = unscaleX(mouseX);
+        double unscaledY = unscaleY(mouseY);
+        
         for (CategoryPanel panel : panels) {
-            if (panel.mouseScrolled((int)mouseX, (int)mouseY, verticalAmount)) return true;
+            if (panel.mouseScrolled((int)unscaledX, (int)unscaledY, verticalAmount)) return true;
         }
         return super.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount);
     }

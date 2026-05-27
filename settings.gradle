@@ -18,7 +18,7 @@ stonecutter {
         // Verify yarn/loader/fabric-api coordinates at https://fabricmc.net/develop
         // before building each version. Year-based (25.x, 26.x) entries need their
         // own mapping coordinates added to build.gradle once pinned.
-        versions("1.20.1", "1.20.4", "1.20.6", "1.21.1", "1.21.3", "1.21.4", "1.21.5")
+        versions("1.21.1")
         vcsVersion = "1.21.1"
     }
 }

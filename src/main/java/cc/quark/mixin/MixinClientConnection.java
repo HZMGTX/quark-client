@@ -17,19 +17,45 @@ public class MixinClientConnection {
 
     @Inject(method = "send(Lnet/minecraft/network/packet/Packet;Lnet/minecraft/network/PacketCallbacks;)V",
             at = @At("HEAD"), cancellable = true)
-    private void onSendPacket(Packet<?> packet, PacketCallbacks callbacks, CallbackInfo ci) {
+    private void onSendPacketInject(Packet<?> packet, PacketCallbacks callbacks, CallbackInfo ci) {
         if (Quark.getInstance() == null) return;
+        // Only handle cancellation here
         EventPacketSend event = new EventPacketSend(packet);
         Quark.getInstance().getEventBus().post(event);
-        if (event.isCancelled()) ci.cancel();
+        if (event.isCancelled()) {
+            ci.cancel();
+        }
     }
 
-    @Inject(method = "channelRead0",
+    @org.spongepowered.asm.mixin.injection.ModifyVariable(
+            method = "send(Lnet/minecraft/network/packet/Packet;Lnet/minecraft/network/PacketCallbacks;)V",
+            at = @At("HEAD"), argsOnly = true)
+    private Packet<?> onSendPacketModify(Packet<?> packet) {
+        if (Quark.getInstance() == null) return packet;
+        EventPacketSend event = new EventPacketSend(packet);
+        Quark.getInstance().getEventBus().post(event);
+        // Note: isCancelled is handled by the Inject mixin above.
+        return event.getPacket() != null ? event.getPacket() : packet;
+    }
+
+    @Inject(method = "channelRead0(Lio/netty/channel/ChannelHandlerContext;Lnet/minecraft/network/packet/Packet;)V",
             at = @At("HEAD"), cancellable = true)
-    private void onChannelRead(ChannelHandlerContext ctx, Packet<?> packet, CallbackInfo ci) {
+    private void onChannelReadInject(ChannelHandlerContext ctx, Packet<?> packet, CallbackInfo ci) {
         if (Quark.getInstance() == null) return;
         EventPacketReceive event = new EventPacketReceive(packet);
         Quark.getInstance().getEventBus().post(event);
-        if (event.isCancelled()) ci.cancel();
+        if (event.isCancelled()) {
+            ci.cancel();
+        }
+    }
+
+    @org.spongepowered.asm.mixin.injection.ModifyVariable(
+            method = "channelRead0(Lio/netty/channel/ChannelHandlerContext;Lnet/minecraft/network/packet/Packet;)V",
+            at = @At("HEAD"), argsOnly = true)
+    private Packet<?> onChannelReadModify(Packet<?> packet) {
+        if (Quark.getInstance() == null) return packet;
+        EventPacketReceive event = new EventPacketReceive(packet);
+        Quark.getInstance().getEventBus().post(event);
+        return event.getPacket() != null ? event.getPacket() : packet;
     }
 }

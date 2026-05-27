@@ -27,19 +27,26 @@ public class AirJump extends Module {
         Quark.getInstance().getEventBus().unsubscribe(this);
     }
 
+    private boolean jumpKeyPressed = false;
+
     @Override
     public void onTick() {
         if (mc.player == null) return;
-        if (mc.player.isOnGround()) jumpsLeft = count.getValue();
-    }
-
-    @EventHandler
-    public void onJump(EventJump event) {
-        if (mc.player == null) return;
-        if (!mc.player.isOnGround() && jumpsLeft > 0) {
-            mc.player.setVelocity(mc.player.getVelocity().x, 0.42, mc.player.getVelocity().z);
-            mc.player.fallDistance = 0;
-            jumpsLeft--;
+        
+        if (mc.player.isOnGround() || mc.player.isClimbing()) {
+            jumpsLeft = count.getValue();
+        } else if (jumpsLeft > 0 && mc.options.jumpKey.isPressed()) {
+            if (!jumpKeyPressed) {
+                mc.player.jump();
+                mc.player.setVelocity(mc.player.getVelocity().x, 0.42, mc.player.getVelocity().z);
+                mc.player.fallDistance = 0;
+                jumpsLeft--;
+                jumpKeyPressed = true;
+            }
+        }
+        
+        if (!mc.options.jumpKey.isPressed()) {
+            jumpKeyPressed = false;
         }
     }
 }

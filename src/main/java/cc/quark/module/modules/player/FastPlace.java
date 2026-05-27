@@ -6,9 +6,8 @@ import cc.quark.module.Category;
 import cc.quark.module.Module;
 import cc.quark.setting.BoolSetting;
 import cc.quark.setting.IntSetting;
-import net.minecraft.client.network.ClientPlayerInteractionManager;
-
-import java.lang.reflect.Field;
+import net.minecraft.client.MinecraftClient;
+import cc.quark.mixin.IMinecraftClient;
 
 public class FastPlace extends Module {
 
@@ -20,22 +19,6 @@ public class FastPlace extends Module {
     private final BoolSetting onHold = register(new BoolSetting(
             "On Hold", "Only reduce delay while right-click is held", true));
 
-    private static Field itemUseCooldownField;
-
-    static {
-        try {
-            itemUseCooldownField = ClientPlayerInteractionManager.class.getDeclaredField("itemUseCooldown");
-            itemUseCooldownField.setAccessible(true);
-        } catch (NoSuchFieldException e) {
-            try {
-                itemUseCooldownField = ClientPlayerInteractionManager.class.getDeclaredField("field_3684");
-                itemUseCooldownField.setAccessible(true);
-            } catch (NoSuchFieldException ex) {
-                System.err.println("[FastPlace] Could not find itemUseCooldown field: " + ex.getMessage());
-            }
-        }
-    }
-
     public FastPlace() {
         super("FastPlace", "Reduces right-click placement delay to zero", Category.PLAYER);
         INSTANCE = this;
@@ -44,17 +27,12 @@ public class FastPlace extends Module {
     @EventHandler
     public void onTick(EventTick event) {
         if (mc.interactionManager == null) return;
-        if (itemUseCooldownField == null) return;
 
         if (onHold.isEnabled() && !mc.options.useKey.isPressed()) return;
 
-        try {
-            int current = (int) itemUseCooldownField.get(mc.interactionManager);
-            if (current > delay.get()) {
-                itemUseCooldownField.set(mc.interactionManager, delay.get());
-            }
-        } catch (IllegalAccessException e) {
-            // Ignore
+        int current = ((IMinecraftClient) mc).getItemUseCooldown();
+        if (current > delay.get()) {
+            ((IMinecraftClient) mc).setItemUseCooldown(delay.get());
         }
     }
 

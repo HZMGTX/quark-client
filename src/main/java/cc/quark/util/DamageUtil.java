@@ -12,7 +12,7 @@ public class DamageUtil {
         if (dist > CRYSTAL_RADIUS * 2) return 0f;
         double exposure = 1.0 - (dist / (CRYSTAL_RADIUS * 2.0));
         float impact = (float)(exposure * exposure);
-        float baseDamage = (impact + exposure) * 6f * 0.85f / 2f;
+        float baseDamage = (float)((impact + exposure) * 6f * 0.85f / 2f);
         // simplified armor reduction: 20 armor = 80% reduction cap
         float armor = entity.getArmor();
         float reduction = 1f - Math.min(0.8f, armor * 0.04f);

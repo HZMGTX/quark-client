@@ -54,7 +54,7 @@ public abstract class MixinLivingEntity {
 
     // TODO: verify signature — in 1.21.1 yarn damage takes (ServerWorld, DamageSource, float)
     @Inject(method = "damage", at = @At("HEAD"), cancellable = true)
-    private void onDamage(ServerWorld world, DamageSource source, float amount, CallbackInfoReturnable<Boolean> cir) {
+    private void onDamage(DamageSource source, float amount, CallbackInfoReturnable<Boolean> cir) {
         if (Quark.getInstance() == null) return;
         if (!((LivingEntity)(Object)this).equals(net.minecraft.client.MinecraftClient.getInstance().player)) return;
         EventDamage event = new EventDamage(amount, source);

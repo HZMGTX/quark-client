@@ -17,9 +17,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public class MixinGameRenderer {
 
     @Inject(method = "renderWorld", at = @At(value = "TAIL"))
-    private void onRenderWorldTail(float tickDelta, long limitTime, MatrixStack matrices, CallbackInfo ci) {
+    private void onRenderWorldTail(net.minecraft.client.render.RenderTickCounter tickCounter, CallbackInfo ci) {
         if (Quark.getInstance() == null) return;
-        Quark.getInstance().getEventBus().post(new EventRender3D(matrices, tickDelta));
+        Quark.getInstance().getEventBus().post(new EventRender3D(new MatrixStack(), tickCounter.getTickDelta(true)));
     }
 
     @ModifyReturnValue(method = "getFov", at = @At("RETURN"))

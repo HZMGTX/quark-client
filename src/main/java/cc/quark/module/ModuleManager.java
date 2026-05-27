@@ -263,7 +263,7 @@ public class ModuleManager {
         register(new AutoDrop());
         register(new AutoEat());
         register(new AutoFeed());
-        register(new cc.quark.module.modules.player.AntiPoison());
+        register(new cc.quark.module.modules.combat.AntiPoison());
         register(new AutoFish());
         register(new AutoGG());
         register(new AutoHeal());
@@ -318,7 +318,7 @@ public class ModuleManager {
         register(new NoCooldown());
         register(new NoFatigue());
         register(new NoHunger());
-        register(new cc.quark.module.modules.player.NoFall());
+        register(new cc.quark.module.modules.movement.NoFall());
         register(new NoPacketKick());
         register(new NoPushItems());
         register(new NoRotate());
@@ -478,27 +478,6 @@ public class ModuleManager {
         register(new Waypoints());
         register(new StreamerMode());
         register(new ChatLogger());
-
-        generatePlaceholders();
-    }
-
-    /** Target total module count exposed by the client. */
-    private static final int TARGET_MODULE_COUNT = 1000;
-
-    /**
-     * Registers inert placeholder modules (no event handlers) spread evenly
-     * across categories until the registry holds at least
-     * {@link #TARGET_MODULE_COUNT} modules.
-     */
-    private void generatePlaceholders() {
-        Category[] cats = Category.values();
-        int i = 1;
-        while (modules.size() < TARGET_MODULE_COUNT) {
-            Category cat = cats[i % cats.length];
-            String name = "Reserved-" + cat.name().charAt(0) + i;
-            register(new Module(name, "Reserved module slot " + i, cat) {});
-            i++;
-        }
     }
 
     // -------------------------------------------------------------------------

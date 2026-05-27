@@ -75,6 +75,10 @@ public class EventBus {
 
             try {
                 MethodHandle handle = LOOKUP.unreflect(method).bindTo(listener);
+                // Adapt the MethodHandle to accept Event as argument, avoiding WrongMethodTypeException
+                // and eliminating the boxing overhead of invokeWithArguments()
+                handle = handle.asType(java.lang.invoke.MethodType.methodType(void.class, Event.class));
+                
                 ListenerEntry entry = new ListenerEntry(listener, handle, priority);
 
                 listenerMap.computeIfAbsent(eventClass, k -> new ArrayList<>()).add(entry);
@@ -133,7 +137,7 @@ public class EventBus {
         for (ListenerEntry entry : snapshot) {
             if (event.isCancellable() && event.isCancelled()) break;
             try {
-                entry.handle.invoke(event);
+                entry.handle.invokeExact(event);
             } catch (Throwable t) {
                 // Log but do not propagate listener errors so other listeners
                 // still get a chance to run
