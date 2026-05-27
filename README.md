@@ -8,7 +8,7 @@
 | |__| | |_| | (_| | |  |   < | (_| (__  
  \___\_\\__,_|\__,_|_|  |_|\_(_)___\___| 
 ```
-  <p><i>The undisputed king of 1.21.1 Fabric clients. No cap. Built for HVH, Anarchy, and Ghost/Closet cheating.</i></p>
+  <p><i>The undisputed king of 1.21.1 Fabric clients. Built from the ground up for HVH, Anarchy, and Ghost/Closet cheating.</i></p>
 
   <p>
     <img alt="Minecraft Version" src="https://img.shields.io/badge/Minecraft-1.21.1-brightgreen?style=for-the-badge&logo=minecraft">
@@ -115,7 +115,7 @@ gradlew.bat runClient
 
 ## 💻 Code Architecture
 
-If you're looking to fork this, contribute, or skid some code (we see you), here's how the codebase works:
+If you're looking to fork this, contribute, or use some of our utilities, here's how the codebase works:
 
 - `cc.quark.event`: The core `MethodHandle` EventBus. It's ridiculously fast. Don't break it.
 - `cc.quark.mixin`: Where we inject into Minecraft's actual code (`MixinMinecraft`, `MixinClientConnection`, `MixinClientPlayerEntity`).
