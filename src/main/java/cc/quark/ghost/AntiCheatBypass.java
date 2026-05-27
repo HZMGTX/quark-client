@@ -28,6 +28,37 @@ public class AntiCheatBypass {
         public static boolean allowBHop() { return true; }
         public static int getMinAttackDelay() { return 6; }
         public static double getMaxCPS() { return 14.0; }
+
+        /**
+         * Apply pre-combat adjustments: throttle CPS to max 14/sec and ensure GCD is applied.
+         * Call this before initiating an attack.
+         */
+        public static void applyPreCombat() {
+            // Throttle CPS and ensure GCD is enforced — actual enforcement is in KillAura/AutoClicker
+            // This method serves as a hook for external modules to call
+        }
+
+        /**
+         * Apply post-combat adjustments: no-op for Watchdog.
+         */
+        public static void applyPostCombat() {
+            // No post-combat adjustments needed for Watchdog
+        }
+
+        /**
+         * Watchdog bans flight immediately — never allow flight.
+         */
+        public static boolean shouldAllowFlight() { return false; }
+
+        /**
+         * Maximum reach distance safe for Watchdog.
+         */
+        public static float getMaxReach() { return 3.2f; }
+
+        /**
+         * Maximum clicks per second safe for Watchdog.
+         */
+        public static int getCpsLimit() { return 14; }
     }
 
     public static class AAC {
@@ -44,6 +75,18 @@ public class AntiCheatBypass {
         public static int getMaxViolations() { return 3; }
         public static int getMinAttackDelay() { return 7; }
         public static boolean requiresRotations() { return true; }
+
+        /** Maximum reach distance safe for Matrix. */
+        public static float getMaxReach() { return 3.15f; }
+
+        /** Maximum clicks per second safe for Matrix. */
+        public static int getCpsLimit() { return 13; }
+
+        /**
+         * Matrix detects extra packets sent outside normal movement cycles.
+         * Return false to suppress any extra packet sending.
+         */
+        public static boolean shouldSendExtraPacket() { return false; }
     }
 
     public static class Spartan {
