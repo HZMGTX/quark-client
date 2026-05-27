@@ -40,6 +40,24 @@ public class NotificationOverlay extends Module {
         QUEUE.add(new Notification(title, message, type, 80));
     }
 
+    // Convenience overloads so modules can call show() as well
+    public static void show(String title, String message, int colorRgb, int durationMs) {
+        NotifType type = colorRgb == 0xFF4444 ? NotifType.ERROR
+                       : colorRgb == 0xFFAA00 ? NotifType.WARNING
+                       : colorRgb == 0x44FF44 ? NotifType.SUCCESS
+                       : NotifType.INFO;
+        int ticks = Math.max(1, durationMs / 50);
+        QUEUE.add(new Notification(title, message, type, ticks));
+    }
+
+    public static void show(String message, int durationMs) {
+        show("Quark", message, 0x4488FF, durationMs);
+    }
+
+    public static void show(String title, String message) {
+        show(title, message, 0x4488FF, 4000);
+    }
+
     private final IntSetting maxShown = register(new IntSetting(
             "Max", "Maximum notifications on screen at once", 5, 1, 10));
     private final BoolSetting timerBar = register(new BoolSetting(
