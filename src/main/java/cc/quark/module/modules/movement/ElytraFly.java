@@ -27,7 +27,7 @@ public class ElytraFly extends Module {
             "Auto Launch", "Automatically start gliding when falling", true));
 
     public ElytraFly() {
-        super("ElytraFly", "Fly using elytra mechanics", Category.MOVEMENT, 0);
+        super("ElytraFly", "Fly using elytra mechanics", Category.MOVEMENT);
     }
 
     @Override

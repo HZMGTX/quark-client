@@ -16,7 +16,7 @@ public class NoFog extends Module {
     private final BoolSetting blindFog  = register(new BoolSetting("Blind Fog",  "Cancel blindness and darkness effect fog",   true));
 
     public NoFog() {
-        super("NoFog", "Removes various fog effects from the world", Category.RENDER, 0);
+        super("NoFog", "Removes various fog effects from the world", Category.RENDER);
     }
 
     @EventHandler

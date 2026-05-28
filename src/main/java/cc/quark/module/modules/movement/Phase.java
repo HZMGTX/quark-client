@@ -14,7 +14,7 @@ public class Phase extends Module {
     private final ModeSetting mode = register(new ModeSetting("Mode", "Phase mode", "Gate", "Gate", "Clip"));
 
     public Phase() {
-        super("Phase", "Phase through blocks", Category.MOVEMENT, 0);
+        super("Phase", "Phase through blocks", Category.MOVEMENT);
     }
 
     

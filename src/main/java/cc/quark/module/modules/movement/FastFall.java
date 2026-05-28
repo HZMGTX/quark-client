@@ -12,7 +12,7 @@ public class FastFall extends Module {
     private final DoubleSetting speed = register(new DoubleSetting("Speed", "Fall speed multiplier", 3.0, 1.0, 10.0));
 
     public FastFall() {
-        super("FastFall", "Fall faster when sneaking", Category.MOVEMENT, 0);
+        super("FastFall", "Fall faster when sneaking", Category.MOVEMENT);
     }
 
     

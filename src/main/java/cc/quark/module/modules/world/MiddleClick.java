@@ -14,7 +14,7 @@ public class MiddleClick extends Module {
     private final BoolSetting friends = register(new BoolSetting("Friends", "Add/remove friends on middle click", true));
 
     public MiddleClick() {
-        super("MiddleClick", "Middle click to add/remove friends", Category.WORLD, 0);
+        super("MiddleClick", "Middle click to add/remove friends", Category.WORLD);
     }
 
     

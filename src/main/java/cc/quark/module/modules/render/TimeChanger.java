@@ -12,7 +12,7 @@ public class TimeChanger extends Module {
     private final IntSetting time = register(new IntSetting("Time", "Client-side time (0=midnight, 6000=day, 18000=sunset)", 6000, 0, 24000));
 
     public TimeChanger() {
-        super("TimeChanger", "Changes the client-side time of day", Category.RENDER, 0);
+        super("TimeChanger", "Changes the client-side time of day", Category.RENDER);
     }
 
     

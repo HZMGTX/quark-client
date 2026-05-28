@@ -21,7 +21,7 @@ public class Crosshair extends Module {
     private final BoolSetting showDefault = register(new BoolSetting("Show Default", "Show vanilla crosshair too", false));
 
     public Crosshair() {
-        super("Crosshair", "Custom crosshair renderer", Category.RENDER, 0);
+        super("Crosshair", "Custom crosshair renderer", Category.RENDER);
     }
 
     

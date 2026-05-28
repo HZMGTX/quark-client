@@ -33,7 +33,7 @@ public class ChestAura extends Module {
     private int slotIndex = 0;
 
     public ChestAura() {
-        super("ChestAura", "Automatically steals from nearby chests", Category.PLAYER, 0);
+        super("ChestAura", "Automatically steals from nearby chests", Category.PLAYER);
     }
 
     @Override

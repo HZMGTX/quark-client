@@ -15,7 +15,7 @@ public class AntiVoid extends Module {
     private Vec3d lastSafePos;
 
     public AntiVoid() {
-        super("AntiVoid", "Prevents falling into the void", Category.MOVEMENT, 0);
+        super("AntiVoid", "Prevents falling into the void", Category.MOVEMENT);
     }
 
     @Override

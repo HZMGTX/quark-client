@@ -13,7 +13,7 @@ public class AirJump extends Module {
     private int jumpsLeft;
 
     public AirJump() {
-        super("AirJump", "Jump multiple times in the air", Category.MOVEMENT, 0);
+        super("AirJump", "Jump multiple times in the air", Category.MOVEMENT);
     }
 
     @Override

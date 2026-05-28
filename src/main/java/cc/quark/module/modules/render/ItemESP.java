@@ -18,7 +18,7 @@ public class ItemESP extends Module {
     private final ModeSetting filter = register(new ModeSetting("Filter", "Item filter", "Valuable", "All", "Valuable", "Custom"));
 
     public ItemESP() {
-        super("ItemESP", "Shows dropped items on the ground", Category.RENDER, 0);
+        super("ItemESP", "Shows dropped items on the ground", Category.RENDER);
     }
 
     

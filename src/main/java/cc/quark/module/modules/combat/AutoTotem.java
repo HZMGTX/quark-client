@@ -30,7 +30,7 @@ public class AutoTotem extends Module {
             "Explosion Detection", "Switch to totem when TNT or Creeper is nearby", true));
 
     public AutoTotem() {
-        super("AutoTotem", "Automatically moves totems to offhand", Category.COMBAT, 0);
+        super("AutoTotem", "Automatically moves totems to offhand", Category.COMBAT);
     }
 
     @Override

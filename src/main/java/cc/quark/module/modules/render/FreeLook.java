@@ -16,7 +16,7 @@ public class FreeLook extends Module {
     private float lockedPitch;
 
     public FreeLook() {
-        super("FreeLook", "Look around freely without rotating your body or sending real rotation to server", Category.RENDER, 0);
+        super("FreeLook", "Look around freely without rotating your body or sending real rotation to server", Category.RENDER);
     }
 
     @Override

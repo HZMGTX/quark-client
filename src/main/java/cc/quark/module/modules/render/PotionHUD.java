@@ -19,7 +19,7 @@ public class PotionHUD extends Module {
     private final BoolSetting compact = register(new BoolSetting("Compact", "Compact display", false));
 
     public PotionHUD() {
-        super("PotionHUD", "Shows active potion effects", Category.RENDER, 0);
+        super("PotionHUD", "Shows active potion effects", Category.RENDER);
     }
 
     

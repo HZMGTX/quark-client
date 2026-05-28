@@ -16,7 +16,7 @@ public class PacketLogger extends Module {
     private final ModeSetting filter = register(new ModeSetting("Filter", "Packet filter", "All", "All", "Movement", "Combat", "World"));
 
     public PacketLogger() {
-        super("PacketLogger", "Logs all packets for debugging", Category.PLAYER, 0);
+        super("PacketLogger", "Logs all packets for debugging", Category.PLAYER);
     }
 
     
