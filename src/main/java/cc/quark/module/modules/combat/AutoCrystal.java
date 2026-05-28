@@ -8,6 +8,7 @@ import cc.quark.module.Module;
 import cc.quark.setting.BoolSetting;
 import cc.quark.setting.DoubleSetting;
 import cc.quark.setting.IntSetting;
+import cc.quark.util.DamageUtil;
 import cc.quark.util.EntityUtil;
 import net.minecraft.block.Blocks;
 import net.minecraft.entity.Entity;
@@ -48,6 +49,12 @@ public class AutoCrystal extends Module {
     private final BoolSetting rotate = register(new BoolSetting(
             "Rotate", "Silently rotate toward crystal positions using RotationManager", true));
 
+    private final BoolSetting antiSuicide = register(new BoolSetting(
+            "Anti Suicide", "Skip placement if self-damage exceeds 85% of current health", true));
+
+    private final BoolSetting smartPlace = register(new BoolSetting(
+            "Smart Place", "Find the best position that maximizes target damage while minimizing self damage", true));
+
     private final BoolSetting renderPlace = register(new BoolSetting(
             "Render Place", "Highlight positions where crystals will be placed", true));
 
@@ -57,6 +64,7 @@ public class AutoCrystal extends Module {
     private int ticksSincePlace = 0;
     private int ticksSinceBreak = 0;
     private BlockPos lastPlacePos = null;
+    private PlayerEntity cachedTarget = null;
 
     public AutoCrystal() {
         super("AutoCrystal", "Automatically places and breaks end crystals for damage",
@@ -65,7 +73,10 @@ public class AutoCrystal extends Module {
 
     @Override
     public String getSuffix() {
-        return String.format("%.1f", minDamage.get());
+        if (cachedTarget != null && !cachedTarget.isDead() && cachedTarget.getHealth() > 0) {
+            return "[" + cachedTarget.getGameProfile().getName() + "]";
+        }
+        return "";
     }
 
     @Override
@@ -73,6 +84,7 @@ public class AutoCrystal extends Module {
         ticksSincePlace = 0;
         ticksSinceBreak = 0;
         lastPlacePos = null;
+        cachedTarget = null;
     }
 
     @EventHandler
@@ -81,6 +93,9 @@ public class AutoCrystal extends Module {
 
         ticksSincePlace++;
         ticksSinceBreak++;
+
+        // Update target reference
+        cachedTarget = findBestDpsTarget();
 
         // Break existing crystals first (separate delay)
         if (ticksSinceBreak > breakDelay.get()) {
@@ -106,12 +121,21 @@ public class AutoCrystal extends Module {
         // Place new crystals
         if (ticksSincePlace <= placeDelay.get()) return;
 
-        // Find target with highest DPS (most damage)
-        PlayerEntity target = findBestDpsTarget();
+        PlayerEntity target = cachedTarget;
         if (target == null) return;
 
-        BlockPos placePos = findBestPlacement(target);
+        BlockPos placePos = smartPlace.isEnabled()
+                ? findSmartPlacement(target)
+                : findBestPlacement(target);
         if (placePos == null) return;
+
+        // Anti Suicide check using DamageUtil
+        if (antiSuicide.isEnabled()) {
+            Vec3d crystalCenter = Vec3d.ofCenter(placePos.up());
+            float selfDmg = DamageUtil.getSelfDamage(crystalCenter);
+            float playerHealth = mc.player.getHealth();
+            if (selfDmg > playerHealth * 0.85f) return;
+        }
 
         // Switch to crystal slot in hotbar
         int crystalSlot = findCrystalSlot();
@@ -138,6 +162,58 @@ public class AutoCrystal extends Module {
         ticksSincePlace = 0;
 
         mc.player.getInventory().selectedSlot = prevSlot;
+    }
+
+    /**
+     * Smart placement: tries positions around the target (4 cardinal blocks) and picks
+     * the one with the best damage-to-self-damage ratio.
+     */
+    private BlockPos findSmartPlacement(PlayerEntity target) {
+        BlockPos targetPos = target.getBlockPos();
+        int[] offsets = {0, 1, -1, 2, -2};
+        double bestScore = Double.NEGATIVE_INFINITY;
+        BlockPos bestPos = null;
+
+        // Try positions around the target
+        int[][] candidates = {
+            {0, 0}, {1, 0}, {-1, 0}, {0, 1}, {0, -1},
+            {2, 0}, {-2, 0}, {0, 2}, {0, -2},
+            {1, 1}, {1, -1}, {-1, 1}, {-1, -1}
+        };
+
+        for (int[] offset : candidates) {
+            for (int dy = -2; dy <= 2; dy++) {
+                BlockPos pos = targetPos.add(offset[0], dy, offset[1]);
+
+                var base = mc.world.getBlockState(pos).getBlock();
+                if (base != Blocks.OBSIDIAN && base != Blocks.BEDROCK) continue;
+
+                BlockPos above = pos.up();
+                if (!mc.world.getBlockState(above).isAir()) continue;
+
+                BlockPos aboveAbove = above.up();
+                if (!mc.world.getBlockState(aboveAbove).isAir()) continue;
+
+                Vec3d crystalCenter = Vec3d.ofCenter(above);
+                if (mc.player.getEyePos().distanceTo(crystalCenter) > placeRange.get()) continue;
+
+                double dmgToTarget = calcExplosionDamage(target, crystalCenter);
+                double dmgToSelf = calcExplosionDamage(mc.player, crystalCenter);
+
+                if (dmgToTarget < minDamage.get()) continue;
+                if (dmgToSelf > maxSelfDamage.get()) continue;
+
+                // Smart score: maximize target damage / (self damage + 1) ratio
+                double score = dmgToTarget / (dmgToSelf + 1.0);
+                if (score > bestScore) {
+                    bestScore = score;
+                    bestPos = pos;
+                }
+            }
+        }
+
+        // Fall back to normal placement if smart placement found nothing
+        return bestPos != null ? bestPos : findBestPlacement(target);
     }
 
     private BlockPos findBestPlacement(PlayerEntity target) {

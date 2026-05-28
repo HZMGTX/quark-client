@@ -22,20 +22,23 @@ import java.util.List;
 
 public class AimAssist extends Module {
 
-    private final DoubleSetting fov = register(new DoubleSetting(
-            "FOV", "Half-angle of the FOV cone for target detection (degrees)", 90.0, 30.0, 180.0));
-
     private final DoubleSetting strength = register(new DoubleSetting(
-            "Strength", "Lerp factor per tick toward target (0.1 = gentle, 1.0 = snap)", 0.3, 0.1, 1.0));
+            "Strength", "How strongly to snap toward the target per tick (0.1 = gentle, 1.0 = snap)", 0.3, 0.1, 1.0));
+
+    private final DoubleSetting fov = register(new DoubleSetting(
+            "FOV", "Half-angle of the FOV cone for target detection (degrees)", 60.0, 10.0, 360.0));
 
     private final BoolSetting onlyPlayers = register(new BoolSetting(
-            "Only Players", "Only assist against other players", false));
+            "Players Only", "Only assist against other players", false));
+
+    private final BoolSetting smooth = register(new BoolSetting(
+            "Smooth", "Use smooth interpolation instead of direct angle application", true));
+
+    private final BoolSetting onlyWhenClicking = register(new BoolSetting(
+            "Only When Clicking", "Only assist while holding left mouse button (LMB)", false));
 
     private final BoolSetting visibleOnly = register(new BoolSetting(
             "Visible Only", "Only assist toward targets with line-of-sight", false));
-
-    private final BoolSetting requireAttack = register(new BoolSetting(
-            "Only On Click", "Only assist while holding left mouse button", false));
 
     private final BoolSetting targetMobs = register(new BoolSetting(
             "Mobs", "Target hostile mobs", true));
@@ -51,7 +54,7 @@ public class AimAssist extends Module {
     public void onPreMotion(EventPreMotion event) {
         if (mc.player == null || mc.world == null) return;
 
-        if (requireAttack.isEnabled()) {
+        if (onlyWhenClicking.isEnabled()) {
             if (mc.options == null || !mc.options.attackKey.isPressed()) return;
         }
 
@@ -62,22 +65,35 @@ public class AimAssist extends Module {
         float desiredYaw   = RotationUtil.getYaw(targetEye);
         float desiredPitch = RotationUtil.getPitch(targetEye);
 
-        float lerp = (float) strength.get();
-
         float currentYaw   = event.getYaw();
         float currentPitch = event.getPitch();
 
         float yawDiff   = MathHelper.wrapDegrees(desiredYaw - currentYaw);
         float pitchDiff = desiredPitch - currentPitch;
 
-        float newYaw   = currentYaw   + yawDiff   * lerp;
-        float newPitch = currentPitch + pitchDiff * lerp;
+        float newYaw, newPitch;
+
+        if (smooth.isEnabled()) {
+            // Smooth lerp: fractional nudge toward target each tick
+            float lerp = (float) strength.get();
+            newYaw   = currentYaw   + yawDiff   * lerp;
+            newPitch = currentPitch + pitchDiff * lerp;
+        } else {
+            // Direct snap: apply full strength as a max-degrees clamp per tick
+            float maxDelta = (float)(strength.get() * 45.0); // strength * 45 degrees max
+            float yawStep   = Math.signum(yawDiff)   * Math.min(Math.abs(yawDiff),   maxDelta);
+            float pitchStep = Math.signum(pitchDiff) * Math.min(Math.abs(pitchDiff), maxDelta);
+            newYaw   = currentYaw   + yawStep;
+            newPitch = currentPitch + pitchStep;
+        }
+
+        newPitch = MathHelper.clamp(newPitch, -90f, 90f);
 
         event.setYaw(newYaw);
-        event.setPitch(MathHelper.clamp(newPitch, -90f, 90f));
+        event.setPitch(newPitch);
 
         mc.player.setYaw(newYaw);
-        mc.player.setPitch(MathHelper.clamp(newPitch, -90f, 90f));
+        mc.player.setPitch(newPitch);
         mc.player.headYaw = newYaw;
         mc.player.bodyYaw = newYaw;
     }

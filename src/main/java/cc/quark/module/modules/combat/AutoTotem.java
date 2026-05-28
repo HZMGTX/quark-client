@@ -15,16 +15,17 @@ import net.minecraft.screen.slot.SlotActionType;
 
 public class AutoTotem extends Module {
 
-    private static final int OFFHAND_SLOT = 40;
+    // Slot 45 in the player's screen handler is the offhand slot
+    private static final int OFFHAND_SLOT = 45;
 
     private final DoubleSetting healthThreshold = register(new DoubleSetting(
-            "Health Threshold", "Move totem to offhand when health is at or below this value", 6.0, 2.0, 16.0));
+            "Health Threshold", "Swap totem to offhand when health is at or below this value", 10.0, 1.0, 10.0));
 
-    private final BoolSetting checkOffhand = register(new BoolSetting(
-            "Check Offhand", "Only swap when offhand is empty or not a totem", true));
+    private final BoolSetting keepSwap = register(new BoolSetting(
+            "Keep Swap", "Always keep a totem in offhand regardless of health threshold", false));
 
-    private final BoolSetting crystalDetection = register(new BoolSetting(
-            "Crystal Detection", "Switch to totem when an End Crystal is within 6 blocks", true));
+    private final BoolSetting crystalDetect = register(new BoolSetting(
+            "Crystal Detect", "Preemptively swap when an End Crystal is placed within 6 blocks", true));
 
     private final BoolSetting explosionDetection = register(new BoolSetting(
             "Explosion Detection", "Switch to totem when TNT or Creeper is nearby", true));
@@ -45,12 +46,21 @@ public class AutoTotem extends Module {
 
         boolean shouldSwap = false;
 
-        float health = mc.player.getHealth();
-        if (health <= (float) healthThreshold.get()) {
+        // Keep Swap: always maintain a totem in offhand
+        if (keepSwap.isEnabled()) {
             shouldSwap = true;
         }
 
-        if (!shouldSwap && crystalDetection.isEnabled()) {
+        // Health threshold check
+        if (!shouldSwap) {
+            float health = mc.player.getHealth();
+            if (health <= (float) healthThreshold.get()) {
+                shouldSwap = true;
+            }
+        }
+
+        // Crystal detection: preemptively swap when crystal is near
+        if (!shouldSwap && crystalDetect.isEnabled()) {
             for (Entity entity : mc.world.getEntities()) {
                 if (entity instanceof EndCrystalEntity) {
                     if (mc.player.distanceTo(entity) <= 6.0) {
@@ -61,6 +71,7 @@ public class AutoTotem extends Module {
             }
         }
 
+        // Explosion detection: TNT or Creeper nearby
         if (!shouldSwap && explosionDetection.isEnabled()) {
             for (Entity entity : mc.world.getEntities()) {
                 boolean isThreat = entity instanceof TntEntity || entity instanceof CreeperEntity;
@@ -73,23 +84,27 @@ public class AutoTotem extends Module {
 
         if (!shouldSwap) return;
 
-        if (checkOffhand.isEnabled() &&
-                mc.player.getOffHandStack().getItem() == Items.TOTEM_OF_UNDYING) return;
+        // Don't swap if offhand already has a totem
+        if (mc.player.getOffHandStack().getItem() == Items.TOTEM_OF_UNDYING) return;
 
         int totemSlot = findTotemSlot();
         if (totemSlot == -1) return;
 
         int syncId = mc.player.playerScreenHandler.syncId;
 
+        // Pick up the totem from its slot
         mc.interactionManager.clickSlot(syncId, totemSlot, 0, SlotActionType.PICKUP, mc.player);
+        // Place it in the offhand slot (slot 45)
         mc.interactionManager.clickSlot(syncId, OFFHAND_SLOT, 0, SlotActionType.PICKUP, mc.player);
 
+        // If the cursor still has an item (offhand was occupied), put it back
         if (!mc.player.currentScreenHandler.getCursorStack().isEmpty()) {
             mc.interactionManager.clickSlot(syncId, totemSlot, 0, SlotActionType.PICKUP, mc.player);
         }
     }
 
     private int findTotemSlot() {
+        // Search entire inventory (slots 0–35 in playerScreenHandler correspond to inventory + hotbar)
         for (int i = 0; i <= 35; i++) {
             var stack = mc.player.playerScreenHandler.getSlot(i).getStack();
             if (stack.getItem() == Items.TOTEM_OF_UNDYING) {
