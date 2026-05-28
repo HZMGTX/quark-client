@@ -4,156 +4,94 @@ import cc.quark.event.EventHandler;
 import cc.quark.event.events.EventTick;
 import cc.quark.module.Category;
 import cc.quark.module.Module;
+import cc.quark.setting.BoolSetting;
 import cc.quark.setting.IntSetting;
 import cc.quark.setting.ModeSetting;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
+import cc.quark.util.TimerUtil;
 import net.minecraft.network.packet.c2s.play.PlayerActionC2SPacket;
-import net.minecraft.registry.Registries;
+import net.minecraft.util.Hand;
+import net.minecraft.util.hit.BlockHitResult;
+import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.Vec3i;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-
-/**
- * AutoMine - automatically mines a specific block type in range.
- *
- * The player can set which block to mine via the Mode setting or by
- * using the .automine <block> command through the command system.
- *
- * Predefined modes:
- *   Diamond â€“ mine diamond ore and deepslate diamond ore
- *   Gold    â€“ gold ore variants
- *   Iron    â€“ iron ore variants
- *   Logs    â€“ all log types (useful for auto-woodcutting)
- *   Custom  â€“ user-specified block ID set via setTargetBlock()
- */
 public class AutoMine extends Module {
 
-    private final ModeSetting blockMode = register(new ModeSetting(
-            "Block", "Block type to mine", "Diamond",
-            "Diamond", "Gold", "Iron", "Logs", "Custom"));
+    private final ModeSetting mode = register(new ModeSetting(
+            "Mode", "Mining behavior",
+            "Continuous",
+            "Continuous", "Single", "Vein"));
 
-    private final IntSetting range = register(new IntSetting(
-            "Range", "Search radius for target blocks", 4, 1, 8));
+    private final BoolSetting crosshair = register(new BoolSetting(
+            "Target Crosshair", "Mine whatever block the crosshair points to", true));
 
-    private String customBlock = "minecraft:stone";
+    private final IntSetting delayMs = register(new IntSetting(
+            "Delay", "Milliseconds between block breaks", 50, 0, 1000));
 
-    private int breakTick = 0;
-    private BlockPos currentTarget = null;
+    private final TimerUtil timer = new TimerUtil();
+    private BlockPos lastTarget = null;
+    private boolean mined = false;
 
     public AutoMine() {
-        super("AutoMine", "Auto-mines a specified block type in range", Category.WORLD);
-    }
-
-    public void setCustomBlock(String blockId) {
-        this.customBlock = blockId;
+        super("AutoMine", "Auto-mines the targeted block continuously or in single/vein modes", Category.WORLD);
     }
 
     @Override
     public void onEnable() {
-        currentTarget = null;
-        breakTick = 0;
+        lastTarget = null;
+        mined = false;
+        timer.reset();
     }
 
     @EventHandler
     public void onTick(EventTick event) {
         if (mc.player == null || mc.world == null || mc.interactionManager == null) return;
+        if (!timer.hasReached(delayMs.get())) return;
 
-        BlockPos center = mc.player.getBlockPos();
-        int r = range.get();
+        if (!crosshair.isEnabled()) return;
 
-        // Find all matching blocks in range
-        List<BlockPos> candidates = new ArrayList<>();
-        for (int x = -r; x <= r; x++) {
-            for (int y = -r; y <= r; y++) {
-                for (int z = -r; z <= r; z++) {
-                    BlockPos pos = center.add(x, y, z);
-                    if (matchesMode(mc.world.getBlockState(pos).getBlock())) {
-                        candidates.add(pos);
-                    }
-                }
-            }
-        }
-
-        if (candidates.isEmpty()) {
-            currentTarget = null;
-            breakTick = 0;
+        HitResult hr = mc.crosshairTarget;
+        if (hr == null || hr.getType() != HitResult.Type.BLOCK) {
+            lastTarget = null;
+            mined = false;
             return;
         }
 
-        // Pick nearest candidate
-        BlockPos nearest = candidates.stream()
-                .min(Comparator.comparingDouble(p ->
-                        p.getSquaredDistance(new Vec3i(center.getX(), center.getY(), center.getZ()))))
-                .orElse(null);
+        BlockHitResult bhr = (BlockHitResult) hr;
+        BlockPos pos = bhr.getBlockPos();
+        Direction face = bhr.getSide();
 
-        if (nearest == null) return;
-
-        // If target changed, reset break progress
-        if (!nearest.equals(currentTarget)) {
-            currentTarget = nearest;
-            breakTick = 0;
+        if (mc.world.getBlockState(pos).isAir()) {
+            lastTarget = null;
+            mined = false;
+            return;
         }
 
-        // Rotate toward the target
-        double dx = nearest.getX() + 0.5 - mc.player.getX();
-        double dy = nearest.getY() + 0.5 - mc.player.getEyeY();
-        double dz = nearest.getZ() + 0.5 - mc.player.getZ();
-        double dist = Math.sqrt(dx * dx + dz * dz);
+        String m = mode.get();
 
-        float yaw   = (float)Math.toDegrees(Math.atan2(-dx, dz));
-        float pitch = (float)-Math.toDegrees(Math.atan2(dy, dist));
+        if (m.equals("Single")) {
+            if (mined && pos.equals(lastTarget)) return;
+        }
 
-        mc.player.setYaw(yaw);
-        mc.player.setPitch(pitch);
-
-        // Determine best face (just use whichever side is visible)
-        Direction face = getClosestFace(center, nearest);
-
-        if (breakTick == 0) {
+        if (!pos.equals(lastTarget)) {
+            lastTarget = pos;
+            mined = false;
             mc.player.networkHandler.sendPacket(new PlayerActionC2SPacket(
-                    PlayerActionC2SPacket.Action.START_DESTROY_BLOCK, nearest, face));
+                    PlayerActionC2SPacket.Action.START_DESTROY_BLOCK, pos, face));
         }
 
-        // Calculate break progress based on block hardness
-        BlockState state = mc.world.getBlockState(nearest);
-        float delta = state.calcBlockBreakingDelta(mc.player, mc.world, nearest);
+        mc.interactionManager.attackBlock(pos, face);
+        mc.player.swingHand(Hand.MAIN_HAND);
 
-        breakTick++;
-
-        // When progress would reach 1.0 (block broken), send stop packet
-        if (delta * breakTick >= 1.0f) {
+        if (mc.world.getBlockState(pos).isAir()) {
             mc.player.networkHandler.sendPacket(new PlayerActionC2SPacket(
-                    PlayerActionC2SPacket.Action.STOP_DESTROY_BLOCK, nearest, face));
-            mc.world.breakBlock(nearest, true, mc.player);
-            currentTarget = null;
-            breakTick = 0;
+                    PlayerActionC2SPacket.Action.STOP_DESTROY_BLOCK, pos, face));
+            mined = true;
+
+            if (m.equals("Vein")) {
+                lastTarget = null;
+            }
+            timer.reset();
         }
-    }
-
-    private boolean matchesMode(Block block) {
-        return switch (blockMode.get()) {
-            case "Diamond" -> block == Blocks.DIAMOND_ORE || block == Blocks.DEEPSLATE_DIAMOND_ORE;
-            case "Gold"    -> block == Blocks.GOLD_ORE    || block == Blocks.DEEPSLATE_GOLD_ORE
-                              || block == Blocks.NETHER_GOLD_ORE;
-            case "Iron"    -> block == Blocks.IRON_ORE    || block == Blocks.DEEPSLATE_IRON_ORE;
-            case "Logs"    -> block.getDefaultState().isIn(net.minecraft.registry.tag.BlockTags.LOGS);
-            case "Custom"  -> Registries.BLOCK.getId(block).toString().equals(customBlock);
-            default -> false;
-        };
-    }
-
-    private Direction getClosestFace(BlockPos from, BlockPos to) {
-        if (from.getY() < to.getY()) return Direction.DOWN;
-        if (from.getY() > to.getY()) return Direction.UP;
-        if (from.getX() < to.getX()) return Direction.WEST;
-        if (from.getX() > to.getX()) return Direction.EAST;
-        if (from.getZ() < to.getZ()) return Direction.NORTH;
-        return Direction.SOUTH;
     }
 }

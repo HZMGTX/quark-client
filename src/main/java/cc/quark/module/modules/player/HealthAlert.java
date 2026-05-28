@@ -5,35 +5,44 @@ import cc.quark.event.events.EventTick;
 import cc.quark.module.Category;
 import cc.quark.module.Module;
 import cc.quark.module.modules.render.NotificationOverlay;
+import cc.quark.setting.BoolSetting;
 import cc.quark.setting.DoubleSetting;
+import cc.quark.util.TimerUtil;
+import net.minecraft.client.sound.PositionedSoundInstance;
+import net.minecraft.sound.SoundEvents;
 
 public class HealthAlert extends Module {
 
-    private final DoubleSetting lowHp   = register(new DoubleSetting("Low HP",    "Warn when HP drops below this (hearts)", 6.0, 1.0, 18.0));
-    private final DoubleSetting critHp  = register(new DoubleSetting("Crit HP",   "Critical alert threshold (hearts)",      3.0, 0.5, 10.0));
+    private final DoubleSetting threshold = register(new DoubleSetting("Threshold", "Warn when health drops below this (hearts)", 6.0, 1.0, 15.0));
+    private final BoolSetting sound = register(new BoolSetting("Sound", "Play ping sound on alert", true));
 
-    private boolean wasCritical = false;
-    private boolean wasLow      = false;
+    private final TimerUtil cooldown = new TimerUtil();
+    private boolean wasLow = false;
 
     public HealthAlert() {
-        super("HealthAlert", "Sends HUD notifications when your health reaches warning thresholds", Category.PLAYER);
+        super("HealthAlert", "Warns when health is critically low", Category.PLAYER);
     }
 
     @EventHandler
     public void onTick(EventTick event) {
         if (mc.player == null) return;
         float hp = mc.player.getHealth() / 2f;
+        boolean isLow = hp <= threshold.get();
 
-        boolean isCritical = hp <= critHp.get();
-        boolean isLow      = hp <= lowHp.get();
-
-        if (isCritical && !wasCritical) {
-            NotificationOverlay.send("Health", "CRITICAL: " + String.format("%.1f", hp) + " hearts!", NotificationOverlay.NotifType.ERROR);
-        } else if (isLow && !wasLow) {
-            NotificationOverlay.send("Health", "Low HP: " + String.format("%.1f", hp) + " hearts", NotificationOverlay.NotifType.WARNING);
+        if (isLow && !wasLow && cooldown.hasReached(3000)) {
+            NotificationOverlay.send("Health Alert", "Low HP: " + String.format("%.1f", hp) + " hearts!", NotificationOverlay.NotifType.WARNING);
+            if (sound.isEnabled() && mc.getSoundManager() != null) {
+                mc.getSoundManager().play(PositionedSoundInstance.master(SoundEvents.BLOCK_NOTE_BLOCK_PLING, 1.0f, 1.0f));
+            }
+            cooldown.reset();
         }
 
-        wasCritical = isCritical;
-        wasLow      = isLow;
+        wasLow = isLow;
+    }
+
+    @Override
+    public void onEnable() {
+        wasLow = false;
+        cooldown.reset();
     }
 }

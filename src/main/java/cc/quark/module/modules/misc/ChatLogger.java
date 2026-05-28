@@ -11,23 +11,22 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.LocalTime;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 public class ChatLogger extends Module {
 
-    private static final DateTimeFormatter TIME_FMT = DateTimeFormatter.ofPattern("HH:mm:ss");
+    private static final DateTimeFormatter TIME_FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
-    private final BoolSetting includeOutgoing = register(new BoolSetting(
-            "Include Outgoing", "Also log messages sent by the player", false));
-
-    private final BoolSetting timestamp = register(new BoolSetting(
-            "Timestamp", "Prepend HH:mm:ss timestamp to each log entry", true));
+    private final BoolSetting logIncoming  = register(new BoolSetting("Log Incoming", "Log messages received from server", true));
+    private final BoolSetting logOutgoing  = register(new BoolSetting("Log Outgoing", "Log messages sent by the player", false));
+    private final BoolSetting includeSystem = register(new BoolSetting("Include System", "Log system/server messages", true));
+    private final BoolSetting timestamp    = register(new BoolSetting("Timestamp", "Prepend timestamp to each log entry", true));
 
     private FileWriter writer;
 
     public ChatLogger() {
-        super("ChatLogger", "Logs chat messages to .minecraft/quark/chat.log", Category.MISC);
+        super("ChatLogger", "Logs all chat to ~/.minecraft/quark/chat.log with timestamps", Category.MISC);
     }
 
     @Override
@@ -53,15 +52,18 @@ public class ChatLogger extends Module {
     @EventHandler
     public void onChat(EventChat event) {
         if (writer == null) return;
-        if (!event.isIncoming() && !includeOutgoing.isEnabled()) return;
+        if (event.isIncoming() && !logIncoming.isEnabled()) return;
+        if (!event.isIncoming() && !logOutgoing.isEnabled()) return;
 
+        String msg = event.getMessage();
+        if (msg == null || msg.isEmpty()) return;
+
+        String direction = event.isIncoming() ? "[IN]" : "[OUT]";
         String line;
         if (timestamp.isEnabled()) {
-            line = "[" + LocalTime.now().format(TIME_FMT) + "] "
-                    + (event.isIncoming() ? "[IN] " : "[OUT] ")
-                    + event.getMessage();
+            line = "[" + LocalDateTime.now().format(TIME_FMT) + "] " + direction + " " + msg;
         } else {
-            line = (event.isIncoming() ? "[IN] " : "[OUT] ") + event.getMessage();
+            line = direction + " " + msg;
         }
 
         try {

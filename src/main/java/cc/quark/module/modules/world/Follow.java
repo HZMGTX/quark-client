@@ -18,11 +18,12 @@ import net.minecraft.util.math.Vec3d;
 public class Follow extends Module {
 
     private final ModeSetting target = register(new ModeSetting(
-            "Target", "What entity type to follow", "Nearest Player",
+            "Target", "What entity type to follow",
+            "Nearest Player",
             "Nearest Player", "Nearest Mob", "Nearest Entity"));
 
-    private final DoubleSetting stopDist = register(new DoubleSetting(
-            "Distance", "Stop following when this close", 3.0, 1.0, 10.0));
+    private final DoubleSetting distance = register(new DoubleSetting(
+            "Distance", "Stop following when within this distance", 3.0, 2.0, 6.0));
 
     private final BoolSetting sprint = register(new BoolSetting(
             "Sprint", "Sprint while following", true));
@@ -31,15 +32,14 @@ public class Follow extends Module {
             "Jump", "Auto-jump over obstacles", true));
 
     public Follow() {
-        super("Follow", "Automatically follows the nearest target entity", Category.WORLD);
+        super("Follow", "Follows the nearest target entity, maintaining a configurable gap", Category.WORLD);
     }
 
     @Override
     public void onDisable() {
-        if (mc.player != null) {
-            mc.player.input.movementForward = 0.0f;
-            mc.player.setSprinting(false);
-        }
+        if (mc.player == null) return;
+        mc.player.input.movementForward = 0.0f;
+        mc.player.setSprinting(false);
     }
 
     @EventHandler
@@ -54,7 +54,7 @@ public class Follow extends Module {
         }
 
         double dist = mc.player.distanceTo(tgt);
-        if (dist <= stopDist.get()) {
+        if (dist <= distance.get()) {
             mc.player.input.movementForward = 0.0f;
             mc.player.setSprinting(false);
             return;
@@ -65,7 +65,7 @@ public class Follow extends Module {
         mc.player.setYaw(yaw);
         mc.player.input.movementForward = 1.0f;
 
-        if (sprint.isEnabled() && dist > stopDist.get() + 1.0) {
+        if (sprint.isEnabled() && dist > distance.get() + 1.5) {
             mc.player.setSprinting(true);
         }
 
@@ -75,13 +75,8 @@ public class Follow extends Module {
             BlockState frontUp = mc.world.getBlockState(front.up());
             if (!frontState.isAir() && frontUp.isAir()) {
                 mc.player.jump();
-            } else {
-                BlockPos frontDown = mc.player.getBlockPos().offset(mc.player.getHorizontalFacing()).down();
-                if (mc.world.getBlockState(frontDown).isAir()
-                        && mc.world.getBlockState(frontDown.down()).isAir()) {
-                } else if (!frontState.isAir()) {
-                    mc.player.jump();
-                }
+            } else if (!frontState.isAir()) {
+                mc.player.jump();
             }
         }
     }
@@ -106,5 +101,10 @@ public class Follow extends Module {
             }
         }
         return closest;
+    }
+
+    @Override
+    public String getSuffix() {
+        return target.get();
     }
 }
