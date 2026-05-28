@@ -57,8 +57,8 @@ public class TargetHUD extends Module {
         if (target == null) return;
 
         DrawContext ctx = event.getDrawContext();
-        int posX = x.getValue();
-        int posY = y.getValue();
+        int posX = x.get();
+        int posY = y.get();
         int width = 140;
         int height = 45;
 

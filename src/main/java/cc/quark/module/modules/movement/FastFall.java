@@ -1,6 +1,5 @@
 package cc.quark.module.modules.movement;
 
-import cc.quark.Quark;
 import cc.quark.event.EventHandler;
 import cc.quark.event.events.EventTick;
 import cc.quark.module.Category;
@@ -23,7 +22,7 @@ public class FastFall extends Module {
     public void onTick(EventTick event) {
         if (mc.player == null) return;
         if (!mc.player.isOnGround() && mc.options.sneakKey.isPressed()) {
-            mc.player.setVelocity(mc.player.getVelocity().x, -speed.getValue() * 0.1, mc.player.getVelocity().z);
+            mc.player.setVelocity(mc.player.getVelocity().x, -speed.get() * 0.1, mc.player.getVelocity().z);
         }
     }
 }

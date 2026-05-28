@@ -1,6 +1,5 @@
 package cc.quark.module.modules.render;
 
-import cc.quark.Quark;
 import cc.quark.event.EventHandler;
 import cc.quark.event.events.EventRender2D;
 import cc.quark.module.Category;
@@ -36,16 +35,16 @@ public class Crosshair extends Module {
         int sh = ctx.getScaledWindowHeight();
         int cx = sw / 2;
         int cy = sh / 2;
-        int c = color.getValue();
+        int c = color.get();
 
-        int s = size.getValue();
-        if (dynamicExpand.getValue()) {
+        int s = size.get();
+        if (dynamicExpand.isEnabled()) {
             Vec3d vel = mc.player.getVelocity();
             double spd = Math.sqrt(vel.x * vel.x + vel.z * vel.z);
             s += (int)(spd * 10);
         }
 
-        switch (style.getValue()) {
+        switch (style.get()) {
             case "Plus" -> {
                 ctx.fill(cx - s, cy - 1, cx + s, cy + 1, c);
                 ctx.fill(cx - 1, cy - s, cx + 1, cy + s, c);

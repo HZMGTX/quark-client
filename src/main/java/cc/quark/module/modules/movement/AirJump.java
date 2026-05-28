@@ -1,8 +1,7 @@
 package cc.quark.module.modules.movement;
 
-import cc.quark.Quark;
 import cc.quark.event.EventHandler;
-import cc.quark.event.events.EventJump;
+import cc.quark.event.events.EventTick;
 import cc.quark.module.Category;
 import cc.quark.module.Module;
 import cc.quark.setting.IntSetting;
@@ -11,6 +10,7 @@ public class AirJump extends Module {
 
     private final IntSetting count = register(new IntSetting("Extra Jumps", "Number of extra jumps in air", 1, 1, 3));
     private int jumpsLeft;
+    private boolean jumpKeyPressed = false;
 
     public AirJump() {
         super("AirJump", "Jump multiple times in the air", Category.MOVEMENT);
@@ -18,19 +18,16 @@ public class AirJump extends Module {
 
     @Override
     public void onEnable() {
-        jumpsLeft = count.getValue();
+        jumpsLeft = count.get();
+        jumpKeyPressed = false;
     }
 
-    
-
-    private boolean jumpKeyPressed = false;
-
-    @Override
-    public void onTick() {
+    @EventHandler
+    public void onTick(EventTick event) {
         if (mc.player == null) return;
-        
+
         if (mc.player.isOnGround() || mc.player.isClimbing()) {
-            jumpsLeft = count.getValue();
+            jumpsLeft = count.get();
         } else if (jumpsLeft > 0 && mc.options.jumpKey.isPressed()) {
             if (!jumpKeyPressed) {
                 mc.player.jump();
@@ -40,7 +37,7 @@ public class AirJump extends Module {
                 jumpKeyPressed = true;
             }
         }
-        
+
         if (!mc.options.jumpKey.isPressed()) {
             jumpKeyPressed = false;
         }

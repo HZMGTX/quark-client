@@ -34,12 +34,12 @@ public class AntiVoid extends Module {
             lastSafePos = pos;
         }
 
-        if (pos.y < threshold.getValue() && lastSafePos != null) {
+        if (pos.y < threshold.get() && lastSafePos != null) {
             mc.player.setPos(lastSafePos.x, lastSafePos.y, lastSafePos.z);
             mc.player.setVelocity(0, 0, 0);
         }
 
-        if (pos.y < threshold.getValue() - 5) {
+        if (pos.y < threshold.get() - 5) {
             mc.player.setVelocity(mc.player.getVelocity().x, 0.5, mc.player.getVelocity().z);
         }
     }

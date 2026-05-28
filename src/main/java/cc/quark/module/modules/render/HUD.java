@@ -137,8 +137,8 @@ public class HUD extends Module {
             int versionWidth   = mc.textRenderer.getWidth(versionText);
             int wmWidth        = nameWidth + versionWidth + padding * 2;
             int wmHeight       = mc.textRenderer.fontHeight + padding;
-            int renderX        = wmX.getValue();
-            int renderY        = wmY.getValue();
+            int renderX        = wmX.get();
+            int renderY        = wmY.get();
 
             int accentFull  = (cc.quark.gui.ClickGUI.getAccentColor() & 0x00FFFFFF) | 0xAA000000;
             RenderUtil.drawGradientRect(ctx, renderX, renderY, renderX + wmWidth, renderY + wmHeight, accentFull, 0x00000000);
@@ -151,10 +151,10 @@ public class HUD extends Module {
         // ---- Module List (right side) ----
         if (!minimal) {
             List<Module> enabled = Quark.getInstance().getModuleManager().getEnabledModules();
-            int yOffset       = listY.getValue();
+            int yOffset       = listY.get();
             int paddingH      = mc.textRenderer.fontHeight / 3;
             int elementHeight = mc.textRenderer.fontHeight + paddingH * 2;
-            int rightOffset   = listX.getValue();
+            int rightOffset   = listX.get();
 
             for (int i = enabled.size() - 1; i >= 0; i--) {
                 Module mod = enabled.get(i);
@@ -183,8 +183,8 @@ public class HUD extends Module {
         }
 
         // ---- Stats panel: Health, Hunger, Armor, Speed ----
-        int sy = statsY.getValue();
-        int sx = statsX.getValue();
+        int sy = statsY.get();
+        int sx = statsX.get();
         int lineH = mc.textRenderer.fontHeight + 2;
 
         if (showHealth.isEnabled()) {
@@ -223,8 +223,8 @@ public class HUD extends Module {
 
         // ---- Coordinates / FPS / BPS (bottom-left) ----
         if (coordinates.isEnabled()) {
-            int renderX = coordsX.getValue();
-            int y       = screenH - coordsY.getValue();
+            int renderX = coordsX.get();
+            int y       = screenH - coordsY.get();
             String coordStr = String.format("XYZ: %.1f / %.1f / %.1f",
                     player.getX(), player.getY(), player.getZ());
             RenderUtil.drawCustomText(ctx, coordStr, renderX, y, 0xFFFFFFFF);

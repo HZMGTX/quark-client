@@ -33,7 +33,7 @@ public class StorageESP extends Module {
         if (mc.player == null || mc.world == null) return;
         MatrixStack matrices = event.getMatrixStack();
 
-        int chunkRadius = (range.getValue() >> 4) + 1;
+        int chunkRadius = (range.get() >> 4) + 1;
         ChunkPos playerChunk = new ChunkPos(mc.player.getBlockPos());
 
         for (int cx = playerChunk.x - chunkRadius; cx <= playerChunk.x + chunkRadius; cx++) {
@@ -42,7 +42,7 @@ public class StorageESP extends Module {
                 if (chunk == null) continue;
 
                 for (BlockEntity be : chunk.getBlockEntities().values()) {
-                    if (mc.player.getPos().distanceTo(be.getPos().toCenterPos()) > range.getValue()) continue;
+                    if (mc.player.getPos().distanceTo(be.getPos().toCenterPos()) > range.get()) continue;
 
                     float[] color = getColor(be);
                     if (color == null) continue;

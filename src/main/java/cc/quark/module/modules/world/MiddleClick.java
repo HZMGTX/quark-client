@@ -24,7 +24,7 @@ public class MiddleClick extends Module {
     @EventHandler
     public void onAttack(EventAttack event) {
         if (!(event.getTarget() instanceof PlayerEntity player)) return;
-        if (!friends.getValue()) return;
+        if (!friends.isEnabled()) return;
         String name = player.getName().getString();
         var fm = Quark.getInstance().getFriendManager();
         if (fm.isFriend(name)) {
