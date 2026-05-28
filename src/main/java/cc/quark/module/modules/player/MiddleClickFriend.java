@@ -23,8 +23,7 @@ public class MiddleClickFriend extends Module {
     public void onTick(EventTick event) {
         if (mc.player == null || mc.getWindow() == null) return;
 
-        boolean middleDown = GLFW.glfwGetMouseButton(mc.getWindow().getHandle(), GLFW.GLFW_MOUSE_BUTTON_MIDDLE)
-                             == GLFW.GLFW_PRESS;
+        boolean middleDown = GLFW.glfwGetMouseButton(mc.getWindow().getHandle(), GLFW.GLFW_MOUSE_BUTTON_MIDDLE) == GLFW.GLFW_PRESS;
 
         if (middleDown && !wasMiddleDown) {
             if (mc.crosshairTarget != null && mc.crosshairTarget.getType() == HitResult.Type.ENTITY) {

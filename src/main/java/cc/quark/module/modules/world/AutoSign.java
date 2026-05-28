@@ -17,10 +17,10 @@ public class AutoSign extends Module {
     private final ModeSetting preset = register(new ModeSetting(
             "Preset", "Text preset to write on signs",
             "Quark.cc",
-            "Quark.cc", "Hello!", "GG", "Come at me", "For Sale", "Private", "No Entry", "Custom"));
+            "Quark.cc", "Hello!", "GG", "Come at me", "For Sale", "Private", "No Entry", "Blank"));
 
     private final BoolSetting closeAfter = register(new BoolSetting(
-            "Auto Close", "Close the sign editor automatically after filling", true));
+            "Auto Close", "Close the sign editor after filling", true));
 
     private BlockPos pendingPos = null;
     private boolean  isFront   = true;
@@ -59,12 +59,12 @@ public class AutoSign extends Module {
     private String[] buildLines() {
         return switch (preset.get()) {
             case "Hello!"     -> new String[]{"Hello!", "", "", ""};
-            case "GG"         -> new String[]{"GG", "", "", ""};
+            case "GG"         -> new String[]{"GG", "EZ", "", ""};
             case "Come at me" -> new String[]{"Come at", "me bro", "", ""};
-            case "For Sale"   -> new String[]{"For Sale", "Contact me", "", ""};
+            case "For Sale"   -> new String[]{"For Sale", "Contact me", "in chat", ""};
             case "Private"    -> new String[]{"PRIVATE", "Keep Out", "", ""};
-            case "No Entry"   -> new String[]{"No Entry", "Authorized", "Only", ""};
-            case "Custom"     -> new String[]{"Custom", "Text", "", ""};
+            case "No Entry"   -> new String[]{"No Entry", "Authorized", "Personnel Only", ""};
+            case "Blank"      -> new String[]{"", "", "", ""};
             default            -> new String[]{"Quark.cc", "", "", ""};
         };
     }

@@ -7,23 +7,37 @@ import cc.quark.module.Category;
 import cc.quark.module.Module;
 import cc.quark.setting.ModeSetting;
 import net.minecraft.network.packet.c2s.play.PlayerMoveC2SPacket;
-import net.minecraft.util.Hand;
 
 public class CriticalHit extends Module {
 
-    private final ModeSetting mode = register(new ModeSetting("Mode", "How to trigger critical hits", "Packet", "Packet", "Jump"));
-    private boolean shouldJump = false;
+    private final ModeSetting mode = register(new ModeSetting("Mode", "How to trigger critical hits", "Packet", "Packet", "Jump", "Legit"));
+
+    private boolean pendingJump = false;
+    private boolean attackedThisTick = false;
 
     public CriticalHit() {
-        super("CriticalHit", "Makes every hit a critical hit", Category.COMBAT);
+        super("CriticalHit", "Makes every melee hit a critical hit", Category.COMBAT);
+    }
+
+    @Override
+    public void onEnable() {
+        pendingJump = false;
+        attackedThisTick = false;
+    }
+
+    @Override
+    public void onDisable() {
+        pendingJump = false;
+        attackedThisTick = false;
     }
 
     @EventHandler
     public void onAttack(EventAttack event) {
-        if (mc.player == null) return;
-        if (mode.is("Packet")) {
-            if (!mc.player.isOnGround()) return;
-            if (mc.getNetworkHandler() == null) return;
+        if (mc.player == null || mc.getNetworkHandler() == null) return;
+        if (mc.player.isInLava() || mc.player.isTouchingWater() || mc.player.isClimbing()) return;
+
+        String m = mode.get();
+        if (m.equals("Packet")) {
             double x = mc.player.getX();
             double y = mc.player.getY();
             double z = mc.player.getZ();
@@ -31,17 +45,27 @@ public class CriticalHit extends Module {
             mc.getNetworkHandler().sendPacket(new PlayerMoveC2SPacket.PositionAndOnGround(x, y, z, false));
             mc.getNetworkHandler().sendPacket(new PlayerMoveC2SPacket.PositionAndOnGround(x, y + 1.1E-5, z, false));
             mc.getNetworkHandler().sendPacket(new PlayerMoveC2SPacket.PositionAndOnGround(x, y, z, true));
-        } else {
-            shouldJump = true;
+        } else if (m.equals("Jump")) {
+            if (mc.player.isOnGround()) {
+                mc.player.jump();
+                pendingJump = true;
+                attackedThisTick = true;
+            }
+        } else if (m.equals("Legit")) {
+            if (mc.player.isOnGround()) {
+                mc.player.jump();
+            }
         }
     }
 
     @EventHandler
     public void onTick(EventTick event) {
         if (mc.player == null) return;
-        if (shouldJump && mc.player.isOnGround()) {
-            mc.player.jump();
-            shouldJump = false;
+
+        if (pendingJump && mc.player.isOnGround() && !attackedThisTick) {
+            pendingJump = false;
         }
+
+        attackedThisTick = false;
     }
 }

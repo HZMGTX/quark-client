@@ -6,33 +6,37 @@ import cc.quark.module.Category;
 import cc.quark.module.Module;
 import cc.quark.setting.DoubleSetting;
 import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.Vec3d;
 
-/**
- * PitchFly - flight that follows both yaw and pitch of the camera.
- */
 public class PitchFly extends Module {
 
-    private final DoubleSetting speed = register(new DoubleSetting(
-            "Speed", "Fly speed", 0.6, 0.1, 2.0));
+    private final DoubleSetting speed = register(new DoubleSetting("Speed", "Fly speed", 0.6, 0.1, 3.0));
 
     public PitchFly() {
-        super("PitchFly", "Flight following camera pitch", Category.MOVEMENT);
+        super("PitchFly", "Fly by looking up or down, horizontal based on yaw", Category.MOVEMENT);
     }
 
     @EventHandler
     public void onTick(EventTick event) {
         if (mc.player == null) return;
-        if (mc.player.input.movementForward == 0) {
-            mc.player.setVelocity(0, 0, 0);
-            return;
+
+        float pitch = mc.player.getPitch();
+        float yaw = mc.player.getYaw();
+        double s = speed.get();
+
+        float yawRad = yaw * 0.017453292f;
+        float pitchRad = pitch * 0.017453292f;
+
+        double vy = 0;
+        if (pitch < -30) {
+            vy = s * (-pitch / 90.0);
+        } else if (pitch > 30) {
+            vy = -s * (pitch / 90.0);
         }
-        float yaw = mc.player.getYaw() * 0.017453292f;
-        float pitch = mc.player.getPitch() * 0.017453292f;
-        double mx = -MathHelper.sin(yaw) * MathHelper.cos(pitch) * speed.get();
-        double my = -MathHelper.sin(pitch) * speed.get();
-        double mz = MathHelper.cos(yaw) * MathHelper.cos(pitch) * speed.get();
-        Vec3d ignored = mc.player.getVelocity();
-        mc.player.setVelocity(mx, my, mz);
+
+        double mx = -MathHelper.sin(yawRad) * MathHelper.cos(pitchRad) * s;
+        double mz = MathHelper.cos(yawRad) * MathHelper.cos(pitchRad) * s;
+
+        mc.player.setVelocity(mx, vy, mz);
+        mc.player.fallDistance = 0;
     }
 }
