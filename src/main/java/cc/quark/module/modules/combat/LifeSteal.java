@@ -10,7 +10,6 @@ import cc.quark.setting.DoubleSetting;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.particle.ParticleTypes;
-import net.minecraft.server.world.ServerWorld;
 
 public class LifeSteal extends Module {
 
