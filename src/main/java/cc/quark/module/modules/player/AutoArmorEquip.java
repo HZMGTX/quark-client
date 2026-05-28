@@ -53,11 +53,8 @@ public class AutoArmorEquip extends Module {
             int bestSlot  = -1;
             int bestScore = equippedScore;
 
-            // Scan all inventory slots (0-35 in the playerScreenHandler correspond to
-            // the 36 hotbar+main inventory slots starting at index 9 for main inv)
-            for (int i = 9; i <= 44; i++) {
-                // Skip the armor slots themselves
-                if (i >= HELMET_SLOT && i <= BOOTS_SLOT) continue;
+            // Scan main inventory + hotbar slots (same range as combat AutoArmor)
+            for (int i = 0; i <= 35; i++) {
                 ItemStack candidate = mc.player.playerScreenHandler.getSlot(i).getStack();
                 if (candidate.isEmpty()) continue;
                 if (!fitsSlot(candidate, armorSlot)) continue;
