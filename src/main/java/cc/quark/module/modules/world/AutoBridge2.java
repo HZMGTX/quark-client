@@ -15,7 +15,7 @@ import net.minecraft.util.math.Vec3d;
 
 public class AutoBridge2 extends Module {
 
-    private final DoubleSetting delay = register(new DoubleSetting("Delay", "Milliseconds between placements", 50.0, 0.0, 500.0));
+    private final DoubleSetting delay = register(new DoubleSetting("Delay", "Milliseconds between block placements", 50.0, 0.0, 500.0));
 
     private final TimerUtil timer = new TimerUtil();
 

@@ -56,22 +56,21 @@ public class AutoFarm extends Module {
         int r = radius.get();
 
         if (tendFarmland.isEnabled()) {
-            for (BlockPos pos : BlockPos.iterate(center.add(-r, -2, -r), center.add(r, 2, r))) {
-                Block b = mc.world.getBlockState(pos).getBlock();
-                if (b != Blocks.DIRT && b != Blocks.GRASS_BLOCK && b != Blocks.DIRT_PATH) continue;
-                BlockPos above = pos.up();
-                Block aboveBlock = mc.world.getBlockState(above).getBlock();
-                if (!(aboveBlock instanceof CropBlock)) continue;
-                BlockPos checkFarmland = pos;
-                if (mc.world.getBlockState(checkFarmland).getBlock() == Blocks.FARMLAND) continue;
-                BlockHitResult hit = new BlockHitResult(Vec3d.ofCenter(pos).add(0, 0.5, 0), Direction.UP, pos.toImmutable(), false);
-                int hoeSlot = findHoeSlot();
-                if (hoeSlot == -1) break;
-                int saved = mc.player.getInventory().selectedSlot;
-                mc.player.getInventory().selectedSlot = hoeSlot;
-                mc.interactionManager.interactBlock(mc.player, Hand.MAIN_HAND, hit);
-                mc.player.getInventory().selectedSlot = saved;
-                return;
+            int hoeSlot = findHoeSlot();
+            if (hoeSlot != -1) {
+                for (BlockPos pos : BlockPos.iterate(center.add(-r, -2, -r), center.add(r, 2, r))) {
+                    Block b = mc.world.getBlockState(pos).getBlock();
+                    if (b != Blocks.DIRT && b != Blocks.GRASS_BLOCK && b != Blocks.DIRT_PATH) continue;
+                    if (mc.world.getBlockState(pos).getBlock() == Blocks.FARMLAND) continue;
+                    Block aboveBlock = mc.world.getBlockState(pos.up()).getBlock();
+                    if (!(aboveBlock instanceof CropBlock)) continue;
+                    int saved = mc.player.getInventory().selectedSlot;
+                    mc.player.getInventory().selectedSlot = hoeSlot;
+                    BlockHitResult hit = new BlockHitResult(Vec3d.ofCenter(pos).add(0, 0.5, 0), Direction.UP, pos.toImmutable(), false);
+                    mc.interactionManager.interactBlock(mc.player, Hand.MAIN_HAND, hit);
+                    mc.player.getInventory().selectedSlot = saved;
+                    return;
+                }
             }
         }
 
@@ -120,17 +119,17 @@ public class AutoFarm extends Module {
     private boolean isEnabledCrop(Block block) {
         String m = mode.get();
         if (m.equals("All")) return block == Blocks.WHEAT || block == Blocks.CARROTS || block == Blocks.POTATOES || block == Blocks.BEETROOTS;
-        if (m.equals("Wheat"))   return block == Blocks.WHEAT;
-        if (m.equals("Carrot"))  return block == Blocks.CARROTS;
-        if (m.equals("Potato"))  return block == Blocks.POTATOES;
+        if (m.equals("Wheat"))    return block == Blocks.WHEAT;
+        if (m.equals("Carrot"))   return block == Blocks.CARROTS;
+        if (m.equals("Potato"))   return block == Blocks.POTATOES;
         if (m.equals("Beetroot")) return block == Blocks.BEETROOTS;
         return false;
     }
 
     private Item getSeed(Block block) {
-        if (block == Blocks.WHEAT)    return Items.WHEAT_SEEDS;
-        if (block == Blocks.CARROTS)  return Items.CARROT;
-        if (block == Blocks.POTATOES) return Items.POTATO;
+        if (block == Blocks.WHEAT)     return Items.WHEAT_SEEDS;
+        if (block == Blocks.CARROTS)   return Items.CARROT;
+        if (block == Blocks.POTATOES)  return Items.POTATO;
         if (block == Blocks.BEETROOTS) return Items.BEETROOT_SEEDS;
         return null;
     }
@@ -149,8 +148,7 @@ public class AutoFarm extends Module {
     private int findHoeSlot() {
         if (mc.player == null) return -1;
         for (int i = 0; i < 9; i++) {
-            Item item = mc.player.getInventory().getStack(i).getItem();
-            if (item instanceof HoeItem) return i;
+            if (mc.player.getInventory().getStack(i).getItem() instanceof HoeItem) return i;
         }
         return -1;
     }
