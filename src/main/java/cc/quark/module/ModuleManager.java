@@ -479,6 +479,9 @@ public class ModuleManager {
         register(new StreamerMode());
         register(new ChatLogger());
         register(new GuiTheme());
+        register(new FriendList());
+        register(new PopupCounter());
+        register(new SendCoords());
     }
 
     // -------------------------------------------------------------------------
