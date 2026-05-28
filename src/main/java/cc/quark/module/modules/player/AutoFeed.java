@@ -5,24 +5,56 @@ import cc.quark.event.events.EventTick;
 import cc.quark.module.Category;
 import cc.quark.module.Module;
 import cc.quark.setting.IntSetting;
+import cc.quark.util.TimerUtil;
+import net.minecraft.component.DataComponentTypes;
+import net.minecraft.component.type.FoodComponent;
+import net.minecraft.item.ItemStack;
+import net.minecraft.util.Hand;
 
-/**
- * AutoFeed - keeps the client-side food level topped up below a threshold.
- */
 public class AutoFeed extends Module {
 
-    private final IntSetting target = register(new IntSetting("Target", "Food level to maintain", 20, 1, 20));
+    private final IntSetting hungerLevel = register(new IntSetting(
+            "Hunger Level", "Eat food when hunger drops below this level", 16, 1, 18));
+
+    private final TimerUtil timer = new TimerUtil();
 
     public AutoFeed() {
-        super("AutoFeed", "Keeps client food level topped up", Category.PLAYER);
+        super("AutoFeed", "Auto-eats food from the hotbar when hunger drops below threshold", Category.PLAYER);
+    }
+
+    @Override
+    public void onEnable() {
+        timer.reset();
     }
 
     @EventHandler
     public void onTick(EventTick event) {
-        if (mc.player == null) return;
-        if (mc.player.getHungerManager().getFoodLevel() < target.get()) {
-            mc.player.getHungerManager().setFoodLevel(target.get());
-            mc.player.getHungerManager().setSaturationLevel(5.0f);
+        if (mc.player == null || mc.interactionManager == null) return;
+        if (!timer.hasReached(200)) return;
+
+        int food = mc.player.getHungerManager().getFoodLevel();
+        if (food >= hungerLevel.get()) return;
+
+        int foodSlot = findFoodSlot();
+        if (foodSlot == -1) return;
+
+        timer.reset();
+
+        int prev = mc.player.getInventory().selectedSlot;
+        mc.player.getInventory().selectedSlot = foodSlot;
+        mc.interactionManager.interactItem(mc.player, Hand.MAIN_HAND);
+        mc.player.getInventory().selectedSlot = prev;
+    }
+
+    private int findFoodSlot() {
+        for (int i = 0; i < 9; i++) {
+            ItemStack stack = mc.player.getInventory().getStack(i);
+            if (stack.isEmpty()) continue;
+            if (stack.contains(DataComponentTypes.FOOD)) {
+                FoodComponent fc = stack.get(DataComponentTypes.FOOD);
+                if (fc != null && fc.nutrition() > 0) return i;
+            }
         }
+        return -1;
     }
 }

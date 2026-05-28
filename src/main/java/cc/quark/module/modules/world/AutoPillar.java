@@ -15,8 +15,8 @@ import net.minecraft.util.math.Vec3d;
 
 public class AutoPillar extends Module {
 
-    private final DoubleSetting height   = register(new DoubleSetting("Height",    "Maximum pillar height in blocks", 30.0, 1.0, 256.0));
-    private final BoolSetting autoStop   = register(new BoolSetting("Auto Stop",   "Disable when max height reached", true));
+    private final DoubleSetting height  = register(new DoubleSetting("Height",    "Maximum pillar height in blocks", 30.0, 1.0, 256.0));
+    private final BoolSetting autoStop  = register(new BoolSetting("Auto Stop",   "Disable when max height reached", true));
 
     private double startY = 0;
 

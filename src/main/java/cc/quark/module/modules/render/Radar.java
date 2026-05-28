@@ -35,9 +35,9 @@ public class Radar extends Module {
         if (mc.player == null || mc.world == null) return;
 
         DrawContext ctx = event.getDrawContext();
-        int cx = posX.getValue() + size.getValue();
-        int cy = posY.getValue() + size.getValue();
-        int r = size.getValue();
+        int cx = posX.get() + size.get();
+        int cy = posY.get() + size.get();
+        int r = size.get();
         int accentColor = ClickGUI.getAccentColor();
         boolean isCircle = "Circle".equals(style.get());
 

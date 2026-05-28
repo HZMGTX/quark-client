@@ -9,6 +9,7 @@ import cc.quark.util.TimerUtil;
 import net.minecraft.block.DoorBlock;
 import net.minecraft.block.FenceGateBlock;
 import net.minecraft.block.TrapdoorBlock;
+import net.minecraft.block.enums.DoubleBlockHalf;
 import net.minecraft.state.property.Properties;
 import net.minecraft.util.Hand;
 import net.minecraft.util.hit.BlockHitResult;
@@ -46,11 +47,8 @@ public class AutoDoor extends Module {
             if (!isDoor && !isGate && !isTrapdoor) continue;
             if (!state.contains(Properties.OPEN)) continue;
 
-            if (isDoor) {
-                if (state.contains(Properties.DOUBLE_BLOCK_HALF)) {
-                    var half = state.get(Properties.DOUBLE_BLOCK_HALF);
-                    if (half == net.minecraft.block.enums.DoubleBlockHalf.UPPER) continue;
-                }
+            if (isDoor && state.contains(Properties.DOUBLE_BLOCK_HALF)) {
+                if (state.get(Properties.DOUBLE_BLOCK_HALF) == DoubleBlockHalf.UPPER) continue;
             }
 
             boolean open = state.get(Properties.OPEN);

@@ -5,41 +5,41 @@ import cc.quark.event.events.EventTick;
 import cc.quark.module.Category;
 import cc.quark.module.Module;
 import cc.quark.setting.BoolSetting;
-import cc.quark.setting.DoubleSetting;
+import cc.quark.setting.IntSetting;
+import cc.quark.util.InventoryUtil;
+import net.minecraft.item.Items;
 import net.minecraft.util.math.Vec3d;
-import org.lwjgl.glfw.GLFW;
 
 public class JetPack extends Module {
 
-    private final DoubleSetting thrust = register(new DoubleSetting(
-            "Thrust", "Upward acceleration per tick", 0.15, 0.05, 0.6));
-    private final DoubleSetting maxVelocity = register(new DoubleSetting(
-            "Max Velocity", "Maximum vertical speed", 0.6, 0.1, 2.0));
-    private final BoolSetting sneakDown = register(new BoolSetting(
-            "Sneak Descend", "Hold sneak to fly downward", true));
-    private final BoolSetting noFallDmg = register(new BoolSetting(
-            "No Fall Damage", "Reset fall distance while active", true));
+    private final IntSetting power = register(new IntSetting("Power", "Thrust power level (1-10)", 5, 1, 10));
+    private final BoolSetting needFireworks = register(new BoolSetting("Need Fireworks", "Require fireworks in inventory to fly", false));
+    private final BoolSetting noFallDmg = register(new BoolSetting("No Fall Damage", "Reset fall distance while active", true));
 
     public JetPack() {
-        super("JetPack", "Hold Space to fly upward; Shift to descend", Category.MOVEMENT);
+        super("JetPack", "Jetpack thrust upward when space pressed while airborne", Category.MOVEMENT);
     }
 
     @EventHandler
     public void onTick(EventTick event) {
         if (mc.player == null) return;
+        if (mc.player.isOnGround()) return;
+        if (!mc.options.jumpKey.isPressed()) return;
 
-        long window = mc.getWindow().getHandle();
-        Vec3d vel = mc.player.getVelocity();
-        double vy = vel.y;
-
-        if (GLFW.glfwGetKey(window, GLFW.GLFW_KEY_SPACE) == GLFW.GLFW_PRESS) {
-            vy = Math.min(maxVelocity.get(), vy + thrust.get());
-        } else if (sneakDown.isEnabled()
-                && GLFW.glfwGetKey(window, GLFW.GLFW_KEY_LEFT_SHIFT) == GLFW.GLFW_PRESS) {
-            vy = Math.max(-maxVelocity.get(), vy - thrust.get());
+        if (needFireworks.isEnabled()) {
+            boolean hasFirework = InventoryUtil.findItem(Items.FIREWORK_ROCKET) != -1;
+            if (!hasFirework) return;
         }
 
-        mc.player.setVelocity(vel.x, vy, vel.z);
-        if (noFallDmg.isEnabled()) mc.player.fallDistance = 0;
+        double thrust = power.get() * 0.04;
+        Vec3d vel = mc.player.getVelocity();
+        double maxVY = power.get() * 0.1;
+        double newVY = Math.min(vel.y + thrust, maxVY);
+
+        mc.player.setVelocity(vel.x, newVY, vel.z);
+
+        if (noFallDmg.isEnabled()) {
+            mc.player.fallDistance = 0;
+        }
     }
 }

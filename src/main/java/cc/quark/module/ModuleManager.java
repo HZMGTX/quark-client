@@ -119,6 +119,7 @@ public class ModuleManager {
         register(new SmartCrit());
         register(new Smash());
         register(new Stab());
+        register(new AutoStrafe());
         register(new Surround());
         register(new SwordBlock());
         register(new TotemPop());
@@ -364,6 +365,7 @@ public class ModuleManager {
         register(new FreeLook());
         register(new Fullbright());
         register(new GuiScale());
+        register(new HealthVignette());
         register(new HUD());
         register(new Hitbox());
         register(new HoleESP());
@@ -387,7 +389,9 @@ public class ModuleManager {
         register(new ShulkerViewer());
         register(new SnapLook());
         register(new SpeedDisplay());
+        register(new BlockESP());
         register(new StorageESP());
+        register(new TargetESP());
         register(new TargetHUD());
         register(new TNTTimer());
         register(new TimeChanger());
@@ -398,6 +402,7 @@ public class ModuleManager {
         register(new TabList());
         register(new ViewModel());
         register(new WeatherChanger());
+        register(new VoidESP());
         register(new XRay());
         register(new Zoom());
 

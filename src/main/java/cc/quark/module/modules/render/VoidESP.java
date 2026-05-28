@@ -10,7 +10,6 @@ import cc.quark.setting.IntSetting;
 import cc.quark.util.RenderUtil;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
-import net.minecraft.world.dimension.DimensionType;
 
 import java.util.ArrayList;
 import java.util.List;

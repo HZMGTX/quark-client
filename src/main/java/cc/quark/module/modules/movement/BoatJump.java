@@ -1,30 +1,35 @@
 package cc.quark.module.modules.movement;
 
 import cc.quark.event.EventHandler;
-import cc.quark.event.events.EventTick;
+import cc.quark.event.events.EventKey;
 import cc.quark.module.Category;
 import cc.quark.module.Module;
 import cc.quark.setting.DoubleSetting;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.vehicle.BoatEntity;
 import net.minecraft.util.math.Vec3d;
+import org.lwjgl.glfw.GLFW;
 
-/**
- * BoatJump - lets the player hop while riding so a boat can leap.
- */
 public class BoatJump extends Module {
 
-    private final DoubleSetting height = register(new DoubleSetting(
-            "Height", "Jump height", 0.5, 0.2, 1.2));
+    private final DoubleSetting force = register(new DoubleSetting("Force", "Upward velocity applied after ejecting", 3.0, 1.0, 5.0));
 
     public BoatJump() {
-        super("BoatJump", "Hop while riding", Category.MOVEMENT);
+        super("BoatJump", "Eject from boat and apply powerful upward boost on space press", Category.MOVEMENT);
     }
 
     @EventHandler
-    public void onTick(EventTick event) {
+    public void onKey(EventKey event) {
         if (mc.player == null) return;
-        if (!mc.player.hasVehicle()) return;
-        if (!mc.options.jumpKey.isPressed()) return;
-        Vec3d v = mc.player.getVelocity();
-        mc.player.setVelocity(v.x, height.get(), v.z);
+        if (event.getKeyCode() != GLFW.GLFW_KEY_SPACE) return;
+
+        Entity vehicle = mc.player.getVehicle();
+        if (!(vehicle instanceof BoatEntity)) return;
+
+        mc.player.stopRiding();
+
+        Vec3d vel = mc.player.getVelocity();
+        mc.player.setVelocity(vel.x, force.get(), vel.z);
+        mc.player.fallDistance = 0;
     }
 }

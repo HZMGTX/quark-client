@@ -30,9 +30,9 @@ public class ItemESP extends Module {
         if (mc.player == null || mc.world == null) return;
         for (Entity entity : mc.world.getEntities()) {
             if (!(entity instanceof ItemEntity ie)) continue;
-            if (mc.player.distanceTo(ie) > range.getValue()) continue;
+            if (mc.player.distanceTo(ie) > range.get()) continue;
             Item item = ie.getStack().getItem();
-            if (!filter.getValue().equals("All") && !isValuable(item)) continue;
+            if (!filter.get().equals("All") && !isValuable(item)) continue;
             int color = getColor(item);
             float cr = ((color >> 16) & 0xFF) / 255.0f;
             float cg = ((color >> 8) & 0xFF) / 255.0f;

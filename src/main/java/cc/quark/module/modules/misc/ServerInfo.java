@@ -6,117 +6,111 @@ import cc.quark.event.events.EventTick;
 import cc.quark.module.Category;
 import cc.quark.module.Module;
 import cc.quark.setting.BoolSetting;
+import cc.quark.setting.IntSetting;
 import cc.quark.util.ChatUtil;
 import net.minecraft.client.gui.DrawContext;
 
+import java.util.ArrayDeque;
+import java.util.Deque;
+
 public class ServerInfo extends Module {
 
-    private final BoolSetting joinMessage = register(new BoolSetting("Join Message", "Announce server info in chat on join", true));
-    private final BoolSetting hudDisplay  = register(new BoolSetting("HUD Display",  "Show server info on screen",           true));
-    private final BoolSetting tpsDisplay  = register(new BoolSetting("TPS Display",  "Show estimated TPS",                   true));
+    private final BoolSetting showIP      = register(new BoolSetting("Show IP", "Display server address", true));
+    private final BoolSetting showMOTD    = register(new BoolSetting("Show MOTD", "Display server MOTD", false));
+    private final BoolSetting showPlayers = register(new BoolSetting("Show Players", "Display online player count", true));
+    private final BoolSetting showPing    = register(new BoolSetting("Show Ping", "Display your latency", true));
+    private final BoolSetting showTPS     = register(new BoolSetting("Show TPS", "Display estimated server TPS", true));
+    private final BoolSetting joinMsg     = register(new BoolSetting("Join Message", "Print server info in chat on join", true));
+    private final IntSetting  posX        = register(new IntSetting("X", "HUD X offset from right edge", 4, 0, 3000));
+    private final IntSetting  posY        = register(new IntSetting("Y", "HUD Y position", 4, 0, 3000));
 
+    private final Deque<Long> tickTimes = new ArrayDeque<>();
+    private double estimatedTps = 20.0;
     private boolean hasJoined = false;
 
-    private double estimatedTps = 20.0;
-    private int tpsSampleCount = 0;
-    private final long[] tickTimes = new long[20];
-    private int tickIndex = 0;
-
     public ServerInfo() {
-        super("ServerInfo", "Displays server information on join and in the HUD", Category.MISC);
+        super("ServerInfo", "Displays server IP, MOTD, player count, ping, and estimated TPS on the HUD", Category.MISC);
     }
 
     @Override
     public void onEnable() {
         hasJoined = false;
         estimatedTps = 20.0;
-        tpsSampleCount = 0;
-        tickIndex = 0;
+        tickTimes.clear();
     }
 
     @EventHandler
     public void onTick(EventTick event) {
-        if (mc.player == null) {
-            hasJoined = false;
-            return;
-        }
+        if (mc.player == null) { hasJoined = false; return; }
 
         long now = System.currentTimeMillis();
-        if (tpsSampleCount < 20) {
-            tickTimes[tickIndex % 20] = now;
-            tpsSampleCount++;
-        } else {
-            tickTimes[tickIndex % 20] = now;
-            long oldest = tickTimes[(tickIndex + 1) % 20];
-            long elapsed = now - oldest;
-            if (elapsed > 0) {
-                estimatedTps = Math.min(20.0, 20000.0 / elapsed);
+        tickTimes.addLast(now);
+        while (tickTimes.size() > 20) tickTimes.pollFirst();
+        if (tickTimes.size() >= 2) {
+            Long[] ts = tickTimes.toArray(new Long[0]);
+            long span = ts[ts.length - 1] - ts[0];
+            if (span > 0) {
+                double avg = (double) span / (ts.length - 1);
+                estimatedTps = Math.min(20.0, 1000.0 / avg);
             }
         }
-        tickIndex++;
 
         if (!hasJoined) {
             hasJoined = true;
-            if (joinMessage.isEnabled()) {
-                sendJoinMessage();
-            }
+            if (joinMsg.isEnabled()) sendJoinMessage();
         }
     }
 
     @EventHandler
     public void onRender2D(EventRender2D event) {
-        if (!hudDisplay.isEnabled() || mc.getWindow() == null) return;
+        if (mc.getWindow() == null) return;
         DrawContext ctx = event.getDrawContext();
+        int sw = mc.getWindow().getScaledWidth();
+        int lh = mc.textRenderer.fontHeight + 2;
+        int pad = 4;
 
         net.minecraft.client.network.ServerInfo si = mc.getCurrentServerEntry();
-        String ip   = si != null ? si.address : "Singleplayer";
+        String ip = si != null ? si.address : "Singleplayer";
         String motd = si != null && si.label != null ? si.label.getString() : "";
 
-        int playerCount = 0;
-        int ping = 0;
+        int playerCount = 0, ping = 0;
         if (mc.getNetworkHandler() != null) {
             playerCount = mc.getNetworkHandler().getPlayerList().size();
             if (mc.player != null) {
-                var selfEntry = mc.getNetworkHandler().getPlayerListEntry(mc.player.getUuid());
-                if (selfEntry != null) ping = selfEntry.getLatency();
+                var entry = mc.getNetworkHandler().getPlayerListEntry(mc.player.getUuid());
+                if (entry != null) ping = entry.getLatency();
             }
         }
 
-        int sw    = mc.getWindow().getScaledWidth();
-        int lineH = mc.textRenderer.fontHeight + 2;
-        int pad   = 4;
+        java.util.List<String> lines = new java.util.ArrayList<>();
+        if (showIP.isEnabled())      lines.add("§7Server: §f" + ip);
+        if (showMOTD.isEnabled() && !motd.isEmpty()) lines.add("§7MOTD: §f" + motd);
+        if (showPlayers.isEnabled()) lines.add("§7Players: §f" + playerCount);
+        if (showPing.isEnabled())    lines.add("§7Ping: " + pingColor(ping) + ping + "ms");
+        if (showTPS.isEnabled())     lines.add(String.format("§7TPS: " + tpsColor(estimatedTps) + "%.1f", estimatedTps));
 
-        String ipLine      = "§7Server: §f" + ip;
-        String playersLine = "§7Players: §f" + playerCount;
-        String pingLine    = "§7Ping: " + pingColor(ping) + ping + "ms";
-        String tpsLine     = tpsDisplay.isEnabled()
-                ? String.format("§7TPS: §r%.1f", estimatedTps) : null;
+        if (lines.isEmpty()) return;
 
-        int maxW = mc.textRenderer.getWidth(stripFormat(ipLine));
-        maxW = Math.max(maxW, mc.textRenderer.getWidth(stripFormat(playersLine)));
-        maxW = Math.max(maxW, mc.textRenderer.getWidth(stripFormat(pingLine)));
-        if (tpsLine != null) maxW = Math.max(maxW, mc.textRenderer.getWidth(stripFormat(tpsLine)));
-        if (!motd.isEmpty()) maxW = Math.max(maxW, mc.textRenderer.getWidth(motd));
-
-        int lineCount = 3 + (motd.isEmpty() ? 0 : 1) + (tpsLine != null ? 1 : 0);
+        int maxW = 0;
+        for (String l : lines) maxW = Math.max(maxW, mc.textRenderer.getWidth(stripFormat(l)));
         int boxW = maxW + pad * 2 + 2;
-        int boxH = lineCount * lineH + pad;
-        int bx   = sw - boxW - 4;
-        int by   = 4;
+        int boxH = lines.size() * lh + pad;
+        int bx = sw - boxW - posX.get();
+        int by = posY.get();
 
         ctx.fill(bx, by, bx + boxW, by + boxH, 0xBB111111);
         ctx.fill(bx, by, bx + 2, by + boxH, cc.quark.gui.ClickGUI.getAccentColor());
 
         int ty = by + pad / 2;
-        ctx.drawTextWithShadow(mc.textRenderer, ipLine,      bx + pad, ty, 0xFFFFFFFF); ty += lineH;
-        if (!motd.isEmpty()) {
-            ctx.drawTextWithShadow(mc.textRenderer, "§7MOTD: §f" + motd, bx + pad, ty, 0xFFFFFFFF); ty += lineH;
-        }
-        ctx.drawTextWithShadow(mc.textRenderer, playersLine, bx + pad, ty, 0xFFFFFFFF); ty += lineH;
-        ctx.drawTextWithShadow(mc.textRenderer, pingLine,    bx + pad, ty, 0xFFFFFFFF); ty += lineH;
-        if (tpsLine != null) {
-            int tpsColor = estimatedTps >= 19.5 ? 0xFF55FF55 : estimatedTps >= 15.0 ? 0xFFFFFF55 : 0xFFFF5555;
-            ctx.drawTextWithShadow(mc.textRenderer, tpsLine, bx + pad, ty, tpsColor);
+        for (int i = 0; i < lines.size(); i++) {
+            int col = 0xFFFFFFFF;
+            if (showPing.isEnabled() && lines.get(i).contains("Ping:")) {
+                col = ping < 50 ? 0xFF55FF55 : ping < 100 ? 0xFFFFFF55 : 0xFFFF5555;
+            } else if (showTPS.isEnabled() && lines.get(i).contains("TPS:")) {
+                col = estimatedTps >= 19.5 ? 0xFF55FF55 : estimatedTps >= 15.0 ? 0xFFFFFF55 : 0xFFFF5555;
+            }
+            ctx.drawTextWithShadow(mc.textRenderer, lines.get(i), bx + pad, ty, col);
+            ty += lh;
         }
     }
 
@@ -125,7 +119,7 @@ public class ServerInfo extends Module {
         net.minecraft.client.network.ServerInfo si = mc.getCurrentServerEntry();
         String ip = si != null ? si.address : "Singleplayer";
         int players = mc.getNetworkHandler() != null ? mc.getNetworkHandler().getPlayerList().size() : 0;
-        ChatUtil.info("§7[Server] §f" + ip + " §7| Players: §f" + players);
+        ChatUtil.info("Connected to §f" + ip + " §7| Players: §f" + players);
     }
 
     private String stripFormat(String s) {
@@ -133,9 +127,15 @@ public class ServerInfo extends Module {
     }
 
     private String pingColor(int ping) {
-        if (ping < 50)  return "§a";
+        if (ping < 50) return "§a";
         if (ping < 100) return "§e";
         if (ping < 200) return "§6";
+        return "§c";
+    }
+
+    private String tpsColor(double tps) {
+        if (tps >= 19.5) return "§a";
+        if (tps >= 15.0) return "§e";
         return "§c";
     }
 }

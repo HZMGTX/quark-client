@@ -4,37 +4,28 @@ import cc.quark.event.EventHandler;
 import cc.quark.event.events.EventTick;
 import cc.quark.module.Category;
 import cc.quark.module.Module;
+import net.minecraft.client.gui.screen.ingame.HandledScreen;
 
-/**
- * MultiTask - allows using items while attacking simultaneously.
- *
- * In vanilla Minecraft the attack cooldown and item-use action are mutually
- * exclusive: starting an attack cancels item use. This module works around
- * that by resetting the item-use progress each tick so both can occur at once.
- */
 public class MultiTask extends Module {
 
     public MultiTask() {
-        super("MultiTask", "Use items and attack at the same time", Category.PLAYER);
+        super("MultiTask", "Allows movement input while inventory is open", Category.PLAYER);
     }
 
     @EventHandler
     public void onTick(EventTick event) {
-        if (mc.player == null || mc.interactionManager == null) return;
-
-        // If the player is using an item and also trying to attack,
-        // cancel the mutual exclusion by keeping the item-use timer alive.
-        // The actual bypass is provided via the mixin; here we ensure the
-        // player.attacking flag does not suppress item use on the client.
-        if (mc.player.isUsingItem()) {
-            // Prevent attack key from cancelling item use by consuming its state
-            // We do this by stopping the attack if it would cancel item usage.
-            // The real bypass requires MixinClientPlayerInteractionManager to skip
-            // the stopUsingItem() call on attack, which is driven by this module being enabled.
-        }
+        if (mc.player == null) return;
+        if (!(mc.currentScreen instanceof HandledScreen<?>)) return;
+        mc.player.input.movementForward = 0f;
+        mc.player.input.movementSideways = 0f;
+        if (mc.options.forwardKey.isPressed()) mc.player.input.movementForward = 1f;
+        if (mc.options.backKey.isPressed()) mc.player.input.movementForward = -1f;
+        if (mc.options.leftKey.isPressed()) mc.player.input.movementSideways = 1f;
+        if (mc.options.rightKey.isPressed()) mc.player.input.movementSideways = -1f;
+        if (mc.options.jumpKey.isPressed()) mc.player.jump();
+        if (mc.options.sneakKey.isPressed()) mc.player.setSneaking(true);
     }
 
-    /** Called by MixinClientPlayerInteractionManager to check if multi-task is active. */
     public static boolean isActive() {
         net.minecraft.client.MinecraftClient mc = net.minecraft.client.MinecraftClient.getInstance();
         if (mc == null) return false;

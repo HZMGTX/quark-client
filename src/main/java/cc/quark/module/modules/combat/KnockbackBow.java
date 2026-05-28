@@ -11,7 +11,6 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.BowItem;
-import net.minecraft.item.Items;
 import net.minecraft.util.Hand;
 
 public class KnockbackBow extends Module {

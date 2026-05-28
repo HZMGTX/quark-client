@@ -27,6 +27,6 @@ public class TimeChanger extends Module {
     }
 
     public long getClientTime() {
-        return time.getValue();
+        return time.get();
     }
 }

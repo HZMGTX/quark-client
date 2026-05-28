@@ -37,7 +37,7 @@ public class PotionHUD extends Module {
         if (effects.isEmpty()) return;
 
         int x = sw - 120, y = 10;
-        switch (position.getValue()) {
+        switch (position.get()) {
             case "Top Left" -> { x = 10; y = 10; }
             case "Bottom Right" -> { x = sw - 120; y = sh - effects.size() * 12 - 10; }
             case "Bottom Left" -> { x = 10; y = sh - effects.size() * 12 - 10; }
@@ -51,7 +51,7 @@ public class PotionHUD extends Module {
             String durStr = dur > 600 ? "**:**" : String.format("%d:%02d", dur / 60, dur % 60);
             boolean bad = effect.getEffectType().value().isBeneficial() == false;
             int color = bad ? 0xFFFF5555 : 0xFF55FF55;
-            String text = compact.getValue()
+            String text = compact.isEnabled()
                 ? name.substring(0, Math.min(name.length(), 8)) + " " + amp
                 : name + " " + (amp > 1 ? amp + " " : "") + durStr;
             ctx.drawTextWithShadow(mc.textRenderer, text, x, y + i * 12, color);
