@@ -11,6 +11,7 @@ import cc.quark.module.modules.player.Blink;
 import cc.quark.setting.BoolSetting;
 import cc.quark.setting.IntSetting;
 import cc.quark.setting.ModeSetting;
+import cc.quark.util.ColorUtil;
 import cc.quark.util.RenderUtil;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.network.ClientPlayerEntity;
@@ -29,42 +30,40 @@ import java.util.List;
  *
  * Renders:
  *  - Client watermark (top-left)
- *  - Enabled modules list (right side, sorted by name length descending)
- *  - Armor durability (bottom-center)
- *  - Coordinates / FPS / Ping (bottom-left)
- *  - Speed / BPS (rolling 5-tick average)
- *  - Active potion effects
- *  - Server TPS estimate (from tick timestamps)
- *  - Combo counter (attacks within 2s)
+ *  - Health, Hunger, Armor, Speed, Coordinates, Effects, FPS, TPS, Combo
+ *  - Blink / Ghost badges
+ *  - Armor durability bars (bottom-center)
  */
 public class HUD extends Module {
 
-    public enum ColorScheme {
-        RAINBOW, STATIC, GRADIENT
-    }
+    // Layout mode
+    private final ModeSetting layout = register(new ModeSetting(
+            "Layout", "HUD layout style", "Compact", "Compact", "Expanded", "Minimal"));
 
     private final ModeSetting colorScheme = register(new ModeSetting(
             "Color", "Color scheme for the HUD text", "Rainbow", "Rainbow", "Static", "Gradient"));
 
-    private final BoolSetting watermark = register(new BoolSetting(
-            "Watermark", "Show client name and version", true));
+    // Element toggles
+    private final BoolSetting watermark      = register(new BoolSetting("Watermark",    "Show client name and version",    true));
+    private final BoolSetting showHealth     = register(new BoolSetting("Health",       "Show player health",               true));
+    private final BoolSetting showHunger     = register(new BoolSetting("Hunger",       "Show food level",                  true));
+    private final BoolSetting showArmorStat  = register(new BoolSetting("Armor",        "Show armor points",                true));
+    private final BoolSetting showSpeed      = register(new BoolSetting("Speed",        "Show blocks-per-second",           true));
+    private final BoolSetting coordinates    = register(new BoolSetting("Coords",       "Show player coordinates",          true));
+    private final BoolSetting potionEffects  = register(new BoolSetting("Effects",      "Show active potion effects",       true));
+    private final BoolSetting showFps        = register(new BoolSetting("FPS",          "Show frames-per-second",           true));
+    private final BoolSetting showTps        = register(new BoolSetting("TPS",          "Show server TPS estimate",         true));
+    private final BoolSetting showCombo      = register(new BoolSetting("Combo",        "Show combo hit counter",           true));
 
-    private final BoolSetting moduleList = register(new BoolSetting(
-            "Module List", "Show enabled modules on right side", true));
-
-    private final BoolSetting coordinates = register(new BoolSetting(
-            "Coordinates", "Show player coordinates", true));
-
-    private final BoolSetting potionEffects = register(new BoolSetting(
-            "Potion Effects", "Show active potion effects", true));
-
-    // Position settings (saved automatically)
-    public final IntSetting wmX    = register(new IntSetting("Watermark X", "X pos", 5, 0, 3000));
-    public final IntSetting wmY    = register(new IntSetting("Watermark Y", "Y pos", 5, 0, 3000));
-    public final IntSetting listX  = register(new IntSetting("List X", "X pos from right", 2, 0, 3000));
-    public final IntSetting listY  = register(new IntSetting("List Y", "Y pos", 5, 0, 3000));
-    public final IntSetting coordsX = register(new IntSetting("Coords X", "X pos", 3, 0, 3000));
-    public final IntSetting coordsY = register(new IntSetting("Coords Y", "Y pos from bottom", 30, 0, 3000));
+    // Position settings
+    public final IntSetting wmX     = register(new IntSetting("Watermark X", "X pos",           5,  0, 3000));
+    public final IntSetting wmY     = register(new IntSetting("Watermark Y", "Y pos",           5,  0, 3000));
+    public final IntSetting listX   = register(new IntSetting("List X",      "X pos from right", 2, 0, 3000));
+    public final IntSetting listY   = register(new IntSetting("List Y",      "Y pos",            5,  0, 3000));
+    public final IntSetting coordsX = register(new IntSetting("Coords X",   "X pos",            3,  0, 3000));
+    public final IntSetting coordsY = register(new IntSetting("Coords Y",   "Y pos from bottom", 30, 0, 3000));
+    public final IntSetting statsX  = register(new IntSetting("Stats X",    "X pos for stats",  3,  0, 3000));
+    public final IntSetting statsY  = register(new IntSetting("Stats Y",    "Y pos for stats",  70, 0, 3000));
 
     // Rolling BPS: last 5 tick positions
     private final Deque<Double> bpsHistory = new ArrayDeque<>();
@@ -86,7 +85,6 @@ public class HUD extends Module {
     @EventHandler
     public void onAttack(EventAttack event) {
         long now = System.currentTimeMillis();
-        // Remove attacks older than 2 seconds
         attackTimestamps.removeIf(t -> now - t > 2000L);
         attackTimestamps.addLast(now);
         combo = attackTimestamps.size();
@@ -96,10 +94,12 @@ public class HUD extends Module {
     public void onRender2D(EventRender2D event) {
         if (mc.player == null || mc.world == null) return;
 
-        DrawContext ctx  = event.getDrawContext();
-        int screenW      = mc.getWindow().getScaledWidth();
-        int screenH      = mc.getWindow().getScaledHeight();
+        DrawContext ctx   = event.getDrawContext();
+        int screenW       = mc.getWindow().getScaledWidth();
+        int screenH       = mc.getWindow().getScaledHeight();
         ClientPlayerEntity player = mc.player;
+        boolean minimal   = layout.is("Minimal");
+        boolean expanded  = layout.is("Expanded");
 
         // --- TPS tick-timestamp tracking ---
         long now = System.currentTimeMillis();
@@ -109,7 +109,7 @@ public class HUD extends Module {
             Long[] ts = tickTimestamps.toArray(new Long[0]);
             long span = ts[ts.length - 1] - ts[0];
             if (span > 0) {
-                double avgInterval = (double) span / (ts.length - 1); // ms per tick
+                double avgInterval = (double) span / (ts.length - 1);
                 estimatedTps = (float) Math.min(20.0, 1000.0 / avgInterval);
             }
         }
@@ -120,7 +120,6 @@ public class HUD extends Module {
         double tickSpeed = Math.sqrt(dx * dx + dz * dz) * 20.0;
         prevX = player.getX();
         prevZ = player.getZ();
-
         bpsHistory.addLast(tickSpeed);
         while (bpsHistory.size() > 5) bpsHistory.pollFirst();
         bps = bpsHistory.stream().mapToDouble(Double::doubleValue).average().orElse(0.0);
@@ -130,7 +129,7 @@ public class HUD extends Module {
         combo = attackTimestamps.size();
 
         // ---- Watermark ----
-        if (watermark.isEnabled()) {
+        if (watermark.isEnabled() && !minimal) {
             String nameText    = "Quark.cc";
             String versionText = " v" + Quark.VERSION;
             int padding        = mc.textRenderer.fontHeight / 2;
@@ -142,20 +141,20 @@ public class HUD extends Module {
             int renderY        = wmY.getValue();
 
             int accentFull  = (cc.quark.gui.ClickGUI.getAccentColor() & 0x00FFFFFF) | 0xAA000000;
-            cc.quark.util.RenderUtil.drawGradientRect(ctx, renderX, renderY, renderX + wmWidth, renderY + wmHeight, accentFull, 0x00000000);
+            RenderUtil.drawGradientRect(ctx, renderX, renderY, renderX + wmWidth, renderY + wmHeight, accentFull, 0x00000000);
             ctx.fill(renderX, renderY, renderX + wmWidth, renderY + 1, cc.quark.gui.ClickGUI.getAccentColor());
 
-            cc.quark.util.RenderUtil.drawCustomText(ctx, nameText, renderX + padding, renderY + padding / 2 + 1, 0xFFFFFFFF);
-            cc.quark.util.RenderUtil.drawCustomText(ctx, versionText, renderX + padding + nameWidth, renderY + padding / 2 + 1, 0xFFAAAAAA);
+            RenderUtil.drawCustomText(ctx, nameText, renderX + padding, renderY + padding / 2 + 1, 0xFFFFFFFF);
+            RenderUtil.drawCustomText(ctx, versionText, renderX + padding + nameWidth, renderY + padding / 2 + 1, 0xFFAAAAAA);
         }
 
         // ---- Module List (right side) ----
-        if (moduleList.isEnabled()) {
+        if (!minimal) {
             List<Module> enabled = Quark.getInstance().getModuleManager().getEnabledModules();
-            int yOffset     = listY.getValue();
-            int paddingH    = mc.textRenderer.fontHeight / 3;
+            int yOffset       = listY.getValue();
+            int paddingH      = mc.textRenderer.fontHeight / 3;
             int elementHeight = mc.textRenderer.fontHeight + paddingH * 2;
-            int rightOffset = listX.getValue();
+            int rightOffset   = listX.getValue();
 
             for (int i = enabled.size() - 1; i >= 0; i--) {
                 Module mod = enabled.get(i);
@@ -175,12 +174,51 @@ public class HUD extends Module {
                 ctx.fill(screenW - 2 - rightOffset, yOffset - 1,
                          screenW - rightOffset, yOffset - 1 + elementHeight, color);
 
-                cc.quark.util.RenderUtil.drawCustomText(ctx, modName, x, yOffset + paddingH, color);
+                RenderUtil.drawCustomText(ctx, modName, x, yOffset + paddingH, color);
                 if (suffix != null) {
-                    cc.quark.util.RenderUtil.drawCustomText(ctx, suffixStr, x + nameWidth, yOffset + paddingH, 0xFF888888);
+                    RenderUtil.drawCustomText(ctx, suffixStr, x + nameWidth, yOffset + paddingH, 0xFF888888);
                 }
                 yOffset += elementHeight;
             }
+        }
+
+        // ---- Stats panel: Health, Hunger, Armor, Speed ----
+        int sy = statsY.getValue();
+        int sx = statsX.getValue();
+        int lineH = mc.textRenderer.fontHeight + 2;
+
+        if (showHealth.isEnabled()) {
+            float hp    = player.getHealth();
+            float maxHp = player.getMaxHealth();
+            float pct   = maxHp > 0 ? hp / maxHp : 1f;
+            int hc = cc.quark.util.ColorUtil.healthColor(pct) | 0xFF000000;
+            String label = expanded ? String.format("Health: %.1f / %.1f", hp, maxHp)
+                                    : String.format("❤ %.1f", hp);
+            RenderUtil.drawCustomText(ctx, label, sx, sy, hc);
+            sy += lineH;
+        }
+
+        if (showHunger.isEnabled()) {
+            int food = player.getHungerManager().getFoodLevel();
+            int color = food >= 15 ? 0xFF55FF55 : food >= 8 ? 0xFFFFFF55 : 0xFFFF5555;
+            String label = expanded ? "Hunger: " + food + "/20" : "🍖 " + food;
+            RenderUtil.drawCustomText(ctx, label, sx, sy, color);
+            sy += lineH;
+        }
+
+        if (showArmorStat.isEnabled()) {
+            int armorPoints = player.getArmor();
+            int color = armorPoints >= 15 ? 0xFF55FFFF : armorPoints >= 8 ? 0xFFFFFFAA : 0xFFAAAAAA;
+            String label = expanded ? "Armor: " + armorPoints : "⛡ " + armorPoints;
+            RenderUtil.drawCustomText(ctx, label, sx, sy, color);
+            sy += lineH;
+        }
+
+        if (showSpeed.isEnabled()) {
+            String label = expanded ? String.format("Speed: %.2f BPS", bps)
+                                    : String.format("⚡ %.2f", bps);
+            RenderUtil.drawCustomText(ctx, label, sx, sy, 0xFFAADDFF);
+            sy += lineH;
         }
 
         // ---- Coordinates / FPS / BPS (bottom-left) ----
@@ -189,43 +227,52 @@ public class HUD extends Module {
             int y       = screenH - coordsY.getValue();
             String coordStr = String.format("XYZ: %.1f / %.1f / %.1f",
                     player.getX(), player.getY(), player.getZ());
-            cc.quark.util.RenderUtil.drawCustomText(ctx, coordStr, renderX, y, 0xFFFFFFFF);
+            RenderUtil.drawCustomText(ctx, coordStr, renderX, y, 0xFFFFFFFF);
 
-            String bpsStr = String.format("BPS: %.2f", bps);
-            cc.quark.util.RenderUtil.drawCustomText(ctx, bpsStr, renderX, y + 10, 0xFFAAAAAA);
+            if (!showSpeed.isEnabled()) {
+                String bpsStr = String.format("BPS: %.2f", bps);
+                RenderUtil.drawCustomText(ctx, bpsStr, renderX, y + 10, 0xFFAAAAAA);
+            }
         }
 
-        // ---- Ping + FPS (left side, above coords) ----
+        // ---- Ping + FPS + TPS (bottom-left stack) ----
         {
             var networkHandler = mc.getNetworkHandler();
+            int infoY = screenH - 40;
+
             if (networkHandler != null) {
                 var entry = networkHandler.getPlayerListEntry(player.getUuid());
                 if (entry != null) {
                     int ping      = entry.getLatency();
                     int pingColor = ping < 80 ? 0xFF44FF88 : ping < 150 ? 0xFFFFFF44 : 0xFFFF4444;
-                    cc.quark.util.RenderUtil.drawCustomText(ctx, "Ping: " + ping + "ms", 3, screenH - 40, pingColor);
+                    RenderUtil.drawCustomText(ctx, "Ping: " + ping + "ms", 3, infoY, pingColor);
+                    infoY -= lineH;
                 }
             }
 
-            int fps      = mc.getCurrentFps();
-            int fpsColor = fps >= 60 ? 0xFF44FF88 : fps >= 30 ? 0xFFFFFF44 : 0xFFFF4444;
-            cc.quark.util.RenderUtil.drawCustomText(ctx, "FPS: " + fps, 3, screenH - 50, fpsColor);
+            if (showFps.isEnabled()) {
+                int fps      = mc.getCurrentFps();
+                int fpsColor = fps >= 60 ? 0xFF44FF88 : fps >= 30 ? 0xFFFFFF44 : 0xFFFF4444;
+                RenderUtil.drawCustomText(ctx, "FPS: " + fps, 3, infoY, fpsColor);
+                infoY -= lineH;
+            }
 
-            // Real estimated TPS
-            String tpsStr   = String.format("TPS: %.1f", estimatedTps);
-            int tpsColor    = estimatedTps >= 19f ? 0xFF44FF88 : estimatedTps >= 15f ? 0xFFFFFF44 : 0xFFFF4444;
-            cc.quark.util.RenderUtil.drawCustomText(ctx, tpsStr, 3, screenH - 60, tpsColor);
+            if (showTps.isEnabled()) {
+                String tpsStr  = String.format("TPS: %.1f", estimatedTps);
+                int tpsColor   = estimatedTps >= 19f ? 0xFF44FF88 : estimatedTps >= 15f ? 0xFFFFFF44 : 0xFFFF4444;
+                RenderUtil.drawCustomText(ctx, tpsStr, 3, infoY, tpsColor);
+            }
         }
 
         // ---- Combo Counter ----
-        if (combo >= 2) {
+        if (showCombo.isEnabled() && combo >= 2) {
             String comboStr = "Combo: " + combo;
             int cw = mc.textRenderer.getWidth(comboStr);
             int cx = screenW / 2 - cw / 2;
             int cy = screenH - 80;
             ctx.fill(cx - 4, cy - 2, cx + cw + 4, cy + mc.textRenderer.fontHeight + 2, 0xAA1A1A1A);
             int comboColor = combo >= 10 ? 0xFFFF4444 : combo >= 5 ? 0xFFFFAA00 : 0xFF44FF88;
-            cc.quark.util.RenderUtil.drawCustomText(ctx, comboStr, cx, cy, comboColor);
+            RenderUtil.drawCustomText(ctx, comboStr, cx, cy, comboColor);
         }
 
         // ---- Blink packet queue indicator ----
@@ -238,7 +285,7 @@ public class HUD extends Module {
                 int bx       = screenW / 2 - blinkW / 2;
                 int by       = screenH - 55;
                 ctx.fill(bx - 4, by - 2, bx + blinkW + 4, by + mc.textRenderer.fontHeight + 2, 0xAA2A0000);
-                cc.quark.util.RenderUtil.drawCustomText(ctx, blinkStr, bx, by, 0xFFFF3333);
+                RenderUtil.drawCustomText(ctx, blinkStr, bx, by, 0xFFFF3333);
             }
         }
 
@@ -253,7 +300,7 @@ public class HUD extends Module {
                 int gy = 6;
                 ctx.fill(gx - 2, gy - 2, gx + gw + 2, gy + mc.textRenderer.fontHeight + 2, 0xBB111111);
                 ctx.fill(gx - 2, gy - 2, gx + gw + 2, gy - 1, accentColor);
-                cc.quark.util.RenderUtil.drawCustomText(ctx, ghostStr, gx, gy, accentColor);
+                RenderUtil.drawCustomText(ctx, ghostStr, gx, gy, accentColor);
             }
         }
 
@@ -286,8 +333,7 @@ public class HUD extends Module {
             int x = startX + i * 40;
             ctx.fill(x, y, x + barW, y + 4, 0x88000000);
             ctx.fill(x, y, x + filledW, y + 4, barColor);
-            cc.quark.util.RenderUtil.drawCustomText(ctx, names[i].substring(0, 1),
-                    x + 13, y + 6, 0xFFCCCCCC);
+            RenderUtil.drawCustomText(ctx, names[i].substring(0, 1), x + 13, y + 6, 0xFFCCCCCC);
         }
     }
 
@@ -316,8 +362,8 @@ public class HUD extends Module {
             int bgW = mc.textRenderer.getWidth(name + roman + " (" + formatDuration(dur) + ")") + 6;
             ctx.fill(x - 2, y - 1, x + bgW, y + mc.textRenderer.fontHeight + 1, 0x88111111);
 
-            cc.quark.util.RenderUtil.drawCustomText(ctx, name + roman, x, y, nameColor);
-            cc.quark.util.RenderUtil.drawCustomText(ctx, durStr, x + mc.textRenderer.getWidth(name + roman), y, 0xFF888888);
+            RenderUtil.drawCustomText(ctx, name + roman, x, y, nameColor);
+            RenderUtil.drawCustomText(ctx, durStr, x + mc.textRenderer.getWidth(name + roman), y, 0xFF888888);
             y += lineH;
         }
     }

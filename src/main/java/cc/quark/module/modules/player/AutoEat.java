@@ -6,7 +6,7 @@ import cc.quark.module.Category;
 import cc.quark.module.Module;
 import cc.quark.setting.BoolSetting;
 import cc.quark.setting.DoubleSetting;
-import cc.quark.setting.EnumSetting;
+import cc.quark.setting.IntSetting;
 import net.minecraft.client.network.ClientPlayerEntity;
 //? if mc >= "1.20.5" {
 import net.minecraft.component.type.FoodComponent;
@@ -19,27 +19,23 @@ import net.minecraft.util.Hand;
 
 public class AutoEat extends Module {
 
-    public enum Priority {
-        HEALTH, HUNGER
-    }
+    private final DoubleSetting healthThreshold = register(new DoubleSetting(
+            "Health Threshold", "Eat when health is at or below this value (hearts)", 14.0, 1.0, 20.0));
 
-    private final DoubleSetting eatAtHealth = register(new DoubleSetting(
-            "Eat At Health", "Eat when health is at or below this value (hearts)", 7.0, 1.0, 20.0));
+    private final IntSetting hungerThreshold = register(new IntSetting(
+            "Hunger Threshold", "Eat when hunger is at or below this value", 17, 1, 20));
 
-    private final DoubleSetting eatAtHunger = register(new DoubleSetting(
-            "Eat At Hunger", "Eat when hunger is at or below this value", 15.0, 1.0, 20.0));
+    private final BoolSetting eatBest = register(new BoolSetting(
+            "Eat Best", "Prefer the highest nutrition food available", true));
 
-    private final BoolSetting bestFood = register(new BoolSetting(
-            "Best Food", "Prioritize the most nutritious food", true));
+    private final BoolSetting switchBack = register(new BoolSetting(
+            "Switch Back", "Restore previous slot after eating", true));
 
-    private final BoolSetting instant = register(new BoolSetting(
-            "Instant", "Force instant food use (use with FastEat)", false));
-
-    private final EnumSetting<Priority> priority = register(new EnumSetting<>(
-            "Priority", "Whether to trigger on Health or Hunger threshold first", Priority.HUNGER));
+    private final BoolSetting stopSprint = register(new BoolSetting(
+            "Stop Sprint", "Stop sprinting while eating (reduces hunger waste)", false));
 
     private int savedSlot = -1;
-    private boolean eating = false;
+    private boolean isEating = false;
 
     private static boolean isJunkFood(Item item) {
         return item == Items.ROTTEN_FLESH
@@ -54,13 +50,13 @@ public class AutoEat extends Module {
 
     @Override
     public void onDisable() {
-        if (eating && mc.player != null) {
+        if (isEating && mc.player != null) {
             mc.options.useKey.setPressed(false);
-            eating = false;
-            if (savedSlot != -1) {
+            isEating = false;
+            if (savedSlot != -1 && switchBack.isEnabled()) {
                 mc.player.getInventory().selectedSlot = savedSlot;
-                savedSlot = -1;
             }
+            savedSlot = -1;
         }
     }
 
@@ -70,31 +66,25 @@ public class AutoEat extends Module {
 
         ClientPlayerEntity player = mc.player;
 
-        boolean shouldEat = false;
-
-        if (priority.get() == Priority.HUNGER) {
-            if (player.getHungerManager().getFoodLevel() <= (int) eatAtHunger.get()) shouldEat = true;
-            if (player.getHealth() <= (float) eatAtHealth.get()) shouldEat = true;
-        } else {
-            if (player.getHealth() <= (float) eatAtHealth.get()) shouldEat = true;
-            if (player.getHungerManager().getFoodLevel() <= (int) eatAtHunger.get()) shouldEat = true;
-        }
+        boolean shouldEat = player.getHungerManager().getFoodLevel() <= hungerThreshold.get()
+                || player.getHealth() <= (float) healthThreshold.get();
 
         if (!shouldEat) {
-            if (eating) {
+            if (isEating) {
                 mc.options.useKey.setPressed(false);
-                eating = false;
-                if (savedSlot != -1) {
+                isEating = false;
+                if (savedSlot != -1 && switchBack.isEnabled()) {
                     player.getInventory().selectedSlot = savedSlot;
-                    savedSlot = -1;
                 }
+                savedSlot = -1;
             }
             return;
         }
 
         if (player.isUsingItem()) {
-            if (instant.isEnabled()) {
-                mc.interactionManager.stopUsingItem(player);
+            // Stop sprint while eating if enabled
+            if (stopSprint.isEnabled()) {
+                player.setSprinting(false);
             }
             return;
         }
@@ -103,20 +93,31 @@ public class AutoEat extends Module {
         boolean bestIsHotbar = false;
         int bestNutrition = -1;
 
-        if (bestFood.isEnabled()) {
+        if (eatBest.isEnabled()) {
+            // Search hotbar first
             for (int i = 0; i < 9; i++) {
                 ItemStack stack = player.getInventory().getStack(i);
                 int nutrition = getFoodNutrition(stack);
                 if (nutrition <= 0 || isJunkFood(stack.getItem())) continue;
-                if (nutrition > bestNutrition) { bestNutrition = nutrition; bestSlot = i; bestIsHotbar = true; }
+                if (nutrition > bestNutrition) {
+                    bestNutrition = nutrition;
+                    bestSlot = i;
+                    bestIsHotbar = true;
+                }
             }
+            // Then search inventory (slots 9-35)
             for (int i = 9; i < 36; i++) {
                 ItemStack stack = player.getInventory().getStack(i);
                 int nutrition = getFoodNutrition(stack);
                 if (nutrition <= 0 || isJunkFood(stack.getItem())) continue;
-                if (nutrition > bestNutrition) { bestNutrition = nutrition; bestSlot = i; bestIsHotbar = false; }
+                if (nutrition > bestNutrition) {
+                    bestNutrition = nutrition;
+                    bestSlot = i;
+                    bestIsHotbar = false;
+                }
             }
         } else {
+            // Find first food in hotbar
             for (int i = 0; i < 9; i++) {
                 ItemStack stack = player.getInventory().getStack(i);
                 int nutrition = getFoodNutrition(stack);
@@ -129,11 +130,12 @@ public class AutoEat extends Module {
 
         if (bestSlot == -1) return;
 
+        if (savedSlot == -1) savedSlot = player.getInventory().selectedSlot;
+
         if (bestIsHotbar) {
-            if (savedSlot == -1) savedSlot = player.getInventory().selectedSlot;
             player.getInventory().selectedSlot = bestSlot;
         } else {
-            if (savedSlot == -1) savedSlot = player.getInventory().selectedSlot;
+            // Swap from inventory to hotbar slot 8
             mc.interactionManager.clickSlot(
                     player.currentScreenHandler.syncId,
                     bestSlot,
@@ -143,9 +145,14 @@ public class AutoEat extends Module {
             player.getInventory().selectedSlot = 8;
         }
 
+        // Stop sprint while eating if enabled
+        if (stopSprint.isEnabled()) {
+            player.setSprinting(false);
+        }
+
         mc.interactionManager.interactItem(player, Hand.MAIN_HAND);
         mc.options.useKey.setPressed(true);
-        eating = true;
+        isEating = true;
     }
 
     private int getFoodNutrition(ItemStack stack) {

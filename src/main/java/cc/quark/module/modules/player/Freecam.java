@@ -2,13 +2,17 @@ package cc.quark.module.modules.player;
 
 import cc.quark.event.EventHandler;
 import cc.quark.event.events.EventPacketSend;
+import cc.quark.event.events.EventRender3D;
 import cc.quark.event.events.EventTick;
 import cc.quark.module.Category;
 import cc.quark.module.Module;
+import cc.quark.setting.BoolSetting;
 import cc.quark.setting.DoubleSetting;
+import cc.quark.util.RenderUtil;
 import net.minecraft.client.input.Input;
 import net.minecraft.entity.Entity;
 import net.minecraft.network.packet.c2s.play.PlayerMoveC2SPacket;
+import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Vec3d;
 
 /**
@@ -21,13 +25,19 @@ import net.minecraft.util.math.Vec3d;
 public class Freecam extends Module {
 
     private final DoubleSetting speed = register(new DoubleSetting(
-            "Speed", "Camera movement speed", 1.0, 0.1, 10.0));
+            "Speed", "Camera movement speed", 1.0, 0.1, 5.0));
+
+    private final BoolSetting noClip = register(new BoolSetting(
+            "No Clip", "Disable collision for the camera", true));
+
+    private final BoolSetting renderPlayer = register(new BoolSetting(
+            "Render Player", "Show player at original position while in freecam", true));
 
     // Saved player state
     private double savedX, savedY, savedZ;
     private float savedYaw, savedPitch;
 
-    // Ghost camera entity (we reuse a dummy entity for the camera position)
+    // Ghost camera entity
     private FreecamEntity cameraEntity;
     private Entity originalCameraEntity;
 
@@ -107,11 +117,11 @@ public class Freecam extends Module {
         if (input.jumping) dy += spd;
         if (input.sneaking) dy -= spd;
 
-        cameraEntity.setPosition(
-                cameraEntity.getX() + dx,
-                cameraEntity.getY() + dy,
-                cameraEntity.getZ() + dz
-        );
+        double newX = cameraEntity.getX() + dx;
+        double newY = cameraEntity.getY() + dy;
+        double newZ = cameraEntity.getZ() + dz;
+
+        cameraEntity.setPosition(newX, newY, newZ);
 
         // Sync camera yaw/pitch to player's look direction
         cameraEntity.setYaw(mc.player.getYaw());
@@ -120,6 +130,18 @@ public class Freecam extends Module {
         // Freeze player movement
         mc.player.setVelocity(Vec3d.ZERO);
         mc.player.setPosition(savedX, savedY, savedZ);
+    }
+
+    @EventHandler
+    public void onRender3D(EventRender3D event) {
+        if (!renderPlayer.isEnabled() || mc.player == null) return;
+
+        // Draw a box at the player's original frozen position
+        Box playerBox = new Box(
+                savedX - 0.3, savedY, savedZ - 0.3,
+                savedX + 0.3, savedY + 1.8, savedZ + 0.3
+        );
+        RenderUtil.drawESPBox(event.getMatrixStack(), playerBox, 0.2f, 0.8f, 0.2f, 0.9f, 1.5f);
     }
 
     @EventHandler

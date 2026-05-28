@@ -24,10 +24,7 @@ public class AntiVoid extends Module {
         if (mc.player != null) lastSafePos = mc.player.getPos();
     }
 
-    @Override
-    public void onDisable() {
-        Quark.getInstance().getEventBus().unsubscribe(this);
-    }
+    
 
     @EventHandler
     public void onTick(EventTick event) {

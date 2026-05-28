@@ -5,39 +5,45 @@ import cc.quark.event.events.EventTick;
 import cc.quark.module.Category;
 import cc.quark.module.Module;
 import cc.quark.setting.BoolSetting;
-import cc.quark.setting.EnumSetting;
 import net.minecraft.item.*;
 import net.minecraft.screen.slot.SlotActionType;
 
 import java.util.*;
 
 /**
- * InventoryManager - sorts inventory, drops junk, and organizes the hotbar.
+ * InventoryManager - manages inventory automatically.
  *
- * Sort modes:
- *   NAME     â€“ alphabetical by item name
- *   STACK    â€“ group by item type (largest stacks first)
- *   VALUE    â€“ tool/armor quality, then food, then materials
+ * Features:
+ *   - Auto Refill  — move items from backpack to hotbar when a hotbar slot runs empty
+ *   - Auto Stack   — stack items of the same type together
+ *   - Drop Trash   — drop junk items automatically
+ *   - Sort         — periodically sort inventory by item value
  */
 public class InventoryManager extends Module {
 
-    public enum SortMode {
-        NAME, STACK, VALUE
-    }
+    private final BoolSetting autoRefill = register(new BoolSetting(
+            "Auto Refill", "Move items from inventory to hotbar when hotbar slot runs empty", true));
 
-    private final EnumSetting<SortMode> sortMode = register(new EnumSetting<>(
-            "Sort Mode", "How to sort inventory items", SortMode.STACK));
+    private final BoolSetting autoStack = register(new BoolSetting(
+            "Auto Stack", "Automatically stack items of the same type together", true));
 
-    private final BoolSetting dropJunk = register(new BoolSetting(
-            "Drop Junk", "Drop junk items (rotten flesh, seeds, etc.)", true));
+    private final BoolSetting dropTrash = register(new BoolSetting(
+            "Drop Trash", "Drop junk items (gravel, dirt, rotten flesh, bones, arrows if full)", true));
 
-    private final BoolSetting hotbarFill = register(new BoolSetting(
-            "Hotbar Fill", "Move best weapons/tools/food to hotbar slots", true));
+    private final BoolSetting sort = register(new BoolSetting(
+            "Sort", "Periodically sort inventory by category", false));
 
     private int tickDelay = 0;
 
+    private static final Set<Item> TRASH_ITEMS = new HashSet<>(Arrays.asList(
+            Items.ROTTEN_FLESH, Items.SPIDER_EYE, Items.POISONOUS_POTATO,
+            Items.WHEAT_SEEDS, Items.MELON_SEEDS, Items.PUMPKIN_SEEDS,
+            Items.BEETROOT_SEEDS, Items.BONE, Items.STRING,
+            Items.GRAVEL, Items.DIRT, Items.SAND, Items.COBBLESTONE
+    ));
+
     public InventoryManager() {
-        super("InventoryManager", "Sorts inventory, drops junk, and organizes hotbar", Category.PLAYER);
+        super("InventoryManager", "Auto-manages inventory: refill, stack, drop trash, and sort", Category.PLAYER);
     }
 
     @EventHandler
@@ -50,93 +56,113 @@ public class InventoryManager extends Module {
         if (tickDelay < 5) return; // Run every 5 ticks
         tickDelay = 0;
 
-        if (dropJunk.isEnabled()) {
-            dropJunkItems();
+        if (dropTrash.isEnabled()) {
+            if (dropJunkItems()) return; // One action per cycle
         }
 
-        if (hotbarFill.isEnabled()) {
-            fillHotbar();
+        if (autoStack.isEnabled()) {
+            if (stackItems()) return;
         }
 
-        sortInventory();
+        if (autoRefill.isEnabled()) {
+            if (refillHotbar()) return;
+        }
+
+        if (sort.isEnabled()) {
+            sortInventory();
+        }
     }
 
     // -------------------------------------------------------------------------
     // Junk dropping
     // -------------------------------------------------------------------------
 
-    private static final Set<Item> JUNK_ITEMS = new HashSet<>(Arrays.asList(
-            Items.ROTTEN_FLESH, Items.SPIDER_EYE, Items.POISONOUS_POTATO,
-            Items.WHEAT_SEEDS, Items.MELON_SEEDS, Items.PUMPKIN_SEEDS,
-            Items.BEETROOT_SEEDS, Items.BONE, Items.STRING,
-            Items.COBBLESTONE, Items.DIRT, Items.GRAVEL, Items.SAND
-    ));
+    private boolean dropJunkItems() {
+        // Check if arrows slot is full (all 36 slots) — only trash arrows if inventory is very full
+        boolean arrowsFull = isInventoryFull();
 
-    private void dropJunkItems() {
         for (int i = 9; i < 36; i++) {
             ItemStack stack = mc.player.getInventory().getStack(i);
             if (stack.isEmpty()) continue;
-            if (JUNK_ITEMS.contains(stack.getItem())) {
-                // Drop by clicking outside the inventory window (slot -999 = throw)
+
+            boolean isTrash = TRASH_ITEMS.contains(stack.getItem());
+            boolean isArrow = stack.getItem() == Items.ARROW && arrowsFull;
+
+            if (isTrash || isArrow) {
                 mc.interactionManager.clickSlot(
                         mc.player.playerScreenHandler.syncId,
                         i, 0, SlotActionType.THROW, mc.player);
-                return; // One per tick cycle
+                return true; // One drop per cycle
             }
         }
+        return false;
+    }
+
+    private boolean isInventoryFull() {
+        for (int i = 9; i < 36; i++) {
+            if (mc.player.getInventory().getStack(i).isEmpty()) return false;
+        }
+        return true;
     }
 
     // -------------------------------------------------------------------------
-    // Hotbar filling
+    // Auto Stack
     // -------------------------------------------------------------------------
 
-    private void fillHotbar() {
-        // Slot 0: best sword, Slot 1: best pickaxe, Slot 2: best axe,
-        // Slot 3: best food, Slot 4-8: fill with remaining valuable items
+    private boolean stackItems() {
+        // Find two stacks of the same item that aren't full and merge them
+        for (int i = 9; i < 36; i++) {
+            ItemStack a = mc.player.getInventory().getStack(i);
+            if (a.isEmpty() || a.getCount() >= a.getMaxCount()) continue;
 
-        int[] desiredSlots = {0, 1, 2, 3};
-        Class<?>[] toolTypes = {SwordItem.class, PickaxeItem.class, AxeItem.class, null /* food */};
+            for (int j = i + 1; j < 36; j++) {
+                ItemStack b = mc.player.getInventory().getStack(j);
+                if (b.isEmpty()) continue;
+                if (a.getItem() != b.getItem()) continue;
+                if (a.getCount() >= a.getMaxCount()) break;
 
-        for (int i = 0; i < desiredSlots.length; i++) {
-            int hotbarSlot = desiredSlots[i];
-            ItemStack current = mc.player.getInventory().getStack(hotbarSlot);
-
-            Class<?> toolType = toolTypes[i];
-            int bestInvSlot = -1;
-
-            if (toolType != null) {
-                // Find best tool of this type in inventory (slots 9-35)
-                int bestDamage = -1;
-                for (int j = 9; j < 36; j++) {
-                    ItemStack stack = mc.player.getInventory().getStack(j);
-                    if (!toolType.isInstance(stack.getItem())) continue;
-                    if (stack.getDamage() > bestDamage) {
-                        bestDamage = stack.getDamage();
-                        bestInvSlot = j;
-                    }
-                }
-                // Swap if found and hotbar slot doesn't already have the right type
-                if (bestInvSlot != -1 && !toolType.isInstance(current.getItem())) {
-                    mc.interactionManager.clickSlot(
-                            mc.player.playerScreenHandler.syncId,
-                            bestInvSlot, hotbarSlot, SlotActionType.SWAP, mc.player);
-                }
-            } else {
-                if (getFoodNutrition(current) <= 0) {
-                    int bestNutrition = -1;
-                    for (int j = 9; j < 36; j++) {
-                        ItemStack stack = mc.player.getInventory().getStack(j);
-                        int nutrition = getFoodNutrition(stack);
-                        if (nutrition > bestNutrition) { bestNutrition = nutrition; bestInvSlot = j; }
-                    }
-                    if (bestInvSlot != -1) {
-                        mc.interactionManager.clickSlot(
-                                mc.player.playerScreenHandler.syncId,
-                                bestInvSlot, hotbarSlot, SlotActionType.SWAP, mc.player);
-                    }
-                }
+                // Click a onto b to stack (shift-click to auto-stack)
+                mc.interactionManager.clickSlot(
+                        mc.player.playerScreenHandler.syncId,
+                        j, 0, SlotActionType.PICKUP, mc.player);
+                mc.interactionManager.clickSlot(
+                        mc.player.playerScreenHandler.syncId,
+                        i, 0, SlotActionType.PICKUP, mc.player);
+                mc.interactionManager.clickSlot(
+                        mc.player.playerScreenHandler.syncId,
+                        j, 0, SlotActionType.PICKUP, mc.player);
+                return true;
             }
         }
+        return false;
+    }
+
+    // -------------------------------------------------------------------------
+    // Auto Refill
+    // -------------------------------------------------------------------------
+
+    private boolean refillHotbar() {
+        for (int hotbarSlot = 0; hotbarSlot < 9; hotbarSlot++) {
+            ItemStack hotbarStack = mc.player.getInventory().getStack(hotbarSlot);
+            if (hotbarStack.isEmpty()) continue;
+            // Check if this is a stackable item that's nearly depleted
+            if (hotbarStack.getMaxCount() <= 1) continue;
+            if (hotbarStack.getCount() > 1) continue;
+
+            // Find matching item in inventory
+            Item needed = hotbarStack.getItem();
+            for (int invSlot = 9; invSlot < 36; invSlot++) {
+                ItemStack invStack = mc.player.getInventory().getStack(invSlot);
+                if (invStack.isEmpty() || invStack.getItem() != needed) continue;
+
+                // Swap/move from inventory to hotbar
+                mc.interactionManager.clickSlot(
+                        mc.player.playerScreenHandler.syncId,
+                        invSlot, hotbarSlot, SlotActionType.SWAP, mc.player);
+                return true;
+            }
+        }
+        return false;
     }
 
     // -------------------------------------------------------------------------
@@ -144,50 +170,13 @@ public class InventoryManager extends Module {
     // -------------------------------------------------------------------------
 
     private void sortInventory() {
-        // Collect all items from inventory slots 9-35
-        List<ItemStack> items = new ArrayList<>();
-        for (int i = 9; i < 36; i++) {
-            ItemStack stack = mc.player.getInventory().getStack(i);
-            if (!stack.isEmpty()) {
-                items.add(stack.copy());
-            }
-        }
-
-        if (items.isEmpty()) return;
-
-        // Sort according to mode
-        switch (sortMode.get()) {
-            case NAME -> items.sort(Comparator.comparing(s -> s.getItem().toString()));
-            case STACK -> items.sort((a, b) -> {
-                // Same item type: sort descending by count
-                if (a.getItem() == b.getItem()) return b.getCount() - a.getCount();
-                return a.getItem().toString().compareTo(b.getItem().toString());
-            });
-            case VALUE -> items.sort((a, b) -> itemValue(b) - itemValue(a));
-        }
-
-        // Write sorted items back via swap operations (simplified: just one pass)
-        // This is complex to do perfectly without a real sorting algorithm via packet clicks.
-        // We do a bubble-sort style single pass each tick.
+        // Bubble-sort style single pass each tick by item value
         for (int i = 9; i < 35; i++) {
             ItemStack a = mc.player.getInventory().getStack(i);
             ItemStack b = mc.player.getInventory().getStack(i + 1);
             if (a.isEmpty() || b.isEmpty()) continue;
 
-            boolean shouldSwap = false;
-            switch (sortMode.get()) {
-                case NAME -> shouldSwap = a.getItem().toString().compareTo(b.getItem().toString()) > 0;
-                case STACK -> {
-                    if (a.getItem() == b.getItem()) {
-                        shouldSwap = a.getCount() < b.getCount();
-                    } else {
-                        shouldSwap = a.getItem().toString().compareTo(b.getItem().toString()) > 0;
-                    }
-                }
-                case VALUE -> shouldSwap = itemValue(a) < itemValue(b);
-            }
-
-            if (shouldSwap) {
+            if (itemValue(a) < itemValue(b)) {
                 mc.interactionManager.clickSlot(
                         mc.player.playerScreenHandler.syncId,
                         i, 0, SlotActionType.PICKUP, mc.player);
@@ -203,7 +192,7 @@ public class InventoryManager extends Module {
     }
 
     private int itemValue(ItemStack stack) {
-        if (stack.getItem() instanceof net.minecraft.item.SwordItem s) return 1000;
+        if (stack.getItem() instanceof SwordItem) return 1000;
         if (stack.getItem() instanceof PickaxeItem) return 900;
         if (stack.getItem() instanceof AxeItem) return 850;
         if (stack.getItem() instanceof ShovelItem) return 800;

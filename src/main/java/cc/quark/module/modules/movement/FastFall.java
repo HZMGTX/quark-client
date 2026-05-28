@@ -15,15 +15,9 @@ public class FastFall extends Module {
         super("FastFall", "Fall faster when sneaking", Category.MOVEMENT, 0);
     }
 
-    @Override
-    public void onEnable() {
-        Quark.getInstance().getEventBus().subscribe(this);
-    }
+    
 
-    @Override
-    public void onDisable() {
-        Quark.getInstance().getEventBus().unsubscribe(this);
-    }
+    
 
     @EventHandler
     public void onTick(EventTick event) {

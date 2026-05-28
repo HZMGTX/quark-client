@@ -13,7 +13,6 @@ import cc.quark.util.ColorUtil;
 import cc.quark.util.RenderUtil;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.render.*;
-import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.ItemEntity;
@@ -23,30 +22,39 @@ import net.minecraft.entity.passive.AnimalEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.vehicle.BoatEntity;
 import net.minecraft.entity.vehicle.MinecartEntity;
+import net.minecraft.item.ItemStack;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Vec3d;
 import org.joml.Matrix4f;
 
 public class ESP extends Module {
 
-    private final BoolSetting players  = register(new BoolSetting("Players",  "ESP for other players",          true));
-    private final BoolSetting mobs     = register(new BoolSetting("Mobs",     "ESP for hostile mobs",           true));
-    private final BoolSetting animals  = register(new BoolSetting("Animals",  "ESP for passive animals",        false));
-    private final BoolSetting items    = register(new BoolSetting("Items",    "ESP for dropped items",          false));
-    private final BoolSetting vehicles = register(new BoolSetting("Vehicles", "ESP for boats and minecarts",    false));
+    private final BoolSetting players    = register(new BoolSetting("Players",    "ESP for other players",          true));
+    private final BoolSetting mobs       = register(new BoolSetting("Mobs",       "ESP for hostile/neutral mobs",   false));
+    private final BoolSetting self       = register(new BoolSetting("Self",       "ESP for yourself",               false));
+    private final BoolSetting animals    = register(new BoolSetting("Animals",    "ESP for passive animals",        false));
+    private final BoolSetting items      = register(new BoolSetting("Items",      "ESP for dropped items",          false));
+    private final BoolSetting vehicles   = register(new BoolSetting("Vehicles",   "ESP for boats and minecarts",    false));
 
-    private final ModeSetting mode     = register(new ModeSetting("Mode", "ESP draw mode", "Box", "Box", "Corner", "Tracer", "BoxTracer"));
-    private final BoolSetting fill     = register(new BoolSetting("Fill",    "Fill the ESP box",             true));
-    private final BoolSetting outline  = register(new BoolSetting("Outline", "Draw the ESP box outline",     true));
-    private final BoolSetting glow     = register(new BoolSetting("Glow",    "Draw a wider glow outline",    false));
-    private final BoolSetting showName = register(new BoolSetting("Names",   "Show entity name above box",   true));
-    private final BoolSetting showDist = register(new BoolSetting("Distance","Show distance near box",       true));
-    private final BoolSetting healthCol= register(new BoolSetting("HealthColor","Color players by health",   true));
+    // Mode: Box / Corner / Tracer / BoxTracer / Glow
+    private final ModeSetting mode       = register(new ModeSetting("Mode", "ESP draw mode", "Box",
+            "Box", "Corner", "Tracer", "BoxTracer", "Glow"));
+
+    private final BoolSetting fill       = register(new BoolSetting("Fill",       "Fill the ESP box",               true));
+    private final BoolSetting outline    = register(new BoolSetting("Outline",    "Draw the ESP box outline",       true));
+
+    // Per-feature display toggles
+    private final BoolSetting showName   = register(new BoolSetting("Name",       "Show entity name above box",     true));
+    private final BoolSetting showDist   = register(new BoolSetting("Distance",   "Show distance in metres",        true));
+    private final BoolSetting healthBar  = register(new BoolSetting("Health Bar", "Draw health bar below the box",  true));
+    private final BoolSetting armorBar   = register(new BoolSetting("Armor",      "Draw armor durability bar",      true));
+    private final BoolSetting healthCol  = register(new BoolSetting("HealthColor","Color players by health",        true));
 
     private final ColorSetting playerColor  = register(new ColorSetting("PlayerColor",  "Player ESP colour",  0xFFFF0000));
     private final ColorSetting mobColor     = register(new ColorSetting("MobColor",     "Mob ESP colour",     0xFFFF8800));
     private final ColorSetting friendColor  = register(new ColorSetting("FriendColor",  "Friend ESP colour",  0xFF00FF00));
     private final ColorSetting animalColor  = register(new ColorSetting("AnimalColor",  "Animal ESP colour",  0xFFFFFF00));
+    private final ColorSetting selfColor    = register(new ColorSetting("SelfColor",    "Self ESP colour",    0xFF00FFFF));
 
     private final DoubleSetting fillAlpha  = register(new DoubleSetting("FillAlpha",  "Fill transparency (0-255)", 30, 0, 255));
 
@@ -62,12 +70,13 @@ public class ESP extends Module {
         float tickDelta = event.getTickDelta();
 
         for (Entity entity : mc.world.getEntities()) {
-            if (entity == mc.player) continue;
-            if (entity.isInvisible()) continue;
+            boolean isSelf = (entity == mc.player);
+            if (isSelf && !self.isEnabled()) continue;
+            if (!isSelf && entity.isInvisible()) continue;
             if (!(entity instanceof LivingEntity) && !(entity instanceof ItemEntity)
                     && !(entity instanceof BoatEntity) && !(entity instanceof MinecartEntity)) continue;
 
-            float[] color = resolveColorRGB(entity);
+            float[] color = resolveColorRGB(entity, isSelf);
             if (color == null) continue;
 
             float r = color[0], g = color[1], b = color[2];
@@ -81,26 +90,14 @@ public class ESP extends Module {
 
             String modeVal = mode.get();
 
-            if (modeVal.equals("Box") || modeVal.equals("BoxTracer")) {
-                if (glow.isEnabled()) {
-                    int accentArgb = cc.quark.gui.ClickGUI.getAccentColor();
-                    float gr = ((accentArgb >> 16) & 0xFF) / 255f;
-                    float gg = ((accentArgb >> 8) & 0xFF) / 255f;
-                    float gb = (accentArgb & 0xFF) / 255f;
-                    Box glowBox = box.expand(0.05);
-                    RenderUtil.drawESPBox(matrices, glowBox, gr, gg, gb, 0.5f, 3.0f);
-                }
+            if (modeVal.equals("Glow")) {
+                // Thick outline only - draw two nested outlines for glow effect
+                RenderUtil.drawESPBox(matrices, box.expand(0.04), r, g, b, 0.35f, 4.0f);
+                RenderUtil.drawESPBox(matrices, box, r, g, b, 0.8f, 2.5f);
+            } else if (modeVal.equals("Box") || modeVal.equals("BoxTracer")) {
                 if (fill.isEnabled()) RenderUtil.drawFilledBox(matrices, box, r, g, b, fa);
                 if (outline.isEnabled()) RenderUtil.drawESPBox(matrices, box, r, g, b, 0.9f, 1.5f);
             } else if (modeVal.equals("Corner")) {
-                if (glow.isEnabled()) {
-                    int accentArgb = cc.quark.gui.ClickGUI.getAccentColor();
-                    float gr = ((accentArgb >> 16) & 0xFF) / 255f;
-                    float gg = ((accentArgb >> 8) & 0xFF) / 255f;
-                    float gb = (accentArgb & 0xFF) / 255f;
-                    Box glowBox = box.expand(0.05);
-                    drawCornerBox(matrices, glowBox, gr, gg, gb, 0.5f, 3.0f);
-                }
                 if (fill.isEnabled()) RenderUtil.drawFilledBox(matrices, box, r, g, b, fa);
                 if (outline.isEnabled()) drawCornerBox(matrices, box, r, g, b, 0.9f, 1.5f);
             }
@@ -111,8 +108,17 @@ public class ESP extends Module {
                 RenderUtil.drawLine3D(matrices, eyes, center, r, g, b, 0.7f, 1.0f);
             }
 
+            // 2D screen-space overlays (health bar, armor bar, labels)
             if (showName.isEnabled() || showDist.isEnabled()) {
                 renderLabel(matrices, entity, ex, ey, ez, r, g, b);
+            }
+
+            if (healthBar.isEnabled() && entity instanceof LivingEntity living) {
+                renderHealthBar(matrices, entity, living, ex, ey, ez, box);
+            }
+
+            if (armorBar.isEnabled() && entity instanceof PlayerEntity player) {
+                renderArmorBar(matrices, player, ex, ey, ez, box);
             }
         }
     }
@@ -161,7 +167,137 @@ public class ESP extends Module {
         matrices.pop();
     }
 
-    private float[] resolveColorRGB(Entity entity) {
+    /**
+     * Renders a small health bar just below the entity's bounding box in world-space.
+     * Uses camera-facing billboard so it's always readable.
+     */
+    private void renderHealthBar(MatrixStack matrices, Entity entity, LivingEntity living,
+                                  double ex, double ey, double ez, Box box) {
+        Camera camera = mc.gameRenderer.getCamera();
+        Vec3d camPos = camera.getPos();
+
+        float hp    = living.getHealth();
+        float maxHp = living.getMaxHealth();
+        float pct   = maxHp > 0 ? Math.max(0f, Math.min(1f, hp / maxHp)) : 0f;
+        int hc = ColorUtil.healthColor(pct);
+        float hr = ((hc >> 16) & 0xFF) / 255f;
+        float hg = ((hc >> 8) & 0xFF) / 255f;
+        float hb = (hc & 0xFF) / 255f;
+
+        double tx = ex - camPos.x;
+        // place just below the feet
+        double ty = ey - 0.15 - camPos.y;
+        double tz = ez - camPos.z;
+
+        double boxW = box.maxX - box.minX;
+        float barHalfW = (float)(boxW * 0.5);
+
+        matrices.push();
+        matrices.translate(tx, ty, tz);
+        matrices.multiply(camera.getRotation());
+        float s = 1.0f; // world units, not text scale
+
+        // Draw bar using raw lines; simpler: use tessellator quads
+        RenderSystem.enableBlend();
+        RenderSystem.defaultBlendFunc();
+        RenderSystem.disableDepthTest();
+        RenderSystem.setShader(GameRenderer::getPositionColorProgram);
+
+        MatrixStack.Entry entry = matrices.peek();
+        Matrix4f mat = entry.getPositionMatrix();
+        Tessellator tess = Tessellator.getInstance();
+
+        // Background bar
+        BufferBuilder buf = tess.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR);
+        buf.vertex(mat, -barHalfW, 0.04f, 0).color(0.1f, 0.1f, 0.1f, 0.7f);
+        buf.vertex(mat, -barHalfW, 0f,    0).color(0.1f, 0.1f, 0.1f, 0.7f);
+        buf.vertex(mat,  barHalfW, 0f,    0).color(0.1f, 0.1f, 0.1f, 0.7f);
+        buf.vertex(mat,  barHalfW, 0.04f, 0).color(0.1f, 0.1f, 0.1f, 0.7f);
+        BufferRenderer.drawWithGlobalProgram(buf.end());
+
+        // Filled portion
+        float fillRight = -barHalfW + barHalfW * 2f * pct;
+        buf = tess.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR);
+        buf.vertex(mat, -barHalfW, 0.04f, 0).color(hr, hg, hb, 0.9f);
+        buf.vertex(mat, -barHalfW, 0f,    0).color(hr, hg, hb, 0.9f);
+        buf.vertex(mat,  fillRight, 0f,   0).color(hr, hg, hb, 0.9f);
+        buf.vertex(mat,  fillRight, 0.04f,0).color(hr, hg, hb, 0.9f);
+        BufferRenderer.drawWithGlobalProgram(buf.end());
+
+        RenderSystem.enableDepthTest();
+        RenderSystem.disableBlend();
+        matrices.pop();
+    }
+
+    /**
+     * Renders a small armor durability bar just below the health bar.
+     */
+    private void renderArmorBar(MatrixStack matrices, PlayerEntity player,
+                                 double ex, double ey, double ez, Box box) {
+        // Compute average armor durability
+        int[] slots = {36, 37, 38, 39};
+        int totalMax = 0, totalCur = 0, count = 0;
+        for (int slot : slots) {
+            ItemStack stack = player.getInventory().getStack(slot);
+            if (!stack.isEmpty() && stack.isDamageable()) {
+                totalMax += stack.getMaxDamage();
+                totalCur += stack.getMaxDamage() - stack.getDamage();
+                count++;
+            }
+        }
+        if (count == 0) return;
+
+        float pct = totalMax > 0 ? (float) totalCur / totalMax : 0f;
+        Camera camera = mc.gameRenderer.getCamera();
+        Vec3d camPos = camera.getPos();
+
+        double tx = ex - camPos.x;
+        double ty = ey - 0.22 - camPos.y; // slightly below health bar
+        double tz = ez - camPos.z;
+
+        double boxW = box.maxX - box.minX;
+        float barHalfW = (float)(boxW * 0.5);
+        // Armor color: cyan-ish
+        float ar = 0.4f, ag = 0.8f, ab = 1.0f;
+
+        matrices.push();
+        matrices.translate(tx, ty, tz);
+        matrices.multiply(camera.getRotation());
+
+        RenderSystem.enableBlend();
+        RenderSystem.defaultBlendFunc();
+        RenderSystem.disableDepthTest();
+        RenderSystem.setShader(GameRenderer::getPositionColorProgram);
+
+        MatrixStack.Entry entry = matrices.peek();
+        Matrix4f mat = entry.getPositionMatrix();
+        Tessellator tess = Tessellator.getInstance();
+
+        // Background
+        BufferBuilder buf = tess.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR);
+        buf.vertex(mat, -barHalfW, 0.04f, 0).color(0.1f, 0.1f, 0.1f, 0.7f);
+        buf.vertex(mat, -barHalfW, 0f,    0).color(0.1f, 0.1f, 0.1f, 0.7f);
+        buf.vertex(mat,  barHalfW, 0f,    0).color(0.1f, 0.1f, 0.1f, 0.7f);
+        buf.vertex(mat,  barHalfW, 0.04f, 0).color(0.1f, 0.1f, 0.1f, 0.7f);
+        BufferRenderer.drawWithGlobalProgram(buf.end());
+
+        float fillRight = -barHalfW + barHalfW * 2f * pct;
+        buf = tess.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR);
+        buf.vertex(mat, -barHalfW, 0.04f, 0).color(ar, ag, ab, 0.9f);
+        buf.vertex(mat, -barHalfW, 0f,    0).color(ar, ag, ab, 0.9f);
+        buf.vertex(mat,  fillRight, 0f,   0).color(ar, ag, ab, 0.9f);
+        buf.vertex(mat,  fillRight, 0.04f,0).color(ar, ag, ab, 0.9f);
+        BufferRenderer.drawWithGlobalProgram(buf.end());
+
+        RenderSystem.enableDepthTest();
+        RenderSystem.disableBlend();
+        matrices.pop();
+    }
+
+    private float[] resolveColorRGB(Entity entity, boolean isSelf) {
+        if (isSelf) {
+            return new float[]{selfColor.getRedF(), selfColor.getGreenF(), selfColor.getBlueF()};
+        }
         if (entity instanceof PlayerEntity player) {
             if (!players.isEnabled()) return null;
             String name = player.getGameProfile().getName();
@@ -196,6 +332,10 @@ public class ESP extends Module {
         return null;
     }
 
+    /**
+     * Draws only the corner edges of a 3-D bounding box — each of the 8 corners
+     * contributes three short lines (one per axis), giving a bracket-style outline.
+     */
     private void drawCornerBox(MatrixStack matrices, Box box, float r, float g, float b,
                                 float alpha, float lineWidth) {
         Camera camera = mc.gameRenderer.getCamera();
@@ -219,6 +359,7 @@ public class ESP extends Module {
         BufferBuilder buf = Tessellator.getInstance().begin(VertexFormat.DrawMode.LINES, VertexFormats.LINES);
         MatrixStack.Entry entry = matrices.peek();
 
+        // 8 corners, each with 3 lines along x, y, z
         emitCorner(buf, entry, x1, y1, z1,  lx,  0,   0,  r, g, b, alpha);
         emitCorner(buf, entry, x1, y1, z1,  0,   ly,  0,  r, g, b, alpha);
         emitCorner(buf, entry, x1, y1, z1,  0,   0,   lz, r, g, b, alpha);

@@ -478,6 +478,7 @@ public class ModuleManager {
         register(new Waypoints());
         register(new StreamerMode());
         register(new ChatLogger());
+        register(new GuiTheme());
     }
 
     // -------------------------------------------------------------------------

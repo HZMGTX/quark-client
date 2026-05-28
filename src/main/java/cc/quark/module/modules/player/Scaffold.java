@@ -25,29 +25,31 @@ public class Scaffold extends Module {
     private final BoolSetting safeWalk = register(new BoolSetting(
             "Safe Walk", "Prevent walking off edges by stopping at block boundaries", true));
 
-    private final BoolSetting safe = register(new BoolSetting(
-            "Safe", "Don't walk toward edges without a block to place", false));
+    private final BoolSetting sprint = register(new BoolSetting(
+            "Sprint", "Maintain sprint while scaffolding", true));
 
-    private final IntSetting speedSetting = register(new IntSetting(
-            "Speed", "Placement speed (blocks per tick)", 1, 1, 5));
+    private final BoolSetting diagonal = register(new BoolSetting(
+            "Diagonal", "Allow diagonal block placement", false));
 
     private final IntSetting delay = register(new IntSetting(
-            "Delay", "Ticks between placements (0 = no delay)", 0, 0, 5));
+            "Delay", "Ticks between placements (0 = no delay)", 1, 0, 10));
 
     private int delayTicks = 0;
+    private boolean towerActive = false;
 
     public Scaffold() {
         super("Scaffold", "Auto-places blocks under player while walking in air", Category.PLAYER);
     }
 
     @Override
+    public String getSuffix() {
+        return towerActive ? "Tower" : null;
+    }
+
+    @Override
     public void onEnable() {
         delayTicks = 0;
-        if (mc.player != null) {
-            if (safe.isEnabled()) {
-                mc.options.sneakKey.setPressed(true);
-            }
-        }
+        towerActive = false;
     }
 
     @Override
@@ -55,21 +57,24 @@ public class Scaffold extends Module {
         if (mc.player != null) {
             mc.options.sneakKey.setPressed(false);
         }
+        towerActive = false;
     }
 
     @EventHandler
     public void onTick(EventTick event) {
         if (mc.player == null || mc.world == null || mc.interactionManager == null) return;
 
-        // Safe walk: if no block below the next step, stop horizontal movement at edge
-        if (safeWalk.isEnabled() && mc.player.isOnGround()) {
+        // Safe walk: sneak key to prevent falling off edges
+        if (safeWalk.isEnabled()) {
             BlockPos belowNext = getPositionAhead().down();
-            if (mc.world.getBlockState(belowNext).isAir()) {
-                int blockSlotCheck = findBlockInHotbar();
-                if (blockSlotCheck == -1) {
-                    // No blocks to place, stop at edge
-                    mc.player.setVelocity(0, mc.player.getVelocity().y, 0);
-                }
+            boolean edgeDanger = mc.world.getBlockState(belowNext).isAir();
+            mc.options.sneakKey.setPressed(edgeDanger && mc.player.isOnGround());
+        }
+
+        // Sprint: maintain sprint while scaffolding
+        if (sprint.isEnabled() && mc.player.isOnGround()) {
+            if (!mc.player.isSneaking()) {
+                mc.player.setSprinting(true);
             }
         }
 
@@ -80,23 +85,28 @@ public class Scaffold extends Module {
         }
 
         int blockSlot = findBlockInHotbar();
-        if (blockSlot == -1) return;
+        if (blockSlot == -1) {
+            towerActive = false;
+            return;
+        }
 
         int savedSlot = mc.player.getInventory().selectedSlot;
         mc.player.getInventory().selectedSlot = blockSlot;
 
-        if (tower.isEnabled() && mc.options.jumpKey.isPressed()) {
+        boolean isTowering = tower.isEnabled() && mc.options.jumpKey.isPressed();
+        towerActive = isTowering;
+
+        if (isTowering) {
             // Tower mode: place block directly below and jump
             if (placeBelow()) {
                 mc.player.jump();
                 if (delay.get() > 0) delayTicks = delay.get();
             }
         } else {
-            for (int i = 0; i < speedSetting.get(); i++) {
-                if (!placeBelow()) break;
+            // Normal scaffold: place block below
+            if (placeBelow()) {
                 if (delay.get() > 0) {
                     delayTicks = delay.get();
-                    break;
                 }
             }
         }
@@ -111,7 +121,12 @@ public class Scaffold extends Module {
 
         if (!mc.world.getBlockState(pos).isAir()) return false;
 
-        for (Direction dir : Direction.values()) {
+        // Collect directions to check — include diagonals if enabled
+        Direction[] dirs = diagonal.isEnabled()
+                ? Direction.values()
+                : new Direction[]{Direction.NORTH, Direction.SOUTH, Direction.EAST, Direction.WEST, Direction.DOWN, Direction.UP};
+
+        for (Direction dir : dirs) {
             BlockPos neighborPos = pos.offset(dir);
             BlockState neighborState = mc.world.getBlockState(neighborPos);
 
@@ -158,13 +173,18 @@ public class Scaffold extends Module {
         if (mc.player == null) return -1;
 
         int bestSlot = -1;
+        int bestCount = -1;
         for (int i = 0; i < 9; i++) {
             ItemStack stack = mc.player.getInventory().getStack(i);
             if (stack.getItem() instanceof BlockItem blockItem) {
                 if (!(blockItem.getBlock() instanceof FallingBlock)) {
-                    return i;
+                    if (stack.getCount() > bestCount) {
+                        bestCount = stack.getCount();
+                        bestSlot = i;
+                    }
+                } else if (bestSlot == -1) {
+                    bestSlot = i;
                 }
-                if (bestSlot == -1) bestSlot = i;
             }
         }
         return bestSlot;

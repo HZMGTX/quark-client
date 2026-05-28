@@ -19,15 +19,9 @@ public class PacketLogger extends Module {
         super("PacketLogger", "Logs all packets for debugging", Category.PLAYER, 0);
     }
 
-    @Override
-    public void onEnable() {
-        Quark.getInstance().getEventBus().subscribe(this);
-    }
+    
 
-    @Override
-    public void onDisable() {
-        Quark.getInstance().getEventBus().unsubscribe(this);
-    }
+    
 
     @EventHandler
     public void onPacketSend(EventPacketSend event) {

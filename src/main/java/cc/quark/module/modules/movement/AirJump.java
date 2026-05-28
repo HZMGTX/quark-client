@@ -22,10 +22,7 @@ public class AirJump extends Module {
         jumpsLeft = count.getValue();
     }
 
-    @Override
-    public void onDisable() {
-        Quark.getInstance().getEventBus().unsubscribe(this);
-    }
+    
 
     private boolean jumpKeyPressed = false;
 
