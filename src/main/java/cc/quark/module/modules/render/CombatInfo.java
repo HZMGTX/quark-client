@@ -1,42 +1,131 @@
 package cc.quark.module.modules.render;
 
 import cc.quark.event.EventHandler;
+import cc.quark.event.events.EventAttack;
 import cc.quark.event.events.EventRender2D;
+import cc.quark.event.events.EventTick;
 import cc.quark.module.Category;
 import cc.quark.module.Module;
+import cc.quark.util.ColorUtil;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.entity.LivingEntity;
+import net.minecraft.util.math.MathHelper;
 
 public class CombatInfo extends Module {
 
+    private LivingEntity target;
+    private int hitsLanded;
+    private float lastDamageDealt;
+    private float targetPrevHealth;
+    private long lastAttackTime;
+    private long lastHitTime;
+
     public CombatInfo() {
-        super("CombatInfo", "Shows nearest entity name, health, and distance on HUD", Category.RENDER);
+        super("CombatInfo", "HUD overlay showing combat stats: target, health, hits, damage", Category.RENDER);
+    }
+
+    @Override
+    public void onEnable() {
+        target = null;
+        hitsLanded = 0;
+        lastDamageDealt = 0f;
+        targetPrevHealth = 0f;
+        lastAttackTime = 0;
+        lastHitTime = 0;
+    }
+
+    @EventHandler
+    public void onAttack(EventAttack event) {
+        if (event.getTarget() instanceof LivingEntity le) {
+            if (target != le) {
+                target = le;
+                hitsLanded = 0;
+                lastDamageDealt = 0f;
+                targetPrevHealth = le.getHealth();
+            }
+            lastAttackTime = System.currentTimeMillis();
+        }
+    }
+
+    @EventHandler
+    public void onTick(EventTick event) {
+        if (target == null) return;
+
+        if (System.currentTimeMillis() - lastAttackTime > 5000 || !target.isAlive() || target.isDead()) {
+            target = null;
+            return;
+        }
+
+        float currentHealth = target.getHealth();
+        if (currentHealth < targetPrevHealth) {
+            float dmg = targetPrevHealth - currentHealth;
+            if (dmg > 0.05f) {
+                lastDamageDealt = dmg;
+                hitsLanded++;
+                lastHitTime = System.currentTimeMillis();
+            }
+        }
+        targetPrevHealth = currentHealth;
     }
 
     @EventHandler
     public void onRender2D(EventRender2D event) {
         if (mc.player == null || mc.world == null) return;
 
-        LivingEntity nearest = null;
-        double best = Double.MAX_VALUE;
-        for (var e : mc.world.getEntities()) {
-            if (!(e instanceof LivingEntity le)) continue;
-            if (e == mc.player) continue;
-            double d = mc.player.distanceTo(le);
-            if (d < best) { best = d; nearest = le; }
+        if (target == null || !target.isAlive()) {
+            if (target != null && hitsLanded > 0) {
+                DrawContext ctx = event.getDrawContext();
+                int x = mc.getWindow().getScaledWidth() - 130;
+                ctx.fill(x - 4, 3, mc.getWindow().getScaledWidth() - 2, 28, 0xAA181818);
+                ctx.fill(x - 4, 3, mc.getWindow().getScaledWidth() - 2, 4, 0xFFFF4444);
+                ctx.drawTextWithShadow(mc.textRenderer, "Target Dead", x, 7, 0xFFFF4444);
+                ctx.drawTextWithShadow(mc.textRenderer, "Hits: " + hitsLanded, x, 17, 0xFFAAAAAA);
+            }
+            return;
         }
-        if (nearest == null) return;
 
         DrawContext ctx = event.getDrawContext();
         int screenW = mc.getWindow().getScaledWidth();
-        String name = nearest.getName().getString();
-        String health = String.format("HP: %.1f", nearest.getHealth());
-        String dist = String.format("Dist: %.1fm", best);
+        int x = screenW - 130;
+        int y = 3;
+        int panelW = 128;
+        int panelH = 58;
 
-        int x = screenW - 120;
-        ctx.fill(x - 2, 3, screenW - 2, 38, 0xAA181818);
-        ctx.drawTextWithShadow(mc.textRenderer, name, x, 7, 0xFFFFFFFF);
-        ctx.drawTextWithShadow(mc.textRenderer, health, x, 17, 0xFFFF5555);
-        ctx.drawTextWithShadow(mc.textRenderer, dist, x, 27, 0xFFAAAAAA);
+        ctx.fill(x - 4, y, x - 4 + panelW, y + panelH, 0xAA181818);
+        ctx.fill(x - 4, y, x - 4 + panelW, y + 1, 0xFFFF4444);
+
+        String name = target.getName().getString();
+        if (name.length() > 14) name = name.substring(0, 13) + "..";
+        ctx.drawTextWithShadow(mc.textRenderer, name, x, y + 4, 0xFFFFFFFF);
+
+        float health = target.getHealth();
+        float maxHealth = target.getMaxHealth();
+        float healthPct = MathHelper.clamp(health / maxHealth, 0f, 1f);
+        int healthCol = ColorUtil.healthColor(healthPct);
+
+        String hpStr = String.format("HP: %.1f / %.0f", health, maxHealth);
+        ctx.drawTextWithShadow(mc.textRenderer, hpStr, x, y + 14, healthCol);
+
+        int barW = panelW - 8;
+        int barX = x - 2;
+        int barY = y + 25;
+        ctx.fill(barX, barY, barX + barW, barY + 4, 0xFF333333);
+        ctx.fill(barX, barY, barX + (int)(barW * healthPct), barY + 4, healthCol);
+
+        double dist = mc.player.distanceTo(target);
+        String distStr = String.format("Dist: %.1fm", dist);
+        ctx.drawTextWithShadow(mc.textRenderer, distStr, x, y + 32, 0xFFAAAAAA);
+
+        String hitsStr = "Hits: " + hitsLanded;
+        ctx.drawTextWithShadow(mc.textRenderer, hitsStr, x, y + 42, 0xFFFFAA00);
+
+        if (lastDamageDealt > 0f) {
+            String dmgStr = String.format("Last: %.1f dmg", lastDamageDealt);
+            long elapsed = System.currentTimeMillis() - lastHitTime;
+            int alpha = elapsed < 2000 ? (int)(255 * (1.0 - elapsed / 2000.0)) : 0;
+            if (alpha > 0) {
+                ctx.drawTextWithShadow(mc.textRenderer, dmgStr, x + 55, y + 42, ColorUtil.withAlpha(0xFF4444, alpha));
+            }
+        }
     }
 }

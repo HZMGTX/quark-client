@@ -4,51 +4,50 @@ import cc.quark.event.EventHandler;
 import cc.quark.event.events.EventTick;
 import cc.quark.module.Category;
 import cc.quark.module.Module;
+import cc.quark.module.modules.render.NotificationOverlay;
 import cc.quark.setting.BoolSetting;
 import cc.quark.setting.IntSetting;
-import cc.quark.util.ChatUtil;
+import cc.quark.util.TimerUtil;
 import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
-import net.minecraft.client.sound.PositionedSoundInstance;
-import net.minecraft.sound.SoundEvents;
 import net.minecraft.util.math.BlockPos;
 
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 public class OreAlert extends Module {
 
-    private final IntSetting range = register(new IntSetting(
-            "Range", "Detection radius", 16, 8, 32));
+    private final IntSetting radius = register(new IntSetting("Radius", "Scan radius for ores", 10, 5, 20));
+    private final BoolSetting diamond = register(new BoolSetting("Diamond", "Alert for diamond ore", true));
+    private final BoolSetting emerald = register(new BoolSetting("Emerald", "Alert for emerald ore", true));
+    private final BoolSetting gold = register(new BoolSetting("Gold", "Alert for gold ore", true));
+    private final BoolSetting iron = register(new BoolSetting("Iron", "Alert for iron ore", false));
+    private final BoolSetting ancient = register(new BoolSetting("Ancient Debris", "Alert for ancient debris", true));
+    private final BoolSetting lapis = register(new BoolSetting("Lapis", "Alert for lapis ore", false));
+    private final BoolSetting redstone = register(new BoolSetting("Redstone", "Alert for redstone ore", false));
 
-    private final BoolSetting diamond = register(new BoolSetting(
-            "Diamond", "Alert on diamond ore", true));
-
-    private final BoolSetting ancient = register(new BoolSetting(
-            "Ancient Debris", "Alert on ancient debris", true));
-
-    private final BoolSetting emerald = register(new BoolSetting(
-            "Emerald", "Alert on emerald ore", false));
-
-    private final BoolSetting gold = register(new BoolSetting(
-            "Gold", "Alert on gold ore", false));
-
-    private final BoolSetting sound = register(new BoolSetting(
-            "Sound", "Play sound when new ore detected", true));
-
-    private final BoolSetting chat = register(new BoolSetting(
-            "Chat", "Send chat notification when new ore detected", true));
-
+    private final TimerUtil scanTimer = new TimerUtil();
+    private final TimerUtil notifTimer = new TimerUtil();
     private final Set<BlockPos> seen = new HashSet<>();
-    private int ticker = 0;
+
+    private int diamondCount;
+    private int emeraldCount;
+    private int goldCount;
+    private int ironCount;
+    private int ancientCount;
+    private int lapisCount;
+    private int redstoneCount;
 
     public OreAlert() {
-        super("OreAlert", "Alerts when rare ores come into view nearby", Category.WORLD);
+        super("OreAlert", "Alerts when valuable ore blocks are found nearby", Category.WORLD);
     }
 
     @Override
     public void onEnable() {
         seen.clear();
+        diamondCount = emeraldCount = goldCount = ironCount = ancientCount = lapisCount = redstoneCount = 0;
     }
 
     @Override
@@ -56,31 +55,56 @@ public class OreAlert extends Module {
         seen.clear();
     }
 
+    @Override
+    public String getSuffix() {
+        StringBuilder sb = new StringBuilder();
+        if (diamond.isEnabled() && diamondCount > 0) sb.append("D:").append(diamondCount).append(" ");
+        if (emerald.isEnabled() && emeraldCount > 0) sb.append("E:").append(emeraldCount).append(" ");
+        if (gold.isEnabled() && goldCount > 0) sb.append("G:").append(goldCount).append(" ");
+        if (iron.isEnabled() && ironCount > 0) sb.append("I:").append(ironCount).append(" ");
+        if (ancient.isEnabled() && ancientCount > 0) sb.append("A:").append(ancientCount).append(" ");
+        if (lapis.isEnabled() && lapisCount > 0) sb.append("L:").append(lapisCount).append(" ");
+        if (redstone.isEnabled() && redstoneCount > 0) sb.append("R:").append(redstoneCount).append(" ");
+        return sb.length() > 0 ? sb.toString().trim() : null;
+    }
+
     @EventHandler
     public void onTick(EventTick event) {
         if (mc.player == null || mc.world == null) return;
-        if (++ticker < 10) return;
-        ticker = 0;
+        if (!scanTimer.hasReached(500)) return;
+        scanTimer.reset();
 
-        int r = range.get();
+        int r = radius.get();
         BlockPos center = mc.player.getBlockPos();
         Set<BlockPos> current = new HashSet<>();
+        Map<String, Integer> counts = new HashMap<>();
+        Set<String> newOreTypes = new HashSet<>();
 
         for (BlockPos pos : BlockPos.iterate(center.add(-r, -r, -r), center.add(r, r, r))) {
-            var state = mc.world.getBlockState(pos);
-            Block block = state.getBlock();
-            if (isTrackedOre(block)) {
-                current.add(pos.toImmutable());
+            Block block = mc.world.getBlockState(pos).getBlock();
+            String name = getOreName(block);
+            if (name == null) continue;
+            BlockPos immutable = pos.toImmutable();
+            current.add(immutable);
+            counts.merge(name, 1, Integer::sum);
+            if (!seen.contains(immutable)) {
+                newOreTypes.add(name);
             }
         }
 
-        for (BlockPos pos : current) {
-            if (!seen.contains(pos)) {
-                Block block = mc.world.getBlockState(pos).getBlock();
-                String oreName = getOreName(block);
-                if (oreName != null) {
-                    triggerAlert(oreName, pos);
-                }
+        diamondCount = counts.getOrDefault("Diamond", 0);
+        emeraldCount = counts.getOrDefault("Emerald", 0);
+        goldCount = counts.getOrDefault("Gold", 0);
+        ironCount = counts.getOrDefault("Iron", 0);
+        ancientCount = counts.getOrDefault("Ancient Debris", 0);
+        lapisCount = counts.getOrDefault("Lapis", 0);
+        redstoneCount = counts.getOrDefault("Redstone", 0);
+
+        if (!newOreTypes.isEmpty() && notifTimer.hasReached(3000)) {
+            notifTimer.reset();
+            for (String oreName : newOreTypes) {
+                int count = counts.getOrDefault(oreName, 0);
+                NotificationOverlay.send("OreAlert", oreName + " x" + count + " nearby!", NotificationOverlay.NotifType.INFO);
             }
         }
 
@@ -88,28 +112,14 @@ public class OreAlert extends Module {
         seen.addAll(current);
     }
 
-    private boolean isTrackedOre(Block block) {
-        if (diamond.isEnabled() && (block == Blocks.DIAMOND_ORE || block == Blocks.DEEPSLATE_DIAMOND_ORE)) return true;
-        if (ancient.isEnabled() && block == Blocks.ANCIENT_DEBRIS) return true;
-        if (emerald.isEnabled() && (block == Blocks.EMERALD_ORE || block == Blocks.DEEPSLATE_EMERALD_ORE)) return true;
-        if (gold.isEnabled() && (block == Blocks.GOLD_ORE || block == Blocks.DEEPSLATE_GOLD_ORE || block == Blocks.NETHER_GOLD_ORE)) return true;
-        return false;
-    }
-
     private String getOreName(Block block) {
-        if (block == Blocks.DIAMOND_ORE || block == Blocks.DEEPSLATE_DIAMOND_ORE) return "Diamond";
-        if (block == Blocks.ANCIENT_DEBRIS) return "Ancient Debris";
-        if (block == Blocks.EMERALD_ORE || block == Blocks.DEEPSLATE_EMERALD_ORE) return "Emerald";
-        if (block == Blocks.GOLD_ORE || block == Blocks.DEEPSLATE_GOLD_ORE || block == Blocks.NETHER_GOLD_ORE) return "Gold";
+        if (diamond.isEnabled() && (block == Blocks.DIAMOND_ORE || block == Blocks.DEEPSLATE_DIAMOND_ORE)) return "Diamond";
+        if (emerald.isEnabled() && (block == Blocks.EMERALD_ORE || block == Blocks.DEEPSLATE_EMERALD_ORE)) return "Emerald";
+        if (gold.isEnabled() && (block == Blocks.GOLD_ORE || block == Blocks.DEEPSLATE_GOLD_ORE || block == Blocks.NETHER_GOLD_ORE)) return "Gold";
+        if (iron.isEnabled() && (block == Blocks.IRON_ORE || block == Blocks.DEEPSLATE_IRON_ORE)) return "Iron";
+        if (ancient.isEnabled() && block == Blocks.ANCIENT_DEBRIS) return "Ancient Debris";
+        if (lapis.isEnabled() && (block == Blocks.LAPIS_ORE || block == Blocks.DEEPSLATE_LAPIS_ORE)) return "Lapis";
+        if (redstone.isEnabled() && (block == Blocks.REDSTONE_ORE || block == Blocks.DEEPSLATE_REDSTONE_ORE)) return "Redstone";
         return null;
-    }
-
-    private void triggerAlert(String oreName, BlockPos pos) {
-        if (chat.isEnabled()) {
-            ChatUtil.info("OreAlert: " + oreName + " at " + pos.getX() + ", " + pos.getY() + ", " + pos.getZ());
-        }
-        if (sound.isEnabled() && mc.getSoundManager() != null) {
-            mc.getSoundManager().play(PositionedSoundInstance.master(SoundEvents.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0f, 1.0f));
-        }
     }
 }

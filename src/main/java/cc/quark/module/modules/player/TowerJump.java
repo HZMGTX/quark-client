@@ -7,23 +7,40 @@ import cc.quark.module.Module;
 import cc.quark.setting.DoubleSetting;
 import net.minecraft.util.math.Vec3d;
 
-/**
- * TowerJump - boosts the player upward while holding jump for fast towering.
- */
 public class TowerJump extends Module {
 
-    private final DoubleSetting boost = register(new DoubleSetting("Boost", "Upward velocity", 0.42, 0.1, 1.0));
+    private final DoubleSetting speed = register(new DoubleSetting(
+            "Speed", "Jump Y velocity multiplier", 1.0, 1.0, 3.0));
+
+    private boolean wasOnGround = false;
 
     public TowerJump() {
-        super("TowerJump", "Launches the player up while towering", Category.PLAYER);
+        super("TowerJump", "Rapidly jump upward while holding space", Category.PLAYER);
+    }
+
+    @Override
+    public void onEnable() {
+        wasOnGround = false;
     }
 
     @EventHandler
     public void onTick(EventTick event) {
         if (mc.player == null) return;
-        if (mc.options.jumpKey.isPressed() && mc.player.isOnGround()) {
-            Vec3d v = mc.player.getVelocity();
-            mc.player.setVelocity(v.x, boost.get(), v.z);
+        if (!mc.options.jumpKey.isPressed()) return;
+
+        boolean onGround = mc.player.isOnGround();
+
+        if (onGround) {
+            Vec3d vel = mc.player.getVelocity();
+            mc.player.setVelocity(vel.x, 0.42 * speed.get(), vel.z);
+            mc.player.jump();
+        } else if (!wasOnGround) {
+            Vec3d vel = mc.player.getVelocity();
+            if (vel.y > 0) {
+                mc.player.setVelocity(vel.x, vel.y * Math.min(speed.get(), 1.5), vel.z);
+            }
         }
+
+        wasOnGround = onGround;
     }
 }

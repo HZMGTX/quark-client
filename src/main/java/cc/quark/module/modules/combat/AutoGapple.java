@@ -6,32 +6,18 @@ import cc.quark.module.Category;
 import cc.quark.module.Module;
 import cc.quark.setting.BoolSetting;
 import cc.quark.setting.DoubleSetting;
-import net.minecraft.client.MinecraftClient;
+import cc.quark.util.TimerUtil;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
+import net.minecraft.util.Hand;
 
-/**
- * AutoGapple - automatically switches to a golden apple (or enchanted golden apple)
- * and right-clicks it when the player's health falls below a configurable threshold.
- *
- * <p>After eating, the module switches back to the previously selected hotbar slot
- * to avoid disrupting normal gameplay.
- */
 public class AutoGapple extends Module {
 
-    private final DoubleSetting health = register(new DoubleSetting(
-            "Health Threshold", "Eat a gapple when health is at or below this value", 12.0, 1.0, 18.0));
+    private final DoubleSetting health = register(new DoubleSetting("Health", "Eat a gapple when health is at or below this value", 8.0, 1.0, 10.0));
+    private final BoolSetting enchanted = register(new BoolSetting("Enchanted", "Prefer enchanted golden apples", true));
 
-    private final BoolSetting gapple = register(new BoolSetting(
-            "Golden Apple", "Use regular golden apples", true));
-
-    private final BoolSetting enchGapple = register(new BoolSetting(
-            "Enchanted Gapple", "Prefer enchanted golden apples (god apples)", true));
-
-    /** The slot we were on before auto-switching, so we can restore it. */
+    private final TimerUtil timer = new TimerUtil();
     private int previousSlot = -1;
-
-    /** Whether we are currently holding a gapple and right-clicking. */
     private boolean eating = false;
 
     public AutoGapple() {
@@ -42,12 +28,11 @@ public class AutoGapple extends Module {
     public void onEnable() {
         previousSlot = -1;
         eating = false;
+        timer.reset();
     }
 
     @Override
     public void onDisable() {
-        // Restore slot if we were mid-eat
-        MinecraftClient mc = MinecraftClient.getInstance();
         if (mc.player != null && previousSlot != -1) {
             mc.player.getInventory().selectedSlot = previousSlot;
         }
@@ -57,13 +42,14 @@ public class AutoGapple extends Module {
 
     @EventHandler
     public void onTick(EventTick event) {
-        MinecraftClient mc = MinecraftClient.getInstance();
         if (mc.player == null || mc.world == null || mc.interactionManager == null) return;
+        if (!timer.hasReached(500)) return;
 
         float currentHealth = mc.player.getHealth();
+        float maxHealth = mc.player.getMaxHealth();
+        float threshold = (float) health.get() * (maxHealth / 20f);
 
-        // If health recovered and we're done eating, restore slot
-        if (eating && currentHealth > (float) health.get()) {
+        if (eating && currentHealth >= threshold) {
             if (previousSlot != -1) {
                 mc.player.getInventory().selectedSlot = previousSlot;
                 previousSlot = -1;
@@ -72,12 +58,10 @@ public class AutoGapple extends Module {
             return;
         }
 
-        if (currentHealth > (float) health.get()) return;
+        if (currentHealth >= threshold) return;
 
-        // Find the best gapple slot in the hotbar
-        int slot = findGappleSlot(mc);
+        int slot = findGappleSlot();
         if (slot == -1) {
-            // No gapple available; reset state
             if (eating && previousSlot != -1) {
                 mc.player.getInventory().selectedSlot = previousSlot;
                 previousSlot = -1;
@@ -86,42 +70,27 @@ public class AutoGapple extends Module {
             return;
         }
 
-        // Switch to the gapple slot if not already there
         if (mc.player.getInventory().selectedSlot != slot) {
-            if (!eating) {
-                previousSlot = mc.player.getInventory().selectedSlot;
-            }
+            if (!eating) previousSlot = mc.player.getInventory().selectedSlot;
             mc.player.getInventory().selectedSlot = slot;
         }
 
         eating = true;
-
-        // Simulate holding right-click to eat
-        mc.options.useKey.setPressed(true);
-        mc.interactionManager.interactItem(mc.player, net.minecraft.util.Hand.MAIN_HAND);
+        mc.interactionManager.interactItem(mc.player, Hand.MAIN_HAND);
+        timer.reset();
     }
 
-    /**
-     * Searches hotbar slots 0-8 for a golden apple.
-     * Prefers enchanted golden apples when the {@code enchGapple} setting is enabled.
-     * Returns -1 if none found.
-     */
-    private int findGappleSlot(MinecraftClient mc) {
+    private int findGappleSlot() {
         int regularSlot = -1;
-
         for (int i = 0; i < 9; i++) {
             ItemStack stack = mc.player.getInventory().getStack(i);
             if (stack.isEmpty()) continue;
-
-            if (enchGapple.isEnabled() && stack.getItem() == Items.ENCHANTED_GOLDEN_APPLE) {
-                return i; // Enchanted gapple takes top priority
-            }
-
-            if (gapple.isEnabled() && stack.getItem() == Items.GOLDEN_APPLE && regularSlot == -1) {
+            if (stack.isOf(Items.ENCHANTED_GOLDEN_APPLE)) return i;
+            if (stack.isOf(Items.GOLDEN_APPLE) && regularSlot == -1) {
+                if (!enchanted.isEnabled()) return i;
                 regularSlot = i;
             }
         }
-
         return regularSlot;
     }
 }

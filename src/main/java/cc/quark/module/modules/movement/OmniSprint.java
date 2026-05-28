@@ -4,22 +4,33 @@ import cc.quark.event.EventHandler;
 import cc.quark.event.events.EventTick;
 import cc.quark.module.Category;
 import cc.quark.module.Module;
+import cc.quark.setting.BoolSetting;
 
-/**
- * OmniSprint - keeps the player sprinting in every direction, even backwards.
- */
 public class OmniSprint extends Module {
+
+    private final BoolSetting always = register(new BoolSetting(
+            "Always", "Sprint even when standing still", false));
 
     public OmniSprint() {
         super("OmniSprint", "Sprint in all directions", Category.MOVEMENT);
     }
 
+    @Override
+    public void onDisable() {
+        if (mc.player != null) {
+            mc.player.setSprinting(false);
+        }
+    }
+
     @EventHandler
     public void onTick(EventTick event) {
         if (mc.player == null) return;
+        if (mc.player.isSneaking()) return;
+
         boolean moving = mc.player.input.movementForward != 0
                 || mc.player.input.movementSideways != 0;
-        if (moving && !mc.player.isTouchingWater() && mc.player.getHungerManager().getFoodLevel() > 0) {
+
+        if (always.isEnabled() || moving) {
             mc.player.setSprinting(true);
         }
     }

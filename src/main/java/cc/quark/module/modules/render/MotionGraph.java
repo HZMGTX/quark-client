@@ -15,47 +15,37 @@ import java.util.Deque;
 
 public class MotionGraph extends Module {
 
-    private final IntSetting posX    = register(new IntSetting("X",      "X position",     0,    0, 4000));
-    private final IntSetting posY    = register(new IntSetting("Y",      "Y position",     0,    0, 4000));
-    private final IntSetting width   = register(new IntSetting("Width",  "Graph width",  150,   80,  250));
-    private final IntSetting height  = register(new IntSetting("Height", "Graph height",  50,   30,  100));
-    private final BoolSetting fill   = register(new BoolSetting("Fill",  "Fill under line", true));
+    private final IntSetting posX   = register(new IntSetting("X",      "HUD X position",    10,   0, 4000));
+    private final IntSetting posY   = register(new IntSetting("Y",      "HUD Y position",    10,   0, 4000));
+    private final IntSetting width  = register(new IntSetting("Width",  "Graph width",       160,  60,  300));
+    private final IntSetting height = register(new IntSetting("Height", "Graph height",       55,  30,  150));
+    private final BoolSetting fill  = register(new BoolSetting("Fill",  "Fill under the graph line", true));
 
     private static final int MAX_SAMPLES = 60;
-    private final Deque<Float> samples = new ArrayDeque<>();
 
-    private Vec3d lastPos = null;
-    private boolean defaultsInitialized = false;
+    private final Deque<Float> samples = new ArrayDeque<>();
+    private Vec3d lastPos;
 
     public MotionGraph() {
-        super("MotionGraph", "Displays a real-time BPS graph on the HUD", Category.RENDER);
+        super("MotionGraph", "HUD overlay showing live player speed as a line graph", Category.RENDER);
     }
 
     @Override
     public void onEnable() {
         lastPos = null;
         samples.clear();
-        defaultsInitialized = false;
     }
 
     @EventHandler
     public void onTick(EventTick event) {
         if (mc.player == null) return;
 
-        if (!defaultsInitialized && mc.getWindow() != null) {
-            int sw = mc.getWindow().getScaledWidth();
-            int sh = mc.getWindow().getScaledHeight();
-            posX.setValue(sw - 160);
-            posY.setValue(sh - 60);
-            defaultsInitialized = true;
-        }
-
         Vec3d pos = mc.player.getPos();
         float bps = 0f;
         if (lastPos != null) {
             double dx = pos.x - lastPos.x;
             double dz = pos.z - lastPos.z;
-            bps = (float) (Math.sqrt(dx * dx + dz * dz) * 20.0);
+            bps = (float)(Math.sqrt(dx * dx + dz * dz) * 20.0);
         }
         lastPos = pos;
 
@@ -68,15 +58,15 @@ public class MotionGraph extends Module {
     @EventHandler
     public void onRender2D(EventRender2D event) {
         if (mc.getWindow() == null) return;
-        DrawContext ctx = event.getDrawContext();
 
+        DrawContext ctx = event.getDrawContext();
         int gx = posX.get();
         int gy = posY.get();
         int gw = width.get();
         int gh = height.get();
 
-        int bg = 0xAA101010;
-        ctx.fill(gx, gy, gx + gw, gy + gh, bg);
+        ctx.fill(gx, gy, gx + gw, gy + gh, 0xAA101010);
+        ctx.fill(gx, gy, gx + gw, gy + 1, 0xFF00CFFF);
 
         if (samples.isEmpty()) return;
 
@@ -84,51 +74,46 @@ public class MotionGraph extends Module {
         int count = arr.length;
 
         float maxVal = 0.001f;
-        for (float v : arr) {
-            if (v > maxVal) maxVal = v;
-        }
+        for (float v : arr) if (v > maxVal) maxVal = v;
 
         float currentBps = arr[count - 1];
         int accentColor = 0xFF00CFFF;
-        int fillColor   = 0x5500CFFF;
+        int fillColor   = 0x4400CFFF;
 
-        int innerX = gx + 1;
-        int innerY = gy + 1;
-        int innerW = gw - 2;
-        int innerH = gh - 2 - mc.textRenderer.fontHeight - 2;
+        int innerX = gx + 2;
+        int innerY = gy + 2;
+        int innerW = gw - 4;
+        int innerH = gh - 4 - mc.textRenderer.fontHeight - 4;
 
         for (int i = 0; i < count - 1; i++) {
-            float t0 = (float) i / (MAX_SAMPLES - 1);
-            float t1 = (float) (i + 1) / (MAX_SAMPLES - 1);
+            float t0 = (float)i / (MAX_SAMPLES - 1);
+            float t1 = (float)(i + 1) / (MAX_SAMPLES - 1);
 
-            int x0 = innerX + (int) (t0 * innerW);
-            int x1 = innerX + (int) (t1 * innerW);
+            int x0 = innerX + (int)(t0 * innerW);
+            int x1 = innerX + (int)(t1 * innerW);
 
-            float h0 = arr[i] / maxVal;
-            float h1 = arr[i + 1] / maxVal;
-            h0 = Math.min(1f, Math.max(0f, h0));
-            h1 = Math.min(1f, Math.max(0f, h1));
+            float h0 = Math.min(1f, arr[i] / maxVal);
+            float h1 = Math.min(1f, arr[i + 1] / maxVal);
 
-            int y0 = innerY + innerH - (int) (h0 * innerH);
-            int y1 = innerY + innerH - (int) (h1 * innerH);
+            int y0 = innerY + innerH - (int)(h0 * innerH);
+            int y1 = innerY + innerH - (int)(h1 * innerH);
 
             if (fill.isEnabled()) {
-                int fillBtm = innerY + innerH;
+                int btm = innerY + innerH;
                 int lx0 = Math.min(x0, x1);
                 int lx1 = Math.max(x0, x1) + 1;
-                int ly0 = Math.min(y0, y1);
-                ctx.fill(lx0, ly0, lx1, fillBtm, fillColor);
+                ctx.fill(lx0, Math.min(y0, y1), lx1, btm, fillColor);
             }
 
             drawLine2D(ctx, x0, y0, x1, y1, accentColor);
         }
 
-        int labelY = gy + gh - mc.textRenderer.fontHeight - 1;
-        ctx.drawTextWithShadow(mc.textRenderer, "BPS", gx + 2, labelY, 0xFFAAAAAA);
+        int labelY = gy + gh - mc.textRenderer.fontHeight - 2;
+        ctx.drawTextWithShadow(mc.textRenderer, "BPS", gx + 3, labelY, 0xFFAAAAAA);
 
         String bpsText = String.format("%.1f", currentBps);
         int bpsW = mc.textRenderer.getWidth(bpsText);
-        ctx.drawTextWithShadow(mc.textRenderer, bpsText, gx + gw - bpsW - 2, gy + 1, accentColor);
+        ctx.drawTextWithShadow(mc.textRenderer, bpsText, gx + gw - bpsW - 3, labelY, accentColor);
     }
 
     private void drawLine2D(DrawContext ctx, int x0, int y0, int x1, int y1, int color) {

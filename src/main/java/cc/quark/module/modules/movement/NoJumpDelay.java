@@ -5,22 +5,59 @@ import cc.quark.event.events.EventTick;
 import cc.quark.module.Category;
 import cc.quark.module.Module;
 
-/**
- * NoJumpDelay - removes the small cooldown between jumps so the player can
- * jump again immediately upon landing while holding the jump key.
- */
+import java.lang.reflect.Field;
+
 public class NoJumpDelay extends Module {
+
+    private Field jumpCooldownField = null;
 
     public NoJumpDelay() {
         super("NoJumpDelay", "Removes jump cooldown", Category.MOVEMENT);
     }
 
+    @Override
+    public void onEnable() {
+        jumpCooldownField = null;
+        if (mc.player == null) return;
+        Class<?> cls = mc.player.getClass();
+        while (cls != null && jumpCooldownField == null) {
+            for (Field f : cls.getDeclaredFields()) {
+                if (f.getType() != int.class) continue;
+                String lower = f.getName().toLowerCase();
+                if (lower.contains("jump") && lower.contains("cool")) {
+                    f.setAccessible(true);
+                    jumpCooldownField = f;
+                    break;
+                }
+            }
+            cls = cls.getSuperclass();
+        }
+        if (jumpCooldownField == null) {
+            cls = mc.player.getClass();
+            while (cls != null && jumpCooldownField == null) {
+                for (Field f : cls.getDeclaredFields()) {
+                    if (f.getType() != int.class) continue;
+                    String lower = f.getName().toLowerCase();
+                    if (lower.contains("jump")) {
+                        f.setAccessible(true);
+                        jumpCooldownField = f;
+                        break;
+                    }
+                }
+                cls = cls.getSuperclass();
+            }
+        }
+    }
+
     @EventHandler
     public void onTick(EventTick event) {
         if (mc.player == null) return;
-        if (!mc.options.jumpKey.isPressed()) return;
-        if (mc.player.isOnGround()) {
-            mc.player.jump();
+        if (jumpCooldownField == null) {
+            onEnable();
+            return;
         }
+        try {
+            jumpCooldownField.set(mc.player, 0);
+        } catch (Exception ignored) {}
     }
 }
