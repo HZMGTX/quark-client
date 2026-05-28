@@ -21,7 +21,7 @@ public class ClickGUI extends Screen {
     private float currentScale = 1.0f;
     private static cc.quark.module.modules.render.ClickGuiModule cachedClickGuiModule;
 
-    // Global accent color fetched from ClickGuiModule
+    // Global accent color — resolves from ClickGuiModule, falls back to ThemeManager
     public static int getAccentColor() {
         if (cachedClickGuiModule == null) {
             cc.quark.module.Module mod = Quark.getInstance().getModuleManager().getModule("ClickGUI");
@@ -32,7 +32,15 @@ public class ClickGUI extends Screen {
         if (cachedClickGuiModule != null) {
             return cachedClickGuiModule.getAccentColor();
         }
-        return 0xFF00AAFF; // Fallback
+        return ThemeManager.INSTANCE.getAccentColor();
+    }
+
+    public static int getBackgroundColor() {
+        return ThemeManager.INSTANCE.getBackgroundColor();
+    }
+
+    public static int getPanelColor() {
+        return ThemeManager.INSTANCE.getPanelColor();
     }
 
     public ClickGUI() {
