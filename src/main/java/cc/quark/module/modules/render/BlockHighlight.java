@@ -6,6 +6,7 @@ import cc.quark.module.Category;
 import cc.quark.module.Module;
 import cc.quark.setting.ColorSetting;
 import cc.quark.setting.DoubleSetting;
+import cc.quark.setting.ModeSetting;
 import cc.quark.util.RenderUtil;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.util.math.MatrixStack;
@@ -16,15 +17,13 @@ import net.minecraft.util.math.Box;
 
 public class BlockHighlight extends Module {
 
-    private final ColorSetting color = register(new ColorSetting(
-            "Color", "Outline color", 0xFFFFFFFF));
-    private final DoubleSetting lineWidth = register(new DoubleSetting(
-            "Line Width", "Outline thickness", 2.0, 0.5, 5.0));
-    private final DoubleSetting expand = register(new DoubleSetting(
-            "Expand", "Box expansion", 0.002, 0.0, 0.05));
+    private final ColorSetting  color     = register(new ColorSetting("Color", "Highlight color", 0xFF00AAFF));
+    private final DoubleSetting lineWidth = register(new DoubleSetting("Line Width", "Outline thickness", 2.0, 0.5, 5.0));
+    private final DoubleSetting expand    = register(new DoubleSetting("Expand", "Box expansion amount", 0.003, 0.0, 0.05));
+    private final ModeSetting   mode      = register(new ModeSetting("Mode", "Render mode", "Outline", "Outline", "Fill", "Both"));
 
     public BlockHighlight() {
-        super("BlockHighlight", "Draws a colored outline around the block you are looking at", Category.RENDER);
+        super("BlockHighlight", "Highlights the targeted block with a colored outline, fill, or both", Category.RENDER);
     }
 
     @EventHandler
@@ -43,7 +42,14 @@ public class BlockHighlight extends Module {
                        .expand(expand.get());
 
         MatrixStack matrices = event.getMatrixStack();
-        float r = color.getRedF(), g = color.getGreenF(), b = color.getBlueF();
-        RenderUtil.drawESPBox(matrices, box, r, g, b, 0.9f, (float) lineWidth.get());
+        float r = color.getRedF(), g = color.getGreenF(), b = color.getBlueF(), a = color.getAlphaF();
+
+        String m = mode.get();
+        if (m.equals("Outline") || m.equals("Both")) {
+            RenderUtil.drawESPBox(matrices, box, r, g, b, Math.min(1f, a + 0.1f), (float) lineWidth.get());
+        }
+        if (m.equals("Fill") || m.equals("Both")) {
+            RenderUtil.drawFilledBox(matrices, box, r, g, b, Math.max(0.05f, a * 0.3f));
+        }
     }
 }

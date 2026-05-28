@@ -4,32 +4,40 @@ import cc.quark.event.EventHandler;
 import cc.quark.event.events.EventTick;
 import cc.quark.module.Category;
 import cc.quark.module.Module;
-import cc.quark.setting.IntSetting;
+import cc.quark.setting.DoubleSetting;
 import net.minecraft.item.BowItem;
+import net.minecraft.item.CrossbowItem;
 
-/**
- * FastBow - releases a drawn bow once it has been charged briefly.
- */
 public class FastBow extends Module {
 
-    private final IntSetting charge = register(new IntSetting("Charge", "Ticks to charge before release", 5, 0, 20));
+    private final DoubleSetting chargeTicks = register(new DoubleSetting("Charge Ticks", "Ticks before forcing release (3-20)", 10.0, 3.0, 20.0));
 
     public FastBow() {
-        super("FastBow", "Quickly fires drawn bows", Category.COMBAT);
+        super("FastBow", "Forces bow release after minimal charge for rapid fire", Category.COMBAT);
     }
 
     @EventHandler
     public void onTick(EventTick event) {
         if (mc.player == null) return;
         if (!mc.player.isUsingItem()) return;
-        if (!(mc.player.getActiveItem().getItem() instanceof BowItem)) return;
+
+        var activeItem = mc.player.getActiveItem();
+        if (!(activeItem.getItem() instanceof BowItem)) return;
+
         //? if mc >= "1.20.5" {
-        int used = mc.player.getActiveItem().getMaxUseTime(mc.player) - mc.player.getItemUseTimeLeft();
+        int maxUse = activeItem.getMaxUseTime(mc.player);
         //?} else {
-        /*int used = mc.player.getActiveItem().getItem().getMaxUseTime(mc.player.getActiveItem()) - mc.player.getItemUseTimeLeft();*/
+        /*int maxUse = activeItem.getItem().getMaxUseTime(activeItem);*/
         //?}
-        if (used >= charge.get()) {
+        int used = maxUse - mc.player.getItemUseTimeLeft();
+
+        if (used >= (int) chargeTicks.get()) {
             mc.player.stopUsingItem();
         }
+    }
+
+    @Override
+    public String getSuffix() {
+        return (int) chargeTicks.get() + "t";
     }
 }

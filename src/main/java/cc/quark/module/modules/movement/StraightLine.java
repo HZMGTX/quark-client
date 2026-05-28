@@ -1,31 +1,40 @@
 package cc.quark.module.modules.movement;
 
 import cc.quark.event.EventHandler;
-import cc.quark.event.events.EventTick;
+import cc.quark.event.events.EventPreMotion;
 import cc.quark.module.Category;
 import cc.quark.module.Module;
 import cc.quark.setting.BoolSetting;
-import cc.quark.setting.IntSetting;
 
 public class StraightLine extends Module {
 
-    private final IntSetting  snapAngle = register(new IntSetting("Snap Angle", "Snap yaw to multiples of this", 45, 1, 90));
-    private final BoolSetting lockPitch = register(new BoolSetting("Lock Pitch", "Keep pitch at 0 (flat look)",  false));
+    private final BoolSetting strict = register(new BoolSetting("Strict", "Snap yaw within tight threshold (within 5 degrees)", true));
 
     public StraightLine() {
-        super("StraightLine", "Snaps your yaw to the nearest angle for perfectly straight movement", Category.MOVEMENT);
+        super("StraightLine", "Force perfectly straight movement by snapping yaw to nearest 90 degrees", Category.MOVEMENT);
     }
 
     @EventHandler
-    public void onTick(EventTick event) {
+    public void onPreMotion(EventPreMotion event) {
         if (mc.player == null) return;
-        int snap = snapAngle.get();
-        if (snap <= 0) return;
 
-        float yaw = mc.player.getYaw();
-        float snapped = Math.round(yaw / (float) snap) * (float) snap;
-        mc.player.setYaw(snapped);
+        float fwd = mc.player.input.movementForward;
+        float side = mc.player.input.movementSideways;
 
-        if (lockPitch.isEnabled()) mc.player.setPitch(0);
+        if (fwd == 0 && side == 0) return;
+
+        float yaw = event.getYaw();
+        float snapped = Math.round(yaw / 90.0f) * 90.0f;
+        float diff = Math.abs(yaw - snapped);
+
+        if (strict.isEnabled()) {
+            if (diff <= 5.0f) {
+                event.setYaw(snapped);
+            }
+        } else {
+            if (diff <= 45.0f) {
+                event.setYaw(snapped);
+            }
+        }
     }
 }

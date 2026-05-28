@@ -5,26 +5,49 @@ import cc.quark.event.events.EventTick;
 import cc.quark.module.Category;
 import cc.quark.module.Module;
 import cc.quark.setting.DoubleSetting;
+import cc.quark.setting.ModeSetting;
+import net.minecraft.util.math.Vec3d;
 
 public class BouncePad extends Module {
 
-    private final DoubleSetting boost = register(new DoubleSetting("Boost", "Upward velocity on landing", 0.8, 0.1, 3.0));
-    private boolean wasFalling = false;
+    private final DoubleSetting height = register(new DoubleSetting("Height", "Upward velocity on bounce", 2.5, 1.0, 5.0));
+    private final ModeSetting mode = register(new ModeSetting("Mode", "Activation mode", "Hold", "Hold", "Toggle"));
+
+    private boolean toggled = false;
+    private boolean wasOnGround = false;
 
     public BouncePad() {
-        super("BouncePad", "Launches you upward when landing on the ground", Category.MOVEMENT);
+        super("BouncePad", "Bounces player upward on key press", Category.MOVEMENT);
     }
 
     @Override
-    public void onEnable() { wasFalling = false; }
+    public void onEnable() {
+        toggled = false;
+        wasOnGround = false;
+    }
 
     @EventHandler
     public void onTick(EventTick event) {
         if (mc.player == null) return;
-        boolean falling = mc.player.getVelocity().y < -0.1;
-        if (wasFalling && mc.player.isOnGround()) {
-            mc.player.addVelocity(0, boost.get(), 0);
+
+        boolean onGround = mc.player.isOnGround();
+        boolean jumpPressed = mc.options.jumpKey.isPressed();
+
+        if (mode.is("Toggle")) {
+            if (jumpPressed && !wasOnGround && onGround) {
+                toggled = !toggled;
+            }
+            if (toggled && onGround) {
+                Vec3d vel = mc.player.getVelocity();
+                mc.player.setVelocity(vel.x, height.get(), vel.z);
+            }
+        } else {
+            if (jumpPressed && onGround) {
+                Vec3d vel = mc.player.getVelocity();
+                mc.player.setVelocity(vel.x, height.get(), vel.z);
+            }
         }
-        wasFalling = falling;
+
+        wasOnGround = onGround;
     }
 }

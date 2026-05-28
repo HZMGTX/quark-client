@@ -1,36 +1,50 @@
 package cc.quark.module.modules.movement;
 
 import cc.quark.event.EventHandler;
-import cc.quark.event.events.EventTick;
+import cc.quark.event.events.EventMove;
 import cc.quark.module.Category;
 import cc.quark.module.Module;
 import cc.quark.setting.DoubleSetting;
-import net.minecraft.util.math.Vec3d;
 
-/**
- * Momentum - gradually accelerates horizontal speed the longer the player keeps
- * moving in the same direction.
- */
 public class Momentum extends Module {
 
-    private final DoubleSetting gain = register(new DoubleSetting(
-            "Gain", "Speed gained per tick while moving", 1.02, 1.0, 1.1));
-    private final DoubleSetting max = register(new DoubleSetting(
-            "Max", "Maximum horizontal speed", 0.5, 0.3, 1.5));
+    private final DoubleSetting retention = register(new DoubleSetting("Retention", "Velocity retention factor when airborne and not moving", 0.95, 0.8, 1.0));
+
+    private double lastGroundX = 0;
+    private double lastGroundZ = 0;
 
     public Momentum() {
-        super("Momentum", "Builds up speed while moving", Category.MOVEMENT);
+        super("Momentum", "Keep horizontal momentum in air when not pressing movement keys", Category.MOVEMENT);
+    }
+
+    @Override
+    public void onEnable() {
+        lastGroundX = 0;
+        lastGroundZ = 0;
     }
 
     @EventHandler
-    public void onTick(EventTick event) {
+    public void onMove(EventMove event) {
         if (mc.player == null) return;
-        if (mc.player.input.movementForward == 0 && mc.player.input.movementSideways == 0) return;
-        Vec3d v = mc.player.getVelocity();
-        double horiz = Math.sqrt(v.x * v.x + v.z * v.z);
+
+        float fwd = mc.player.input.movementForward;
+        float side = mc.player.input.movementSideways;
+
+        if (mc.player.isOnGround()) {
+            lastGroundX = event.getX();
+            lastGroundZ = event.getZ();
+            return;
+        }
+
+        if (fwd != 0 || side != 0) return;
+
+        double horiz = Math.sqrt(lastGroundX * lastGroundX + lastGroundZ * lastGroundZ);
         if (horiz <= 0) return;
-        double target = Math.min(horiz * gain.get(), max.get());
-        double scale = target / horiz;
-        mc.player.setVelocity(v.x * scale, v.y, v.z * scale);
+
+        lastGroundX *= retention.get();
+        lastGroundZ *= retention.get();
+
+        event.setX(lastGroundX);
+        event.setZ(lastGroundZ);
     }
 }
