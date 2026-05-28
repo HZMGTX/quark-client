@@ -4,31 +4,42 @@ import cc.quark.event.EventHandler;
 import cc.quark.event.events.EventTick;
 import cc.quark.module.Category;
 import cc.quark.module.Module;
-import cc.quark.setting.DoubleSetting;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.util.Hand;
+import cc.quark.setting.ModeSetting;
 
-/**
- * FastHurt - re-attacks targets immediately, ignoring the hurt-resistance window.
- */
 public class FastHurt extends Module {
 
-    private final DoubleSetting range = register(new DoubleSetting("Range", "Attack range", 3.5, 1.0, 6.0));
+    private final ModeSetting mode = register(new ModeSetting(
+            "Mode", "When to remove I-frames",
+            "Always",
+            "Always", "In Combat"));
+
+    private int combatTimer = 0;
 
     public FastHurt() {
-        super("FastHurt", "Attacks ignoring hurt resistance time", Category.COMBAT);
+        super("FastHurt", "Removes invincibility frames so you can be hit faster consecutively", Category.COMBAT);
+    }
+
+    @Override
+    public void onEnable() {
+        combatTimer = 0;
     }
 
     @EventHandler
     public void onTick(EventTick event) {
-        if (mc.player == null || mc.world == null || mc.interactionManager == null) return;
-        for (Entity entity : mc.world.getEntities()) {
-            if (entity == mc.player || !(entity instanceof LivingEntity living) || living.isDead()) continue;
-            if (mc.player.distanceTo(entity) > range.get()) continue;
-            mc.interactionManager.attackEntity(mc.player, living);
-            mc.player.swingHand(Hand.MAIN_HAND);
-            return;
+        if (mc.player == null) return;
+
+        if (mc.player.hurtTime > 0) {
+            combatTimer = 60;
         }
+
+        if (mode.is("In Combat") && combatTimer <= 0) return;
+        if (combatTimer > 0) combatTimer--;
+
+        mc.player.hurtTime = 0;
+    }
+
+    @Override
+    public String getSuffix() {
+        return mode.get();
     }
 }
