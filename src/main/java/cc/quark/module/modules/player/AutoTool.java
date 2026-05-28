@@ -4,47 +4,43 @@ import cc.quark.event.EventHandler;
 import cc.quark.event.events.EventTick;
 import cc.quark.module.Category;
 import cc.quark.module.Module;
-import cc.quark.setting.EnumSetting;
-import cc.quark.setting.IntSetting;
-import net.minecraft.block.*;
-import net.minecraft.item.*;
+import cc.quark.setting.BoolSetting;
+import cc.quark.setting.ModeSetting;
+import net.minecraft.block.Block;
+import net.minecraft.block.BlockState;
+import net.minecraft.entity.LivingEntity;
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.SwordItem;
 import net.minecraft.util.hit.BlockHitResult;
+import net.minecraft.util.hit.EntityHitResult;
 import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.BlockPos;
 
 /**
- * AutoTool - automatically switches to the best tool for the block being targeted.
- *
- * Preference modes:
- *   SPEED  â€“ choose the tool that gives the highest mining speed.
- *   DAMAGE â€“ choose the tool that preserves durability (only switch when strictly required).
+ * AutoTool - automatically switches to the best tool for the block being mined,
+ * or to a sword when targeting a living entity.
  */
 public class AutoTool extends Module {
 
-    public enum Preference {
-        SPEED, DAMAGE
-    }
+    private final ModeSetting preference = register(new ModeSetting(
+            "Preference", "Tool selection strategy", "Speed", "Speed", "Damage"));
 
-    private final EnumSetting<Preference> preference = register(new EnumSetting<>(
-            "Preference", "Tool selection strategy", Preference.SPEED));
+    private final BoolSetting switchBack = register(new BoolSetting(
+            "Switch Back", "Switch back to previous slot after mining", true));
 
-    private final IntSetting keepDurability = register(new IntSetting(
-            "Keep Durability", "Don't use a tool if its remaining uses fall below this value", 5, 1, 100));
+    private final BoolSetting swordForMobs = register(new BoolSetting(
+            "Sword for Mobs", "Switch to sword when targeting living entities", true));
 
     /** The slot we were in before AutoTool switched. -1 means no switch was made. */
     private int previousSlot = -1;
 
     public AutoTool() {
-        super("AutoTool", "Auto-switches to the best tool for the targeted block", Category.PLAYER);
+        super("AutoTool", "Auto-switches to the best tool for the targeted block or entity", Category.PLAYER);
     }
 
     @Override
     public void onDisable() {
-        // Restore original slot when disabled
-        if (mc.player != null && previousSlot != -1) {
-            mc.player.getInventory().selectedSlot = previousSlot;
-            previousSlot = -1;
-        }
+        restorePreviousSlot();
     }
 
     @EventHandler
@@ -52,36 +48,74 @@ public class AutoTool extends Module {
         if (mc.player == null || mc.world == null) return;
 
         HitResult hit = mc.crosshairTarget;
-        if (hit == null || hit.getType() != HitResult.Type.BLOCK) {
-            // Restore previous slot when not targeting a block
-            if (previousSlot != -1) {
-                mc.player.getInventory().selectedSlot = previousSlot;
-                previousSlot = -1;
+
+        // Handle entity targeting (sword for mobs)
+        if (hit != null && hit.getType() == HitResult.Type.ENTITY && swordForMobs.isEnabled()) {
+            EntityHitResult ehr = (EntityHitResult) hit;
+            if (ehr.getEntity() instanceof LivingEntity) {
+                int swordSlot = findBestSwordSlot();
+                if (swordSlot != -1) {
+                    int current = mc.player.getInventory().selectedSlot;
+                    if (current != swordSlot) {
+                        if (previousSlot == -1) previousSlot = current;
+                        mc.player.getInventory().selectedSlot = swordSlot;
+                    }
+                    return;
+                }
             }
+        }
+
+        // Handle block targeting
+        if (hit == null || hit.getType() != HitResult.Type.BLOCK) {
+            if (switchBack.isEnabled()) restorePreviousSlot();
             return;
         }
 
         BlockPos pos = ((BlockHitResult) hit).getBlockPos();
         BlockState state = mc.world.getBlockState(pos);
-        Block block = state.getBlock();
 
-        int bestSlot = findBestToolSlot(block, state, pos);
+        int bestSlot = findBestToolSlot(state, pos);
         if (bestSlot == -1) return;
 
         int currentSlot = mc.player.getInventory().selectedSlot;
         if (currentSlot != bestSlot) {
-            if (previousSlot == -1) {
-                previousSlot = currentSlot;
-            }
+            if (previousSlot == -1) previousSlot = currentSlot;
             mc.player.getInventory().selectedSlot = bestSlot;
         }
     }
 
+    private void restorePreviousSlot() {
+        if (mc.player != null && previousSlot != -1) {
+            mc.player.getInventory().selectedSlot = previousSlot;
+            previousSlot = -1;
+        }
+    }
+
+    /**
+     * Finds the hotbar slot (0-8) with the best sword for combat.
+     */
+    private int findBestSwordSlot() {
+        if (mc.player == null) return -1;
+        int bestSlot = -1;
+        float bestDmg = -1f;
+        for (int i = 0; i < 9; i++) {
+            ItemStack stack = mc.player.getInventory().getStack(i);
+            if (stack.getItem() instanceof SwordItem sword) {
+                float dmg = sword.getMaterial().getAttackDamage();
+                if (dmg > bestDmg) {
+                    bestDmg = dmg;
+                    bestSlot = i;
+                }
+            }
+        }
+        return bestSlot;
+    }
+
     /**
      * Finds the hotbar slot (0-8) containing the best tool for the given block.
-     * Returns -1 if no suitable tool is found or current tool is already best.
+     * Returns -1 if no suitable tool is found.
      */
-    private int findBestToolSlot(Block block, BlockState state, BlockPos pos) {
+    private int findBestToolSlot(BlockState state, BlockPos pos) {
         if (mc.player == null || mc.world == null) return -1;
 
         int bestSlot = -1;
@@ -91,22 +125,15 @@ public class AutoTool extends Module {
             ItemStack stack = mc.player.getInventory().getStack(i);
             if (stack.isEmpty()) continue;
 
-            // Respect keepDurability setting
-            if (stack.isDamageable()) {
-                int remaining = stack.getMaxDamage() - stack.getDamage();
-                if (remaining <= keepDurability.get()) continue;
-            }
-
             float speed = stack.getMiningSpeedMultiplier(state);
 
-            if (preference.get() == Preference.SPEED) {
+            if (preference.is("Speed")) {
                 if (speed > bestSpeed) {
                     bestSpeed = speed;
                     bestSlot = i;
                 }
             } else {
-                // DAMAGE mode: only switch if this tool is specifically effective
-                // (i.e., gives >1x speed) and is "lighter" on durability
+                // Damage mode: only switch if specifically effective (>1x speed)
                 if (speed > 1.0f && speed > bestSpeed) {
                     bestSpeed = speed;
                     bestSlot = i;

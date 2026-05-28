@@ -276,6 +276,7 @@ public class ModuleManager {
         register(new AutoPotion());
         register(new AutoRegister());
         register(new AutoRepair());
+        register(new AutoBot());
         register(new AutoReply());
         register(new AutoRespawn());
         register(new AutoSelect());

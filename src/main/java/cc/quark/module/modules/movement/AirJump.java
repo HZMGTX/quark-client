@@ -18,7 +18,6 @@ public class AirJump extends Module {
 
     @Override
     public void onEnable() {
-        Quark.getInstance().getEventBus().subscribe(this);
         jumpsLeft = count.getValue();
     }
 

@@ -29,7 +29,7 @@ public class SendCoords extends Module {
 
     @EventHandler
     public void onKey(EventKey event) {
-        if (mc.player == null || event.getKey() != GLFW.GLFW_KEY_F9) return;
+        if (mc.player == null || event.getKeyCode() != GLFW.GLFW_KEY_F9) return;
         sendCoords();
     }
 
