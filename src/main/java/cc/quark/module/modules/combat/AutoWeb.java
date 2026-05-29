@@ -5,33 +5,96 @@ import cc.quark.event.events.EventTick;
 import cc.quark.module.Category;
 import cc.quark.module.Module;
 import cc.quark.setting.DoubleSetting;
+import cc.quark.setting.IntSetting;
+import cc.quark.util.TimerUtil;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
+import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.util.Hand;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Direction;
+import net.minecraft.util.hit.BlockHitResult;
+import net.minecraft.util.math.Vec3d;
 
 /**
- * AutoWeb - places cobwebs toward nearby targets to trap them.
+ * AutoWeb — places cobwebs at the nearest enemy's current position to trap
+ * them.  Finds cobwebs anywhere in the inventory, switches to that slot,
+ * performs a block-place interaction, then restores the previous slot.
  */
 public class AutoWeb extends Module {
 
-    private final DoubleSetting range = register(new DoubleSetting("Range", "Trigger range", 3.0, 1.0, 6.0));
+    private final DoubleSetting range   = register(new DoubleSetting("Range",   "Range to search for enemies (blocks)", 4.0, 1.0, 8.0));
+    private final IntSetting    delayMs = register(new IntSetting   ("Delay",   "Ms between web placements",            500, 100, 3000));
+
+    private final TimerUtil timer = new TimerUtil();
+    private int prevSlot = -1;
 
     public AutoWeb() {
-        super("AutoWeb", "Places cobwebs to trap nearby targets", Category.COMBAT);
+        super("AutoWeb", "Places cobwebs at enemy feet to trap them", Category.COMBAT);
+    }
+
+    @Override
+    public void onEnable() {
+        timer.reset();
+        prevSlot = -1;
+    }
+
+    @Override
+    public void onDisable() {
+        restoreSlot();
     }
 
     @EventHandler
     public void onTick(EventTick event) {
         if (mc.player == null || mc.world == null || mc.interactionManager == null) return;
-        if (!mc.player.getMainHandStack().isOf(Items.COBWEB)) return;
-        for (Entity entity : mc.world.getEntities()) {
-            if (entity == mc.player || !(entity instanceof LivingEntity living) || living.isDead()) continue;
-            if (mc.player.distanceTo(entity) <= range.get()) {
-                mc.interactionManager.interactItem(mc.player, Hand.MAIN_HAND);
-                mc.player.swingHand(Hand.MAIN_HAND);
-                return;
-            }
+        if (!timer.hasReached(delayMs.get())) return;
+
+        // Find nearest enemy
+        LivingEntity target = null;
+        double best = range.get();
+        for (Entity e : mc.world.getEntities()) {
+            if (e == mc.player) continue;
+            if (!(e instanceof LivingEntity living)) continue;
+            if (living.isDead() || living.getHealth() <= 0f) continue;
+            double d = mc.player.distanceTo(e);
+            if (d < best) { best = d; target = living; }
+        }
+        if (target == null) { restoreSlot(); return; }
+
+        // Find cobweb in hotbar
+        int webSlot = -1;
+        for (int i = 0; i < 9; i++) {
+            ItemStack s = mc.player.getInventory().getStack(i);
+            if (s.isOf(Items.COBWEB)) { webSlot = i; break; }
+        }
+        if (webSlot == -1) { restoreSlot(); return; }
+
+        int cur = mc.player.getInventory().selectedSlot;
+        if (cur != webSlot) {
+            prevSlot = cur;
+            mc.player.getInventory().selectedSlot = webSlot;
+        }
+
+        // Place cobweb at target's feet block
+        BlockPos placePos = target.getBlockPos();
+        if (mc.world.getBlockState(placePos).isAir()) {
+            Vec3d hitVec = Vec3d.ofCenter(placePos.down()).add(0, 0.5, 0);
+            BlockHitResult hit = new BlockHitResult(hitVec, Direction.UP, placePos.down(), false);
+            mc.interactionManager.interactBlock(mc.player, Hand.MAIN_HAND, hit);
+        } else {
+            // Fallback: interact item (may place if looking at a valid surface)
+            mc.interactionManager.interactItem(mc.player, Hand.MAIN_HAND);
+        }
+        mc.player.swingHand(Hand.MAIN_HAND);
+        timer.reset();
+        restoreSlot();
+    }
+
+    private void restoreSlot() {
+        if (prevSlot != -1 && mc.player != null) {
+            mc.player.getInventory().selectedSlot = prevSlot;
+            prevSlot = -1;
         }
     }
 }
