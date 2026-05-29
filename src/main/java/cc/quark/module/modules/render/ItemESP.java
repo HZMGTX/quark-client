@@ -1,58 +1,63 @@
 package cc.quark.module.modules.render;
 
-import cc.quark.Quark;
 import cc.quark.event.EventHandler;
 import cc.quark.event.events.EventRender3D;
 import cc.quark.module.Category;
 import cc.quark.module.Module;
+import cc.quark.setting.BoolSetting;
+import cc.quark.setting.ColorSetting;
+import cc.quark.setting.DoubleSetting;
 import cc.quark.setting.IntSetting;
-import cc.quark.setting.ModeSetting;
 import cc.quark.util.RenderUtil;
-import net.minecraft.entity.ItemEntity;
+import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.Entity;
-import net.minecraft.item.*;
+import net.minecraft.entity.ItemEntity;
+import net.minecraft.util.math.Box;
+import net.minecraft.util.math.Vec3d;
 
 public class ItemESP extends Module {
 
-    private final IntSetting range = register(new IntSetting("Range", "ESP range", 32, 10, 64));
-    private final ModeSetting filter = register(new ModeSetting("Filter", "Item filter", "Valuable", "All", "Valuable", "Custom"));
+    private final IntSetting    range     = register(new IntSetting("Range", "ESP range in blocks", 32, 4, 128));
+    private final BoolSetting   tracers   = register(new BoolSetting("Tracers", "Draw tracer lines to items", false));
+    private final BoolSetting   fill      = register(new BoolSetting("Fill", "Fill the ESP box", true));
+    private final ColorSetting  color     = register(new ColorSetting("Color", "ESP box color", 0xFFFFFF55));
+    private final DoubleSetting fillAlpha = register(new DoubleSetting("Fill Alpha", "Fill transparency", 0.12, 0.0, 1.0));
 
     public ItemESP() {
-        super("ItemESP", "Shows dropped items on the ground", Category.RENDER);
+        super("ItemESP", "Draws ESP boxes around dropped items in the world", Category.RENDER);
     }
-
-    
-
-    
 
     @EventHandler
     public void onRender3D(EventRender3D event) {
         if (mc.player == null || mc.world == null) return;
+
+        MatrixStack matrices = event.getMatrixStack();
+        float td = event.getTickDelta();
+        Vec3d from = mc.player.getCameraPosVec(td);
+        double maxRange = range.get();
+
+        float r = color.getRedF(), g = color.getGreenF(), b = color.getBlueF(), a = color.getAlphaF();
+        float fa = (float) fillAlpha.get();
+
         for (Entity entity : mc.world.getEntities()) {
-            if (!(entity instanceof ItemEntity ie)) continue;
-            if (mc.player.distanceTo(ie) > range.get()) continue;
-            Item item = ie.getStack().getItem();
-            if (!filter.get().equals("All") && !isValuable(item)) continue;
-            int color = getColor(item);
-            float cr = ((color >> 16) & 0xFF) / 255.0f;
-            float cg = ((color >> 8) & 0xFF) / 255.0f;
-            float cb = (color & 0xFF) / 255.0f;
-            RenderUtil.drawESPBox(event.getMatrixStack(), ie.getBoundingBox(), cr, cg, cb, 0.85f, 1.5f);
+            if (!(entity instanceof ItemEntity)) continue;
+            if (mc.player.distanceTo(entity) > maxRange) continue;
+
+            double ex = entity.prevX + (entity.getX() - entity.prevX) * td;
+            double ey = entity.prevY + (entity.getY() - entity.prevY) * td;
+            double ez = entity.prevZ + (entity.getZ() - entity.prevZ) * td;
+            Box box = entity.getBoundingBox().offset(ex - entity.getX(), ey - entity.getY(), ez - entity.getZ());
+
+            RenderUtil.drawESPBox(matrices, box, r, g, b, a, 1.5f);
+
+            if (fill.isEnabled() && fa > 0) {
+                RenderUtil.drawFilledBox(matrices, box, r, g, b, fa);
+            }
+
+            if (tracers.isEnabled()) {
+                Vec3d center = new Vec3d(ex, ey + entity.getHeight() / 2.0, ez);
+                RenderUtil.drawLine3D(matrices, from, center, r, g, b, a * 0.8f, 1.0f);
+            }
         }
-    }
-
-    private boolean isValuable(Item item) {
-        return item == Items.DIAMOND || item == Items.NETHERITE_INGOT ||
-               item == Items.EMERALD || item == Items.GOLD_INGOT ||
-               item == Items.TOTEM_OF_UNDYING || item == Items.ENCHANTED_GOLDEN_APPLE ||
-               item instanceof SwordItem || item instanceof ArmorItem;
-    }
-
-    private int getColor(Item item) {
-        if (item == Items.DIAMOND || item == Items.DIAMOND_SWORD) return 0xFF55FFFF;
-        if (item == Items.NETHERITE_INGOT) return 0xFF443355;
-        if (item == Items.TOTEM_OF_UNDYING) return 0xFFFFAA00;
-        if (item == Items.ENCHANTED_GOLDEN_APPLE) return 0xFFFFD700;
-        return 0xFFFFFFFF;
     }
 }
