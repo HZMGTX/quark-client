@@ -405,6 +405,16 @@ public class ModuleManager {
         register(new VoidESP());
         register(new XRay());
         register(new Zoom());
+        register(new ChunkBoundary());
+        register(new MotionBlur());
+        register(new CaveFinder());
+        register(new Tracers2());
+        register(new NameTags());
+        register(new Ambience());
+        register(new ESP2());
+        register(new BeaconESP());
+        register(new FreeCam());
+        register(new Nametag());
 
         // -------- WORLD --------
         register(new AutoBed());
