@@ -13,6 +13,8 @@ import net.minecraft.util.math.Vec3d;
 
 public class Crosshair extends Module {
 
+    public static Crosshair INSTANCE;
+
     private final ModeSetting style = register(new ModeSetting("Style", "Crosshair style", "Plus", "Plus", "Dot", "Circle", "T", "Arrow"));
     private final IntSetting size = register(new IntSetting("Size", "Crosshair size", 5, 1, 20));
     private final ColorSetting color = register(new ColorSetting("Color", "Crosshair color", 0xFFFFFFFF));
@@ -21,6 +23,11 @@ public class Crosshair extends Module {
 
     public Crosshair() {
         super("Crosshair", "Custom crosshair renderer", Category.RENDER);
+        INSTANCE = this;
+    }
+
+    public boolean isShowingDefault() {
+        return showDefault.isEnabled();
     }
 
     

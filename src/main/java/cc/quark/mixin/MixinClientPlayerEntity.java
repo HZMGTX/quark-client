@@ -40,11 +40,13 @@ public abstract class MixinClientPlayerEntity {
 
         // Apply any modifications modules made to the event back onto the player
         // so the packet picks them up.
-        if (event.getYaw() != player.getYaw()) {
-            player.setYaw(event.getYaw());
+        if (event.getYaw() != player.getYaw())     player.setYaw(event.getYaw());
+        if (event.getPitch() != player.getPitch()) player.setPitch(event.getPitch());
+        if (event.getX() != player.getX() || event.getY() != player.getY() || event.getZ() != player.getZ()) {
+            player.setPosition(event.getX(), event.getY(), event.getZ());
         }
-        if (event.getPitch() != player.getPitch()) {
-            player.setPitch(event.getPitch());
+        if (event.isOnGround() != player.isOnGround()) {
+            player.setOnGround(event.isOnGround());
         }
     }
 
