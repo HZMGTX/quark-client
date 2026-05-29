@@ -5,29 +5,52 @@ import cc.quark.event.events.EventTick;
 import cc.quark.module.Category;
 import cc.quark.module.Module;
 import cc.quark.setting.IntSetting;
+import cc.quark.setting.ModeSetting;
+import cc.quark.util.TimerUtil;
 
-/**
- * AutoClose - closes the currently open screen after a configurable timeout.
- */
 public class AutoClose extends Module {
 
-    private final IntSetting delay = register(new IntSetting("Delay", "Ticks before closing", 60, 5, 600));
-    private int timer = 0;
+    private final ModeSetting mode = register(new ModeSetting(
+            "Mode", "When to close the screen",
+            "Delay", "Instant", "Delay"));
+    private final IntSetting delay = register(new IntSetting(
+            "Delay ms", "Milliseconds before closing (Delay mode)", 1500, 100, 10000));
+
+    private final TimerUtil timer = new TimerUtil();
+    private boolean screenWasOpen = false;
 
     public AutoClose() {
-        super("AutoClose", "Closes open GUIs after a delay", Category.PLAYER);
+        super("AutoClose", "Auto-closes open inventory screens after a configurable delay", Category.PLAYER);
+    }
+
+    @Override
+    public void onEnable() {
+        screenWasOpen = false;
     }
 
     @EventHandler
     public void onTick(EventTick event) {
         if (mc.player == null) return;
-        if (mc.currentScreen == null) {
-            timer = 0;
-            return;
+
+        boolean screenOpen = mc.currentScreen != null;
+
+        if (screenOpen && !screenWasOpen) {
+            // Screen just opened
+            screenWasOpen = true;
+            timer.reset();
+
+            if (mode.is("Instant")) {
+                mc.player.closeHandledScreen();
+                screenWasOpen = false;
+            }
+        } else if (!screenOpen) {
+            screenWasOpen = false;
         }
-        if (++timer >= delay.get()) {
-            timer = 0;
+
+        // Delay mode: close after timer
+        if (screenOpen && mode.is("Delay") && timer.hasReached(delay.get())) {
             mc.player.closeHandledScreen();
+            screenWasOpen = false;
         }
     }
 }

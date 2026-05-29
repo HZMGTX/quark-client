@@ -4,33 +4,46 @@ import cc.quark.event.EventHandler;
 import cc.quark.event.events.EventTick;
 import cc.quark.module.Category;
 import cc.quark.module.Module;
+import cc.quark.setting.BoolSetting;
 import cc.quark.setting.DoubleSetting;
+import cc.quark.util.InventoryUtil;
+import net.minecraft.item.ItemStack;
+import net.minecraft.util.Hand;
 
 public class SaturationKeeper extends Module {
 
-    private final DoubleSetting level = register(new DoubleSetting("Level", "Saturation level to maintain", 5.0, 0.0, 20.0));
-    private float savedSaturation = -1f;
+    private final DoubleSetting minSaturation = register(new DoubleSetting(
+            "Min Saturation", "Eat when saturation drops below this level", 3.0, 0.0, 20.0));
+    private final BoolSetting autoEat = register(new BoolSetting(
+            "Auto Eat", "Automatically eat best food to restore saturation", true));
 
     public SaturationKeeper() {
-        super("SaturationKeeper", "Keeps saturation at a set level", Category.PLAYER);
+        super("SaturationKeeper", "Maintains high saturation by auto-eating high-saturation food", Category.PLAYER);
     }
 
     @EventHandler
     public void onTick(EventTick event) {
-        if (mc.player == null) return;
-        var hungerManager = mc.player.getHungerManager();
-        if (savedSaturation < 0) {
-            savedSaturation = hungerManager.getSaturationLevel();
-        }
-        hungerManager.setSaturationLevel((float) level.get());
-    }
+        if (mc.player == null || mc.interactionManager == null) return;
 
-    @Override
-    public void onDisable() {
-        if (mc.player == null) return;
-        if (savedSaturation >= 0) {
-            mc.player.getHungerManager().setSaturationLevel(savedSaturation);
-            savedSaturation = -1f;
+        var hungerManager = mc.player.getHungerManager();
+        float saturation = hungerManager.getSaturationLevel();
+        int food = hungerManager.getFoodLevel();
+
+        if (saturation >= minSaturation.get()) return;
+        if (!autoEat.isEnabled()) return;
+
+        // Find and eat best food
+        ItemStack best = InventoryUtil.getBestFood();
+        if (best.isEmpty()) return;
+
+        // Find the slot of best food in hotbar
+        for (int i = 0; i < 9; i++) {
+            ItemStack stack = mc.player.getInventory().getStack(i);
+            if (!stack.isEmpty() && stack.isOf(best.getItem())) {
+                mc.player.getInventory().selectedSlot = i;
+                mc.interactionManager.interactItem(mc.player, Hand.MAIN_HAND);
+                return;
+            }
         }
     }
 }
