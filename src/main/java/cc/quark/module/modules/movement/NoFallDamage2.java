@@ -19,7 +19,7 @@ public class NoFallDamage2 extends Module {
     public void onTick(EventTick event) {
         if (mc.player == null || mc.getNetworkHandler() == null) return;
         if (mc.player.fallDistance > 2.0f) {
-            mc.player.networkHandler.sendPacket(new PlayerMoveC2SPacket.OnGroundOnly(true));
+            mc.player.networkHandler.sendPacket(new PlayerMoveC2SPacket.OnGroundOnly(true, mc.player.horizontalCollision));
             mc.player.fallDistance = 0.0f;
         }
     }
