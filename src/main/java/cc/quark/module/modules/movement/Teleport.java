@@ -11,14 +11,25 @@ import net.minecraft.network.packet.c2s.play.PlayerMoveC2SPacket;
 import net.minecraft.util.math.BlockPos;
 import org.lwjgl.glfw.GLFW;
 
+/**
+ * Teleport - on key press, raycast along crosshair direction; CheckBlocks
+ * validates the path by scanning 0.5-block steps and stopping before any
+ * solid block; sends PlayerMoveC2SPacket to the new position and updates
+ * client-side position.
+ */
 public class Teleport extends Module {
 
-    private final IntSetting key = register(new IntSetting("Key", "Key to trigger teleport (GLFW keycode)", GLFW.GLFW_KEY_F7, GLFW.GLFW_KEY_F1, GLFW.GLFW_KEY_F12));
-    private final DoubleSetting distance = register(new DoubleSetting("Distance", "Teleport distance in blocks", 5.0, 1.0, 50.0));
-    private final BoolSetting checkBlocks = register(new BoolSetting("Check Blocks", "Avoid teleporting into walls", true));
+    private final IntSetting key = register(new IntSetting(
+            "Key", "GLFW key code to trigger teleport", GLFW.GLFW_KEY_F7, GLFW.GLFW_KEY_F1, GLFW.GLFW_KEY_F12));
+    private final DoubleSetting distance = register(new DoubleSetting(
+            "Distance", "Maximum teleport distance in blocks", 10.0, 1.0, 50.0));
+    private final BoolSetting checkBlocks = register(new BoolSetting(
+            "Check Blocks", "Stop before solid blocks along the path", true));
+    private final BoolSetting horizontal = register(new BoolSetting(
+            "Horizontal Only", "Ignore pitch — teleport horizontally only", false));
 
     public Teleport() {
-        super("Teleport", "Teleport forward quickly on key press", Category.MOVEMENT);
+        super("Teleport", "Teleport to crosshair target on key press with block collision check", Category.MOVEMENT);
     }
 
     @EventHandler
@@ -26,34 +37,42 @@ public class Teleport extends Module {
         if (mc.player == null || mc.getNetworkHandler() == null) return;
         if (event.getKeyCode() != key.get()) return;
 
-        double yawRad = Math.toRadians(mc.player.getYaw());
-        double pitchRad = Math.toRadians(mc.player.getPitch());
+        double yawRad   = Math.toRadians(mc.player.getYaw());
+        double pitchRad = horizontal.isEnabled() ? 0.0 : Math.toRadians(mc.player.getPitch());
 
         double dx = -Math.sin(yawRad) * Math.cos(pitchRad);
-        double dy = -Math.sin(pitchRad);
-        double dz = Math.cos(yawRad) * Math.cos(pitchRad);
+        double dy = horizontal.isEnabled() ? 0.0 : -Math.sin(pitchRad);
+        double dz =  Math.cos(yawRad) * Math.cos(pitchRad);
 
-        double dist = distance.get();
+        double maxDist = distance.get();
+        double actualDist = maxDist;
 
         if (checkBlocks.isEnabled() && mc.world != null) {
-            for (double step = 1.0; step <= dist; step += 0.5) {
+            for (double step = 0.5; step <= maxDist; step += 0.5) {
                 double tx = mc.player.getX() + dx * step;
                 double ty = mc.player.getY() + dy * step;
                 double tz = mc.player.getZ() + dz * step;
-                BlockPos feetPos = new BlockPos((int) Math.floor(tx), (int) Math.floor(ty), (int) Math.floor(tz));
+
+                BlockPos feetPos = BlockPos.ofFloored(tx, ty, tz);
                 BlockPos headPos = feetPos.up();
-                if (!mc.world.getBlockState(feetPos).isAir() || !mc.world.getBlockState(headPos).isAir()) {
-                    dist = step - 0.5;
+
+                boolean feetBlocked = !mc.world.getBlockState(feetPos).isAir();
+                boolean headBlocked = !mc.world.getBlockState(headPos).isAir();
+
+                if (feetBlocked || headBlocked) {
+                    actualDist = Math.max(0, step - 0.5);
                     break;
                 }
             }
         }
 
-        double nx = mc.player.getX() + dx * dist;
-        double ny = mc.player.getY() + dy * dist;
-        double nz = mc.player.getZ() + dz * dist;
+        double nx = mc.player.getX() + dx * actualDist;
+        double ny = mc.player.getY() + dy * actualDist;
+        double nz = mc.player.getZ() + dz * actualDist;
 
-        mc.getNetworkHandler().sendPacket(new PlayerMoveC2SPacket.PositionAndOnGround(nx, ny, nz, mc.player.isOnGround()));
+        // Send packet first, then update client position
+        mc.getNetworkHandler().sendPacket(new PlayerMoveC2SPacket.PositionAndOnGround(
+                nx, ny, nz, mc.player.isOnGround()));
         mc.player.setPosition(nx, ny, nz);
     }
 }

@@ -3,6 +3,7 @@ package cc.quark.mixin;
 import cc.quark.Quark;
 import cc.quark.event.events.EventRender3D;
 import cc.quark.module.ModuleManager;
+import cc.quark.module.modules.render.NoHurtCam;
 import cc.quark.module.modules.render.Zoom;
 import net.minecraft.client.render.Camera;
 import net.minecraft.client.render.GameRenderer;
@@ -20,6 +21,13 @@ public class MixinGameRenderer {
     private void onRenderWorldTail(net.minecraft.client.render.RenderTickCounter tickCounter, CallbackInfo ci) {
         if (Quark.getInstance() == null) return;
         Quark.getInstance().getEventBus().post(new EventRender3D(new MatrixStack(), tickCounter.getTickDelta(true)));
+    }
+
+    @Inject(method = "tiltViewWhenHurt", at = @At("HEAD"), cancellable = true)
+    private void onTiltViewWhenHurt(MatrixStack matrices, float tickDelta, CallbackInfo ci) {
+        if (NoHurtCam.INSTANCE != null && NoHurtCam.INSTANCE.isEnabled()) {
+            ci.cancel();
+        }
     }
 
     @ModifyReturnValue(method = "getFov", at = @At("RETURN"))

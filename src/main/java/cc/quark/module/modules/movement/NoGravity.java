@@ -4,36 +4,35 @@ import cc.quark.event.EventHandler;
 import cc.quark.event.events.EventTick;
 import cc.quark.module.Category;
 import cc.quark.module.Module;
-import cc.quark.setting.BoolSetting;
-import cc.quark.setting.DoubleSetting;
-import net.minecraft.util.math.Vec3d;
 
+/**
+ * NoGravity - simpler than GravityControl: zero Y velocity each tick while
+ * airborne so the player simply floats at their current height.
+ * Hold Jump to rise, Sneak to descend slowly.
+ */
 public class NoGravity extends Module {
 
-    private final BoolSetting  hover     = register(new BoolSetting("Hover",    "Hover in place (cancel fall)", true));
-    private final DoubleSetting hoverY   = register(new DoubleSetting("Descend","Slow descent speed",           0.05, 0.0, 0.5));
-    private final BoolSetting  ascend    = register(new BoolSetting("Ascend",   "Hold jump to rise",            true));
-
     public NoGravity() {
-        super("NoGravity", "Disables gravity — hover, float, or slowly descend", Category.MOVEMENT);
+        super("NoGravity", "Zero Y velocity while airborne; Jump to rise, Sneak to sink", Category.MOVEMENT);
     }
 
     @EventHandler
     public void onTick(EventTick event) {
         if (mc.player == null) return;
-        if (mc.player.isOnGround() || mc.player.isTouchingWater() || mc.player.isInLava()) return;
+        if (mc.player.isOnGround()) return;
+        if (mc.player.isTouchingWater() || mc.player.isInLava()) return;
 
-        Vec3d vel = mc.player.getVelocity();
+        double vy;
 
-        if (hover.isEnabled()) {
-            double targetY = vel.y < 0 ? -hoverY.get() : vel.y;
-
-            if (ascend.isEnabled() && mc.options.jumpKey.isPressed()) {
-                targetY = 0.2;
-            }
-
-            mc.player.setVelocity(vel.x, targetY, vel.z);
-            mc.player.fallDistance = 0;
+        if (mc.options.jumpKey.isPressed()) {
+            vy = 0.15;
+        } else if (mc.options.sneakKey.isPressed()) {
+            vy = -0.08;
+        } else {
+            vy = 0.0;
         }
+
+        mc.player.setVelocity(mc.player.getVelocity().x, vy, mc.player.getVelocity().z);
+        mc.player.fallDistance = 0;
     }
 }
