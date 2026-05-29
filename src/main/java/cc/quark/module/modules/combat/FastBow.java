@@ -4,16 +4,25 @@ import cc.quark.event.EventHandler;
 import cc.quark.event.events.EventTick;
 import cc.quark.module.Category;
 import cc.quark.module.Module;
-import cc.quark.setting.DoubleSetting;
+import cc.quark.setting.IntSetting;
 import net.minecraft.item.BowItem;
-import net.minecraft.item.CrossbowItem;
 
+/**
+ * FastBow — forces the bow to release after only MinCharge ticks of draw,
+ * enabling rapid-fire at the cost of reduced arrow velocity.
+ */
 public class FastBow extends Module {
 
-    private final DoubleSetting chargeTicks = register(new DoubleSetting("Charge Ticks", "Ticks before forcing release (3-20)", 10.0, 3.0, 20.0));
+    private final IntSetting minCharge = register(new IntSetting(
+            "Min Charge", "Ticks of draw before auto-release (20 = full power)", 5, 1, 20));
 
     public FastBow() {
         super("FastBow", "Forces bow release after minimal charge for rapid fire", Category.COMBAT);
+    }
+
+    @Override
+    public String getSuffix() {
+        return minCharge.get() + "t";
     }
 
     @EventHandler
@@ -31,13 +40,8 @@ public class FastBow extends Module {
         //?}
         int used = maxUse - mc.player.getItemUseTimeLeft();
 
-        if (used >= (int) chargeTicks.get()) {
+        if (used >= minCharge.get()) {
             mc.player.stopUsingItem();
         }
-    }
-
-    @Override
-    public String getSuffix() {
-        return (int) chargeTicks.get() + "t";
     }
 }

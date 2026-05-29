@@ -4,15 +4,16 @@ import cc.quark.event.EventHandler;
 import cc.quark.event.events.EventTick;
 import cc.quark.module.Category;
 import cc.quark.module.Module;
-import cc.quark.setting.BoolSetting;
+import cc.quark.setting.ModeSetting;
 
 public class AutoSprint extends Module {
 
-    private final BoolSetting omniSprint = register(new BoolSetting(
-            "Omni Sprint", "Sprint in all directions, not just forward", true));
+    private final ModeSetting mode = register(new ModeSetting(
+            "Mode", "When to sprint",
+            "Always", "Always", "Moving", "Forward"));
 
     public AutoSprint() {
-        super("AutoSprint", "Automatically sprints while moving", Category.PLAYER);
+        super("AutoSprint", "Automatically sprints based on movement mode", Category.PLAYER);
     }
 
     @Override
@@ -24,11 +25,17 @@ public class AutoSprint extends Module {
     public void onTick(EventTick event) {
         if (mc.player == null) return;
         if (mc.player.isSneaking()) return;
+        if (mc.player.getHealth() <= 6f) return; // don't sprint when very low health (hunger cost)
 
-        boolean moving = omniSprint.isEnabled()
-                ? mc.player.input.movementForward != 0 || mc.player.input.movementSideways != 0
-                : mc.player.input.movementForward > 0;
+        boolean shouldSprint = switch (mode.get()) {
+            case "Always"   -> true;
+            case "Moving"   -> mc.player.input.movementForward != 0 || mc.player.input.movementSideways != 0;
+            case "Forward"  -> mc.player.input.movementForward > 0;
+            default         -> false;
+        };
 
-        if (moving) mc.player.setSprinting(true);
+        if (shouldSprint) {
+            mc.player.setSprinting(true);
+        }
     }
 }

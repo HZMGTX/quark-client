@@ -1,38 +1,69 @@
 package cc.quark.module.modules.combat;
 
 import cc.quark.event.EventHandler;
-import cc.quark.event.events.EventPacketReceive;
+import cc.quark.event.events.EventPacketSend;
 import cc.quark.module.Category;
 import cc.quark.module.Module;
 import cc.quark.setting.IntSetting;
-import net.minecraft.network.packet.s2c.play.EntityVelocityUpdateS2CPacket;
+import net.minecraft.network.packet.Packet;
+import net.minecraft.network.packet.c2s.play.PlayerInteractEntityC2SPacket;
+
+import java.util.ArrayDeque;
+import java.util.Deque;
 
 /**
- * PingSpoofCombat - delays incoming velocity updates to simulate lag in combat.
+ * PingSpoofCombat — delays outgoing attack packets (PlayerInteractEntityC2SPacket)
+ * by Delay milliseconds to simulate high ping.  The queued packets are released
+ * after the delay expires.
  */
 public class PingSpoofCombat extends Module {
 
-    private final IntSetting delay = register(new IntSetting("Delay", "Spoofed delay in ticks", 5, 0, 40));
+    private final IntSetting delayMs = register(new IntSetting("Delay", "Outgoing attack packet delay in ms", 150, 0, 500));
 
-    private int counter;
+    /** Pair of [packet, timestamp] */
+    private final Deque<Object[]> queue = new ArrayDeque<>();
 
     public PingSpoofCombat() {
-        super("PingSpoofCombat", "Delays incoming velocity updates in combat", Category.COMBAT);
+        super("PingSpoofCombat", "Delays outgoing attack packets to simulate ping", Category.COMBAT);
     }
 
     @Override
     public void onEnable() {
-        counter = 0;
+        queue.clear();
+    }
+
+    @Override
+    public void onDisable() {
+        flushAll();
     }
 
     @EventHandler
-    public void onReceive(EventPacketReceive event) {
-        if (mc.player == null) return;
-        if (event.getPacket() instanceof EntityVelocityUpdateS2CPacket) {
-            counter++;
-            if (counter % (delay.get() + 1) != 0) {
-                event.cancel();
+    public void onPacketSend(EventPacketSend event) {
+        if (mc.player == null || mc.getNetworkHandler() == null) return;
+        if (!(event.getPacket() instanceof PlayerInteractEntityC2SPacket)) return;
+
+        // Cancel the immediate send and queue it
+        event.cancel();
+        queue.addLast(new Object[]{ event.getPacket(), System.currentTimeMillis() });
+
+        // Release any packets whose delay has expired
+        long threshold = System.currentTimeMillis() - delayMs.get();
+        while (!queue.isEmpty()) {
+            Object[] head = queue.peekFirst();
+            if ((long) head[1] <= threshold) {
+                queue.pollFirst();
+                mc.getNetworkHandler().sendPacket((Packet<?>) head[0]);
+            } else {
+                break;
             }
+        }
+    }
+
+    private void flushAll() {
+        if (mc.getNetworkHandler() == null) { queue.clear(); return; }
+        while (!queue.isEmpty()) {
+            Object[] entry = queue.pollFirst();
+            mc.getNetworkHandler().sendPacket((Packet<?>) entry[0]);
         }
     }
 }

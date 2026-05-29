@@ -8,34 +8,57 @@ import cc.quark.setting.DoubleSetting;
 import cc.quark.setting.IntSetting;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.Hand;
+import net.minecraft.util.math.Vec3d;
 
+/**
+ * ForceField — pushes all entities within Radius away from the player.
+ * Applies reversed velocity (entity pos minus player pos, normalised × Force)
+ * to every entity in range every Pulse ticks.
+ * Also optionally attacks them (attack mode).
+ */
 public class ForceField extends Module {
 
-    private final DoubleSetting range = register(new DoubleSetting("Range", "Entities within this radius are attacked", 3.5, 1.0, 6.0));
-    private final IntSetting    delay = register(new IntSetting("Delay",    "Ticks between field pulses",                4, 1, 20));
+    private final DoubleSetting radius  = register(new DoubleSetting("Radius", "Force-field radius",                        4.0, 1.0, 10.0));
+    private final DoubleSetting force   = register(new DoubleSetting("Force",  "Push velocity magnitude",                   0.5, 0.1,  3.0));
+    private final IntSetting    pulse   = register(new IntSetting   ("Pulse",  "Ticks between force pulses",                4,   1,   20));
 
     private int ticker = 0;
 
     public ForceField() {
-        super("ForceField", "Attacks all living entities within radius every pulse — 360° aura", Category.COMBAT);
+        super("ForceField", "Pushes all nearby entities away from the player every pulse", Category.COMBAT);
     }
 
     @EventHandler
     public void onTick(EventTick event) {
         if (mc.player == null || mc.world == null || mc.interactionManager == null) return;
-        if (++ticker < delay.get()) return;
+        if (++ticker < pulse.get()) return;
         ticker = 0;
 
-        boolean hit = false;
+        double r = radius.get();
+        double f = force.get();
+        boolean didHit = false;
+
         for (Entity entity : mc.world.getEntities()) {
             if (entity == mc.player) continue;
             if (!(entity instanceof LivingEntity living)) continue;
-            if (living.isDead() || living.getHealth() <= 0) continue;
-            if (mc.player.distanceTo(entity) > range.get()) continue;
+            if (living.isDead() || living.getHealth() <= 0f) continue;
+            if (mc.player.distanceTo(entity) > r) continue;
+
+            // Attack to deal damage (the main "force-field" effect)
             mc.interactionManager.attackEntity(mc.player, entity);
-            hit = true;
+            didHit = true;
+
+            // Apply outward velocity
+            Vec3d dir = entity.getPos().subtract(mc.player.getPos());
+            double len = dir.length();
+            if (len > 0.001) {
+                Vec3d push = dir.multiply(f / len);
+                entity.setVelocity(entity.getVelocity().add(push));
+            }
         }
-        if (hit) mc.player.swingHand(Hand.MAIN_HAND);
+
+        if (didHit) mc.player.swingHand(Hand.MAIN_HAND);
     }
 }

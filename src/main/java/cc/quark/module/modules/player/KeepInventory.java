@@ -1,39 +1,35 @@
 package cc.quark.module.modules.player;
 
 import cc.quark.event.EventHandler;
-import cc.quark.event.events.EventTick;
+import cc.quark.event.events.EventPacketSend;
 import cc.quark.module.Category;
 import cc.quark.module.Module;
-import cc.quark.setting.IntSetting;
-import cc.quark.util.ChatUtil;
+import cc.quark.setting.BoolSetting;
+import net.minecraft.network.packet.c2s.play.DropItemC2SPacket;
 
-/**
- * KeepInventory - warns the player to bank their items when health gets dangerously low.
- */
 public class KeepInventory extends Module {
 
-    private final IntSetting health = register(new IntSetting("Health", "Warn below this health", 6, 1, 19));
-    private boolean warned = false;
+    private final BoolSetting onlyOnDeath = register(new BoolSetting(
+            "Only On Death", "Only block item drops when player is dead", true));
+    private final BoolSetting cancelAll = register(new BoolSetting(
+            "Cancel All Drops", "Cancel all drop packets regardless of death state", false));
 
     public KeepInventory() {
-        super("KeepInventory", "Warns to protect inventory at low health", Category.PLAYER);
-    }
-
-    @Override
-    public void onEnable() {
-        warned = false;
+        super("KeepInventory", "Cancels item-drop packets to prevent losing inventory on death", Category.PLAYER);
     }
 
     @EventHandler
-    public void onTick(EventTick event) {
+    public void onPacketSend(EventPacketSend event) {
         if (mc.player == null) return;
-        if (mc.player.getHealth() <= health.get()) {
-            if (!warned) {
-                ChatUtil.error("Low health! Protect your inventory.");
-                warned = true;
-            }
-        } else {
-            warned = false;
+        if (!(event.getPacket() instanceof DropItemC2SPacket)) return;
+
+        if (cancelAll.isEnabled()) {
+            event.cancel();
+            return;
+        }
+
+        if (onlyOnDeath.isEnabled() && (mc.player.isDead() || mc.player.getHealth() <= 0f)) {
+            event.cancel();
         }
     }
 }

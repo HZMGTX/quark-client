@@ -5,36 +5,65 @@ import cc.quark.event.events.EventPacketReceive;
 import cc.quark.module.Category;
 import cc.quark.module.Module;
 import cc.quark.setting.DoubleSetting;
+import cc.quark.setting.ModeSetting;
 import net.minecraft.network.packet.s2c.play.EntityVelocityUpdateS2CPacket;
 
+/**
+ * AntiKnockback — intercepts EntityVelocityUpdateS2CPacket and scales the
+ * horizontal and vertical components independently.
+ * 0 % = fully cancelled; 100 % = vanilla knockback.
+ */
 public class AntiKnockback extends Module {
 
+    private final ModeSetting mode = register(new ModeSetting(
+            "Mode", "How knockback is modified", "Reduce", "Reduce", "Zero", "Reverse"));
+
     private final DoubleSetting horizontal = register(new DoubleSetting(
-            "Horizontal", "Percentage of horizontal knockback to keep (0 = none)", 0.0, 0.0, 100.0));
+            "Horizontal", "H-knockback to keep (0 = none, 100 = full)", 0.0, 0.0, 100.0));
 
     private final DoubleSetting vertical = register(new DoubleSetting(
-            "Vertical", "Percentage of vertical knockback to keep (0 = none)", 0.0, 0.0, 100.0));
+            "Vertical", "V-knockback to keep (0 = none, 100 = full)", 0.0, 0.0, 100.0));
 
     public AntiKnockback() {
-        super("AntiKnockback", "Reduces knockback received from attacks.", Category.COMBAT);
+        super("AntiKnockback", "Reduces or cancels incoming knockback", Category.COMBAT);
+    }
+
+    @Override
+    public String getSuffix() {
+        return mode.get() + " " + (int) horizontal.get() + "%";
     }
 
     @EventHandler
     public void onPacketReceive(EventPacketReceive event) {
         if (mc.player == null) return;
         if (!(event.getPacket() instanceof EntityVelocityUpdateS2CPacket pkt)) return;
-
         if (pkt.getEntityId() != mc.player.getId()) return;
 
         event.cancel();
 
-        double hMult = horizontal.get() / 100.0;
-        double vMult = vertical.get() / 100.0;
+        double rawX = pkt.getVelocityX() / 8000.0;
+        double rawY = pkt.getVelocityY() / 8000.0;
+        double rawZ = pkt.getVelocityZ() / 8000.0;
 
-        double velX = pkt.getVelocityX() / 8000.0 * hMult;
-        double velY = pkt.getVelocityY() / 8000.0 * vMult;
-        double velZ = pkt.getVelocityZ() / 8000.0 * hMult;
+        double newX, newY, newZ;
+        switch (mode.get()) {
+            case "Zero" -> { newX = 0; newY = 0; newZ = 0; }
+            case "Reverse" -> {
+                double hScale = horizontal.get() / 100.0;
+                double vScale = vertical.get() / 100.0;
+                newX = -rawX * hScale;
+                newY = -rawY * vScale;
+                newZ = -rawZ * hScale;
+            }
+            default -> { // Reduce
+                double hScale = horizontal.get() / 100.0;
+                double vScale = vertical.get() / 100.0;
+                newX = rawX * hScale;
+                newY = rawY * vScale;
+                newZ = rawZ * hScale;
+            }
+        }
 
-        mc.player.setVelocity(velX, velY, velZ);
+        mc.player.setVelocity(newX, newY, newZ);
     }
 }

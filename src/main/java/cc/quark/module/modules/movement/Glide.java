@@ -5,33 +5,54 @@ import cc.quark.event.events.EventMove;
 import cc.quark.module.Category;
 import cc.quark.module.Module;
 import cc.quark.setting.DoubleSetting;
+import cc.quark.setting.ModeSetting;
 
 /**
- * Glide - replaces the normal free-fall acceleration with a slow, controlled descent,
- * allowing the player to glide horizontally after jumping or falling off a ledge.
+ * Glide - reduces gravity while airborne so the player descends slowly.
  *
- * <p>The Y component in the move event is clamped so the player sinks at most
- * {@link #fallSpeed} blocks per tick, producing a gentle floating effect.
+ * <ul>
+ *   <li><b>Slow</b>   - clamp downward Y to a gentle terminal velocity.</li>
+ *   <li><b>Float</b>  - zero out all downward Y velocity (hover).</li>
+ *   <li><b>Boost</b>  - apply a small upward force each tick to sustain height.</li>
+ * </ul>
  */
 public class Glide extends Module {
 
+    private final ModeSetting mode = register(new ModeSetting(
+            "Mode", "Glide behaviour", "Slow", "Slow", "Float", "Boost"));
     private final DoubleSetting fallSpeed = register(new DoubleSetting(
-            "Fall Speed", "Maximum downward speed while gliding (blocks/tick)", 0.05, 0.0, 0.5));
+            "Fall Speed", "Max downward speed in Slow mode (blocks/tick)", 0.05, 0.0, 0.5));
+    private final DoubleSetting boostForce = register(new DoubleSetting(
+            "Boost Force", "Upward force applied each tick in Boost mode", 0.04, 0.0, 0.2));
 
     public Glide() {
-        super("Glide", "Slows the player's descent for a gliding effect", Category.MOVEMENT);
+        super("Glide", "Reduce gravity for a slow, gliding descent", Category.MOVEMENT);
     }
 
     @EventHandler
     public void onMove(EventMove event) {
         if (mc.player == null) return;
-        // Only glide while in the air
         if (mc.player.isOnGround()) return;
-        // Don't interfere with upward movement
-        if (event.getY() >= 0) return;
 
-        // Clamp descent to the configured fall speed
-        event.setY(-fallSpeed.get());
-        mc.player.fallDistance = 0;
+        switch (mode.get()) {
+            case "Slow" -> {
+                // Only clamp when falling (Y negative)
+                if (event.getY() < -fallSpeed.get()) {
+                    event.setY(-fallSpeed.get());
+                    mc.player.fallDistance = 0;
+                }
+            }
+            case "Float" -> {
+                if (event.getY() < 0) {
+                    event.setY(0.0);
+                    mc.player.fallDistance = 0;
+                }
+            }
+            case "Boost" -> {
+                // Apply upward force — net effect opposes gravity
+                event.setY(event.getY() + boostForce.get());
+                mc.player.fallDistance = 0;
+            }
+        }
     }
 }

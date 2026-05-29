@@ -5,16 +5,22 @@ import cc.quark.event.events.EventPacketReceive;
 import cc.quark.module.Category;
 import cc.quark.module.Module;
 import cc.quark.setting.BoolSetting;
+import cc.quark.util.ChatUtil;
 import net.minecraft.network.packet.c2s.play.PlayPongC2SPacket;
+import net.minecraft.network.packet.s2c.play.DisconnectS2CPacket;
 import net.minecraft.network.packet.s2c.play.KeepAliveS2CPacket;
-import net.minecraft.network.packet.s2c.play.LoginCompressionS2CPacket;
 
 public class NoPacketKick extends Module {
 
-    private final BoolSetting autoRespond = register(new BoolSetting("Auto Respond", "Auto-respond to keepalive packets", true));
+    private final BoolSetting autoRespond = register(new BoolSetting(
+            "Auto Respond", "Immediately respond to keepalive packets", true));
+    private final BoolSetting cancelDisconnect = register(new BoolSetting(
+            "Cancel Disconnect", "Cancel incoming disconnect packets", true));
+    private final BoolSetting logDisconnect = register(new BoolSetting(
+            "Log Disconnect", "Log blocked disconnect reason to chat", true));
 
     public NoPacketKick() {
-        super("NoPacketKick", "Prevents kick from keepalive timeout by auto-responding", Category.PLAYER);
+        super("NoPacketKick", "Prevents kick packets from disconnecting you; auto-responds to keepalive", Category.PLAYER);
     }
 
     @EventHandler
@@ -25,7 +31,10 @@ public class NoPacketKick extends Module {
             mc.player.networkHandler.sendPacket(new PlayPongC2SPacket((int) pkt.getId()));
         }
 
-        if (event.getPacket() instanceof LoginCompressionS2CPacket) {
+        if (cancelDisconnect.isEnabled() && event.getPacket() instanceof DisconnectS2CPacket pkt) {
+            if (logDisconnect.isEnabled()) {
+                ChatUtil.warn("[NoPacketKick] Blocked disconnect: " + pkt.getReason().getString());
+            }
             event.cancel();
         }
     }
