@@ -5,6 +5,7 @@ import cc.quark.command.CommandManager;
 import cc.quark.event.events.EventJump;
 import cc.quark.event.events.EventPostMotion;
 import cc.quark.event.events.EventPreMotion;
+import cc.quark.event.events.EventSlowdown;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.network.packet.c2s.play.ChatMessageC2SPacket;
 import org.spongepowered.asm.mixin.Mixin;
@@ -59,6 +60,26 @@ public abstract class MixinClientPlayerEntity {
         Quark instance = Quark.getInstance();
         if (instance == null) return;
         instance.getEventBus().post(new EventPostMotion());
+    }
+
+    /**
+     * Fires EventSlowdown when the player is using an item (e.g. eating, blocking,
+     * drawing a bow). If cancelled, the input is pre-multiplied to counteract the
+     * 0.2x slowdown factor that Minecraft applies during item use.
+     */
+    @Inject(method = "tickMovement", at = @At("HEAD"))
+    private void onTickMovement(CallbackInfo ci) {
+        if (Quark.getInstance() == null) return;
+        ClientPlayerEntity player = (ClientPlayerEntity)(Object)this;
+        if (!player.isUsingItem()) return;
+        EventSlowdown event = new EventSlowdown(0.2f);
+        Quark.getInstance().getEventBus().post(event);
+        if (event.isCancelled()) {
+            // Pre-multiply the inputs by 5 (inverse of 0.2) so that after MC
+            // applies the 0.2x slowdown factor the net speed is unchanged.
+            player.input.movementForward  *= 5.0f;
+            player.input.movementSideways *= 5.0f;
+        }
     }
 
 }

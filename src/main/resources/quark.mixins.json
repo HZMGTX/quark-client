@@ -12,7 +12,8 @@
     "MixinLivingEntity",
     "MixinClientConnection",
     "MixinClientPlayNetworkHandler",
-    "MixinKeyboard"
+    "MixinKeyboard",
+    "MixinBackgroundRenderer"
   ],
   "injectors": {
     "defaultRequire": 1

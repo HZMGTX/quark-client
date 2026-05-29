@@ -128,6 +128,14 @@ public class ModuleManager {
         register(new Vampire());
         register(new Velocity());
         register(new WTap());
+        register(new TotemSwap());
+        register(new WTap2());
+        register(new KillAura2());
+        register(new AutoGapple2());
+        register(new ShieldBlock());
+        register(new BlastProof());
+        register(new NoHitCooldown());
+        register(new AntiAutoClicker());
 
         // -------- MOVEMENT --------
         register(new Acceleration());
@@ -245,6 +253,20 @@ public class ModuleManager {
         register(new WaterWalk());
         register(new Webless());
         register(new YPort());
+        register(new AirBrake());
+        register(new AutoParkour());
+        register(new BounceFly());
+        register(new ClipWalk());
+        register(new FastStop());
+        register(new ForwardBoost());
+        register(new HighStep());
+        register(new KnifeSpeed());
+        register(new PacketStep());
+        register(new ParkourHelper());
+        register(new SpeedBoost());
+        register(new StepAssist());
+        register(new SurfaceSwim());
+        register(new WallJump());
 
         // -------- PLAYER --------
         register(new AFKMode());
@@ -337,6 +359,15 @@ public class ModuleManager {
         register(new ToolSaver());
         register(new TowerJump());
         register(new XCarry());
+        register(new NoParticles());
+        register(new InfiniteReach());
+        register(new ArmorAlert());
+        register(new AutoOffhand());
+        register(new NoDeathScreen());
+        register(new AutoPickup());
+        register(new GhostHand());
+        register(new AntiGrief());
+        register(new StorageOrganizer());
 
         // -------- RENDER --------
         register(new ActiveMods());
@@ -405,6 +436,16 @@ public class ModuleManager {
         register(new VoidESP());
         register(new XRay());
         register(new Zoom());
+        register(new ChunkBoundary());
+        register(new MotionBlur());
+        register(new CaveFinder());
+        register(new Tracers2());
+        register(new NameTags());
+        register(new Ambience());
+        register(new ESP2());
+        register(new BeaconESP());
+        register(new FreeCam());
+        register(new Nametag());
 
         // -------- WORLD --------
         register(new AutoBed());
@@ -444,6 +485,18 @@ public class ModuleManager {
         register(new TreeFeller());
         register(new Tunneler());
         register(new VeinMiner());
+        register(new AntiDrops());
+        register(new TorchPlacer());
+        register(new Scaffolding());
+        register(new AutoFurnace());
+        register(new VeinMiner2());
+        register(new ChestStealer2());
+        register(new AutoSmith());
+        register(new SpawnProofer());
+        register(new AutoWorkbench());
+        register(new BlockRecorder());
+        register(new AntiEnderpearl());
+        register(new AutoDispenser());
 
         // -------- EXPLOIT --------
         register(new AntiAim());
@@ -473,6 +526,14 @@ public class ModuleManager {
         register(new PortalGod());
         register(new Spoofer());
         register(new Timer());
+        register(new ChunkLoad());
+        register(new AntiHunger2());
+        register(new NoRenderDistance());
+        register(new AutoInteract());
+        register(new PacketLogger2());
+        register(new AntiSpectator());
+        register(new CrashClient());
+        register(new SignBypass());
 
         // -------- MISC --------
         register(new AntiDetect());
@@ -488,6 +549,11 @@ public class ModuleManager {
         register(new FriendList());
         register(new PopupCounter());
         register(new SendCoords());
+        register(new TextReplace());
+        register(new AutoCommand());
+        register(new SessionStats());
+        register(new ModuleHistory());
+        register(new QuickMessages());
     }
 
     // -------------------------------------------------------------------------
