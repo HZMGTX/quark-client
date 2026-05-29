@@ -7,41 +7,64 @@ import cc.quark.module.Module;
 import cc.quark.setting.DoubleSetting;
 import cc.quark.setting.IntSetting;
 
+/**
+ * Acceleration - ramps speed up from 1.0x to MaxSpeed over AccelTicks ticks
+ * after leaving the ground.  Resets the counter whenever the player stops
+ * moving or lands.
+ */
 public class Acceleration extends Module {
 
-    private final IntSetting ticks = register(new IntSetting("Ticks", "Ticks to ramp up to max speed", 20, 5, 40));
-    private final DoubleSetting maxSpeed = register(new DoubleSetting("Max Speed", "Maximum speed multiplier", 1.5, 1.0, 3.0));
+    private final IntSetting accelTicks = register(new IntSetting(
+            "Accel Ticks", "Ticks to ramp from base to max speed", 20, 5, 60));
+    private final DoubleSetting maxSpeed = register(new DoubleSetting(
+            "Max Speed", "Maximum speed multiplier at full ramp", 2.0, 1.1, 5.0));
+    private final DoubleSetting baseSpeed = register(new DoubleSetting(
+            "Base Speed", "Multiplier applied at tick 0", 1.0, 0.5, 2.0));
 
-    private int currentTick = 0;
+    /** Ticks elapsed since the player last touched the ground while moving. */
+    private int airTicks = 0;
+    /** Whether we were on the ground last tick. */
+    private boolean wasOnGround = true;
 
     public Acceleration() {
-        super("Acceleration", "Gradually accelerate to max speed over configurable ticks", Category.MOVEMENT);
+        super("Acceleration", "Gradually ramp horizontal speed after leaving ground", Category.MOVEMENT);
     }
 
     @Override
     public void onEnable() {
-        currentTick = 0;
+        airTicks = 0;
+        wasOnGround = true;
     }
 
     @EventHandler
     public void onMove(EventMove event) {
         if (mc.player == null) return;
 
-        float fwd = mc.player.input.movementForward;
+        boolean onGround = mc.player.isOnGround();
+        float fwd  = mc.player.input.movementForward;
         float side = mc.player.input.movementSideways;
+        boolean moving = (fwd != 0 || side != 0);
 
-        if (fwd == 0 && side == 0) {
-            currentTick = 0;
+        // Reset counter on landing or when the player stops moving
+        if (onGround || !moving) {
+            airTicks = 0;
+            wasOnGround = onGround;
             return;
         }
 
-        int maxTicks = ticks.get();
-        if (currentTick < maxTicks) currentTick++;
+        // Count ticks spent airborne and moving
+        if (!onGround) {
+            if (airTicks < accelTicks.get()) airTicks++;
+        }
 
-        double progress = (double) currentTick / maxTicks;
-        double multiplier = 1.0 + (maxSpeed.get() - 1.0) * progress;
+        wasOnGround = onGround;
 
-        event.setX(event.getX() * multiplier);
-        event.setZ(event.getZ() * multiplier);
+        // Lerp multiplier from baseSpeed → maxSpeed over accelTicks
+        int maxT    = Math.max(1, accelTicks.get());
+        double t    = Math.min(1.0, (double) airTicks / maxT);
+        double mult = baseSpeed.get() + (maxSpeed.get() - baseSpeed.get()) * t;
+
+        event.setX(event.getX() * mult);
+        event.setZ(event.getZ() * mult);
     }
 }

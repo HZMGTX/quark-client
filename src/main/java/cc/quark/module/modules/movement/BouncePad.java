@@ -8,22 +8,32 @@ import cc.quark.setting.DoubleSetting;
 import cc.quark.setting.ModeSetting;
 import net.minecraft.util.math.Vec3d;
 
+/**
+ * BouncePad - launches the player upward on landing.
+ *
+ * <ul>
+ *   <li><b>Auto</b> - bounce on every landing regardless of input.</li>
+ *   <li><b>Hold</b> - only bounce when the sneak (crouch) key is held on landing.</li>
+ * </ul>
+ */
 public class BouncePad extends Module {
 
-    private final DoubleSetting height = register(new DoubleSetting("Height", "Upward velocity on bounce", 2.5, 1.0, 5.0));
-    private final ModeSetting mode = register(new ModeSetting("Mode", "Activation mode", "Hold", "Hold", "Toggle"));
+    private final DoubleSetting height = register(new DoubleSetting(
+            "Height", "Upward velocity applied on bounce", 2.5, 0.5, 10.0));
+    private final ModeSetting mode = register(new ModeSetting(
+            "Mode", "Activation mode", "Auto", "Auto", "Hold"));
+    private final DoubleSetting horizontalBoost = register(new DoubleSetting(
+            "Horizontal Boost", "Multiplier applied to current horizontal speed on bounce", 1.0, 0.5, 3.0));
 
-    private boolean toggled = false;
-    private boolean wasOnGround = false;
+    private boolean wasInAir = false;
 
     public BouncePad() {
-        super("BouncePad", "Bounces player upward on key press", Category.MOVEMENT);
+        super("BouncePad", "Bounce upward on landing", Category.MOVEMENT);
     }
 
     @Override
     public void onEnable() {
-        toggled = false;
-        wasOnGround = false;
+        wasInAir = false;
     }
 
     @EventHandler
@@ -31,23 +41,22 @@ public class BouncePad extends Module {
         if (mc.player == null) return;
 
         boolean onGround = mc.player.isOnGround();
-        boolean jumpPressed = mc.options.jumpKey.isPressed();
 
-        if (mode.is("Toggle")) {
-            if (jumpPressed && !wasOnGround && onGround) {
-                toggled = !toggled;
-            }
-            if (toggled && onGround) {
+        // Detect the landing tick: was in air last tick, now on ground
+        if (onGround && wasInAir) {
+            boolean shouldBounce = mode.is("Auto")
+                    || (mode.is("Hold") && mc.options.sneakKey.isPressed());
+
+            if (shouldBounce) {
                 Vec3d vel = mc.player.getVelocity();
-                mc.player.setVelocity(vel.x, height.get(), vel.z);
-            }
-        } else {
-            if (jumpPressed && onGround) {
-                Vec3d vel = mc.player.getVelocity();
-                mc.player.setVelocity(vel.x, height.get(), vel.z);
+                mc.player.setVelocity(
+                        vel.x * horizontalBoost.get(),
+                        height.get(),
+                        vel.z * horizontalBoost.get());
+                mc.player.fallDistance = 0;
             }
         }
 
-        wasOnGround = onGround;
+        wasInAir = !onGround;
     }
 }

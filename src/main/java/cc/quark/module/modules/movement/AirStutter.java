@@ -1,42 +1,43 @@
 package cc.quark.module.modules.movement;
 
 import cc.quark.event.EventHandler;
-import cc.quark.event.events.EventTick;
+import cc.quark.event.events.EventPreMotion;
 import cc.quark.module.Category;
 import cc.quark.module.Module;
 import cc.quark.setting.DoubleSetting;
-import cc.quark.setting.IntSetting;
-import net.minecraft.util.math.Vec3d;
 
-import java.util.Random;
-
+/**
+ * AirStutter - spoof the Y position in outgoing motion packets by alternating
+ * a small offset each tick: +offset one tick, -offset the next.  This creates
+ * a micro-stutter that can desync server-side prediction without visible
+ * movement on the client.
+ */
 public class AirStutter extends Module {
 
-    private final IntSetting interval = register(new IntSetting(
-            "Interval", "Ticks between velocity jitter events", 3, 1, 10));
-    private final DoubleSetting strength = register(new DoubleSetting(
-            "Strength", "Jitter magnitude (blocks/tick)", 0.015, 0.002, 0.08));
+    private final DoubleSetting offset = register(new DoubleSetting(
+            "Offset", "Y position spoof magnitude (blocks)", 0.01, 0.001, 0.1));
 
-    private final Random rng = new Random();
-    private int ticker = 0;
+    private boolean flip = false;
 
     public AirStutter() {
-        super("AirStutter", "Adds micro velocity noise in air to confuse prediction-based ACs", Category.MOVEMENT);
+        super("AirStutter", "Alternate Y+offset / Y-offset position spoof each tick", Category.MOVEMENT);
+    }
+
+    @Override
+    public void onEnable() {
+        flip = false;
     }
 
     @EventHandler
-    public void onTick(EventTick event) {
+    public void onPreMotion(EventPreMotion event) {
         if (mc.player == null) return;
-        if (mc.player.isOnGround()) { ticker = 0; return; }
+        if (mc.player.isOnGround()) {
+            flip = false;
+            return;
+        }
 
-        if (++ticker < interval.get()) return;
-        ticker = 0;
-
-        Vec3d vel = mc.player.getVelocity();
-        double str = strength.get();
-        mc.player.setVelocity(
-                vel.x + (rng.nextDouble() - 0.5) * str * 2,
-                vel.y,
-                vel.z + (rng.nextDouble() - 0.5) * str * 2);
+        double spoof = flip ? offset.get() : -offset.get();
+        event.setY(event.getY() + spoof);
+        flip = !flip;
     }
 }

@@ -1,30 +1,42 @@
 package cc.quark.module.modules.movement;
 
 import cc.quark.event.EventHandler;
-import cc.quark.event.events.EventTick;
+import cc.quark.event.events.EventDamage;
 import cc.quark.module.Category;
 import cc.quark.module.Module;
-import cc.quark.setting.DoubleSetting;
-import net.minecraft.util.math.Vec3d;
+import cc.quark.setting.ModeSetting;
 
 /**
- * Damage - boosts the player's velocity in their look direction right after
- * taking damage, converting knockback into a controlled launch.
+ * Damage - cancels or modifies incoming damage events.
+ *
+ * <ul>
+ *   <li><b>Fall</b> - cancel only fall damage (no attacker, no projectile).</li>
+ *   <li><b>All</b>  - cancel all damage types.</li>
+ * </ul>
  */
 public class Damage extends Module {
 
-    private final DoubleSetting power = register(new DoubleSetting(
-            "Power", "Launch multiplier on hit", 1.5, 1.0, 4.0));
+    private final ModeSetting mode = register(new ModeSetting(
+            "Mode", "Which damage to cancel", "Fall", "Fall", "All"));
 
     public Damage() {
-        super("Damage", "Boosts velocity when hurt", Category.MOVEMENT);
+        super("Damage", "Cancel fall damage and/or all damage", Category.MOVEMENT);
     }
 
     @EventHandler
-    public void onTick(EventTick event) {
+    public void onDamage(EventDamage event) {
         if (mc.player == null) return;
-        if (mc.player.hurtTime <= 0) return;
-        Vec3d v = mc.player.getVelocity();
-        mc.player.setVelocity(v.x * power.get(), v.y, v.z * power.get());
+
+        switch (mode.get()) {
+            case "All" -> event.cancel();
+            case "Fall" -> {
+                // Fall damage has no attacker and no source entity
+                boolean hasAttacker = event.getSource().getAttacker() != null;
+                boolean hasSource   = event.getSource().getSource() != null;
+                if (!hasAttacker && !hasSource) {
+                    event.cancel();
+                }
+            }
+        }
     }
 }

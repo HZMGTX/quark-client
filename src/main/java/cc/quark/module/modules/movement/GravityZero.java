@@ -1,27 +1,42 @@
 package cc.quark.module.modules.movement;
 
 import cc.quark.event.EventHandler;
-import cc.quark.event.events.EventTick;
+import cc.quark.event.events.EventMove;
 import cc.quark.module.Category;
 import cc.quark.module.Module;
-import net.minecraft.util.math.Vec3d;
+import cc.quark.setting.BoolSetting;
 
 /**
- * GravityZero - removes downward acceleration so the player drifts in place.
+ * GravityZero - zeroes the Y component of every move event while airborne,
+ * effectively removing gravity so the player drifts at their current height.
+ *
+ * <p>This is a simpler, always-zero-G version of {@link GravityControl}.
+ * When {@code Allow Upward} is true, positive Y values (initial jump arc)
+ * are preserved so jumping still works.
  */
 public class GravityZero extends Module {
 
+    private final BoolSetting allowUpward = register(new BoolSetting(
+            "Allow Upward", "Keep upward velocity from jumps/launches", true));
+
     public GravityZero() {
-        super("GravityZero", "Zero vertical gravity", Category.MOVEMENT);
+        super("GravityZero", "Remove gravity — hover at current altitude", Category.MOVEMENT);
     }
 
     @EventHandler
-    public void onTick(EventTick event) {
+    public void onMove(EventMove event) {
         if (mc.player == null) return;
         if (mc.player.isOnGround() || mc.player.isTouchingWater()) return;
-        Vec3d v = mc.player.getVelocity();
-        if (v.y < 0) {
-            mc.player.setVelocity(v.x, 0.0, v.z);
+
+        double y = event.getY();
+
+        if (allowUpward.isEnabled()) {
+            // Only cancel downward component
+            if (y < 0) event.setY(0.0);
+        } else {
+            event.setY(0.0);
         }
+
+        mc.player.fallDistance = 0;
     }
 }

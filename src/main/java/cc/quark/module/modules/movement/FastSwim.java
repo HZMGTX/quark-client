@@ -6,43 +6,76 @@ import cc.quark.module.Category;
 import cc.quark.module.Module;
 import cc.quark.setting.BoolSetting;
 import cc.quark.setting.DoubleSetting;
+import net.minecraft.entity.effect.StatusEffectInstance;
+import net.minecraft.entity.effect.StatusEffects;
 import net.minecraft.util.math.Vec3d;
 
+/**
+ * FastSwim - makes the player move faster through water (and optionally lava).
+ *
+ * <p>Combines:
+ * <ul>
+ *   <li>Direct velocity override in the input direction.</li>
+ *   <li>Dolphin's Grace status effect for smoother server-side motion.</li>
+ *   <li>Optional upward boost when the jump key is held.</li>
+ * </ul>
+ */
 public class FastSwim extends Module {
 
     private final DoubleSetting speed = register(new DoubleSetting(
-            "Speed", "Swim speed multiplier", 2.5, 1.0, 8.0));
+            "Speed", "Swim speed (blocks/tick)", 0.35, 0.05, 2.0));
     private final BoolSetting upBoost = register(new BoolSetting(
-            "Up Boost", "Boost vertical speed too", true));
+            "Up Boost", "Boost upward speed when jump key is held", true));
+    private final BoolSetting dolphinsGrace = register(new BoolSetting(
+            "Dolphins Grace", "Apply Dolphins Grace effect for smooth swimming", true));
     private final BoolSetting inLava = register(new BoolSetting(
-            "Lava", "Also speed in lava", false));
+            "In Lava", "Also apply fast movement in lava", false));
 
     public FastSwim() {
-        super("FastSwim", "Move faster through water (and optionally lava)", Category.MOVEMENT);
+        super("FastSwim", "High-speed water (and lava) movement", Category.MOVEMENT);
     }
 
     @EventHandler
     public void onTick(EventTick event) {
         if (mc.player == null) return;
-        boolean inWater = mc.player.isTouchingWater();
+
+        boolean inWater   = mc.player.isTouchingWater();
         boolean inLavaFluid = mc.player.isInLava();
-        if (!inWater && !(inLava.isEnabled() && inLavaFluid)) return;
 
-        boolean moving = mc.player.input.movementForward != 0
-                      || mc.player.input.movementSideways != 0;
-        if (!moving) return;
+        boolean active = inWater || (inLava.isEnabled() && inLavaFluid);
+        if (!active) return;
 
-        float yaw    = mc.player.getYaw();
-        float fwd    = mc.player.input.movementForward;
-        float side   = mc.player.input.movementSideways;
-        double rad   = Math.toRadians(yaw);
-        double spd   = speed.get() * 0.045;
+        // Apply Dolphin's Grace so server-side movement is smooth
+        if (dolphinsGrace.isEnabled() && inWater) {
+            mc.player.addStatusEffect(new StatusEffectInstance(
+                    StatusEffects.DOLPHINS_GRACE, 20, 0, false, false));
+        }
 
-        double nx = -Math.sin(rad) * fwd * spd + Math.cos(rad) * side * spd;
-        double nz =  Math.cos(rad) * fwd * spd + Math.sin(rad) * side * spd;
+        float fwd  = mc.player.input.movementForward;
+        float side = mc.player.input.movementSideways;
+        boolean jumpHeld = mc.options.jumpKey.isPressed();
+
+        if (fwd == 0 && side == 0 && !jumpHeld) return;
+
+        double yawRad = Math.toRadians(mc.player.getYaw());
+        double spd    = speed.get();
+
+        double dx = (-Math.sin(yawRad) * fwd + Math.cos(yawRad) * side) * spd;
+        double dz = ( Math.cos(yawRad) * fwd + Math.sin(yawRad) * side) * spd;
 
         Vec3d vel = mc.player.getVelocity();
-        double ny = upBoost.isEnabled() ? vel.y * speed.get() * 0.5 : vel.y;
-        mc.player.setVelocity(nx, ny, nz);
+        double dy = vel.y;
+
+        if (upBoost.isEnabled() && jumpHeld) {
+            dy = Math.max(dy, spd * 0.8);
+        } else if (mc.options.sneakKey.isPressed()) {
+            dy = -spd * 0.5;
+        }
+
+        if (fwd != 0 || side != 0) {
+            mc.player.setVelocity(dx, dy, dz);
+        } else {
+            mc.player.setVelocity(vel.x, dy, vel.z);
+        }
     }
 }
