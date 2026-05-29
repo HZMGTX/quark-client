@@ -8,12 +8,18 @@ import cc.quark.setting.BoolSetting;
 import net.minecraft.entity.effect.StatusEffectInstance;
 import net.minecraft.entity.effect.StatusEffects;
 
+/**
+ * SlowFallToggle - apply Slow Falling status effect while enabled.
+ * "Only Falling" setting only applies the effect when Y velocity is negative,
+ * removing it while the player is rising or on ground.
+ */
 public class SlowFallToggle extends Module {
 
-    private final BoolSetting onlyFalling = register(new BoolSetting("Only Falling", "Only apply when Y velocity is negative", false));
+    private final BoolSetting onlyFalling = register(new BoolSetting(
+            "Only Falling", "Only apply effect when falling (Y vel < 0)", false));
 
     public SlowFallToggle() {
-        super("SlowFallToggle", "Toggle slow falling effect", Category.MOVEMENT);
+        super("SlowFallToggle", "Apply Slow Falling; Only Falling option restricts to descent", Category.MOVEMENT);
     }
 
     @Override
@@ -25,10 +31,18 @@ public class SlowFallToggle extends Module {
     @EventHandler
     public void onTick(EventTick event) {
         if (mc.player == null) return;
-        if (onlyFalling.isEnabled() && mc.player.getVelocity().y >= 0) {
+
+        boolean isFalling = mc.player.getVelocity().y < 0;
+
+        if (onlyFalling.isEnabled() && !isFalling) {
             mc.player.removeStatusEffect(StatusEffects.SLOW_FALLING);
             return;
         }
-        mc.player.addStatusEffect(new StatusEffectInstance(StatusEffects.SLOW_FALLING, Integer.MAX_VALUE, 0, false, false));
+
+        // Refresh the effect every tick to keep it active indefinitely
+        if (!mc.player.hasStatusEffect(StatusEffects.SLOW_FALLING)) {
+            mc.player.addStatusEffect(new StatusEffectInstance(
+                    StatusEffects.SLOW_FALLING, Integer.MAX_VALUE, 0, false, false));
+        }
     }
 }

@@ -10,14 +10,21 @@ import cc.quark.util.InventoryUtil;
 import net.minecraft.item.Items;
 import net.minecraft.util.math.Vec3d;
 
+/**
+ * JetPack - holding Jump while airborne applies upward thrust; IntSetting Power
+ * (1-10) scales velocity; resets fall distance to prevent fall damage.
+ */
 public class JetPack extends Module {
 
-    private final IntSetting power = register(new IntSetting("Power", "Thrust power level (1-10)", 5, 1, 10));
-    private final BoolSetting needFireworks = register(new BoolSetting("Need Fireworks", "Require fireworks in inventory to fly", false));
-    private final BoolSetting noFallDmg = register(new BoolSetting("No Fall Damage", "Reset fall distance while active", true));
+    private final IntSetting power = register(new IntSetting(
+            "Power", "Thrust power (1-10)", 5, 1, 10));
+    private final BoolSetting needFireworks = register(new BoolSetting(
+            "Need Fireworks", "Require fireworks in inventory", false));
+    private final BoolSetting noFallDmg = register(new BoolSetting(
+            "No Fall Damage", "Reset fall distance while thrusting", true));
 
     public JetPack() {
-        super("JetPack", "Jetpack thrust upward when space pressed while airborne", Category.MOVEMENT);
+        super("JetPack", "Upward thrust on Jump key while airborne; Power scales velocity", Category.MOVEMENT);
     }
 
     @EventHandler
@@ -26,15 +33,14 @@ public class JetPack extends Module {
         if (mc.player.isOnGround()) return;
         if (!mc.options.jumpKey.isPressed()) return;
 
-        if (needFireworks.isEnabled()) {
-            boolean hasFirework = InventoryUtil.findItem(Items.FIREWORK_ROCKET) != -1;
-            if (!hasFirework) return;
-        }
+        if (needFireworks.isEnabled() && InventoryUtil.findItem(Items.FIREWORK_ROCKET) == -1) return;
 
-        double thrust = power.get() * 0.04;
+        // Thrust: each power unit adds 0.04 per tick; cap proportional to power
+        double thrust  = power.get() * 0.04;
+        double capVY   = power.get() * 0.08;
+
         Vec3d vel = mc.player.getVelocity();
-        double maxVY = power.get() * 0.1;
-        double newVY = Math.min(vel.y + thrust, maxVY);
+        double newVY = Math.min(vel.y + thrust, capVY);
 
         mc.player.setVelocity(vel.x, newVY, vel.z);
 
