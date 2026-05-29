@@ -485,6 +485,18 @@ public class ModuleManager {
         register(new TreeFeller());
         register(new Tunneler());
         register(new VeinMiner());
+        register(new AntiDrops());
+        register(new TorchPlacer());
+        register(new Scaffolding());
+        register(new AutoFurnace());
+        register(new VeinMiner2());
+        register(new ChestStealer2());
+        register(new AutoSmith());
+        register(new SpawnProofer());
+        register(new AutoWorkbench());
+        register(new BlockRecorder());
+        register(new AntiEnderpearl());
+        register(new AutoDispenser());
 
         // -------- EXPLOIT --------
         register(new AntiAim());
@@ -514,6 +526,14 @@ public class ModuleManager {
         register(new PortalGod());
         register(new Spoofer());
         register(new Timer());
+        register(new ChunkLoad());
+        register(new AntiHunger2());
+        register(new NoRenderDistance());
+        register(new AutoInteract());
+        register(new PacketLogger2());
+        register(new AntiSpectator());
+        register(new CrashClient());
+        register(new SignBypass());
 
         // -------- MISC --------
         register(new AntiDetect());
@@ -529,6 +549,11 @@ public class ModuleManager {
         register(new FriendList());
         register(new PopupCounter());
         register(new SendCoords());
+        register(new TextReplace());
+        register(new AutoCommand());
+        register(new SessionStats());
+        register(new ModuleHistory());
+        register(new QuickMessages());
     }
 
     // -------------------------------------------------------------------------
