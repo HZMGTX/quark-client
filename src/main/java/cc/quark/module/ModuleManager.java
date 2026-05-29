@@ -128,6 +128,14 @@ public class ModuleManager {
         register(new Vampire());
         register(new Velocity());
         register(new WTap());
+        register(new TotemSwap());
+        register(new WTap2());
+        register(new KillAura2());
+        register(new AutoGapple2());
+        register(new ShieldBlock());
+        register(new BlastProof());
+        register(new NoHitCooldown());
+        register(new AntiAutoClicker());
 
         // -------- MOVEMENT --------
         register(new Acceleration());
@@ -245,6 +253,20 @@ public class ModuleManager {
         register(new WaterWalk());
         register(new Webless());
         register(new YPort());
+        register(new AirBrake());
+        register(new AutoParkour());
+        register(new BounceFly());
+        register(new ClipWalk());
+        register(new FastStop());
+        register(new ForwardBoost());
+        register(new HighStep());
+        register(new KnifeSpeed());
+        register(new PacketStep());
+        register(new ParkourHelper());
+        register(new SpeedBoost());
+        register(new StepAssist());
+        register(new SurfaceSwim());
+        register(new WallJump());
 
         // -------- PLAYER --------
         register(new AFKMode());
@@ -337,6 +359,15 @@ public class ModuleManager {
         register(new ToolSaver());
         register(new TowerJump());
         register(new XCarry());
+        register(new NoParticles());
+        register(new InfiniteReach());
+        register(new ArmorAlert());
+        register(new AutoOffhand());
+        register(new NoDeathScreen());
+        register(new AutoPickup());
+        register(new GhostHand());
+        register(new AntiGrief());
+        register(new StorageOrganizer());
 
         // -------- RENDER --------
         register(new ActiveMods());
