@@ -136,6 +136,16 @@ public class ModuleManager {
         register(new BlastProof());
         register(new NoHitCooldown());
         register(new AntiAutoClicker());
+        register(new AntiFireball2());
+        register(new AutoEnderPearl());
+        register(new AutoObsidian());
+        register(new AutoPearl2());
+        register(new CombatRecorder());
+        register(new CritSpam());
+        register(new HurtTimer());
+        register(new ShieldSpoof());
+        register(new SpeedAura());
+        register(new ThornsAura());
         register(new AntiVelocity2());
         register(new ArrowDodge());
         register(new AutoShoot());
@@ -585,6 +595,16 @@ public class ModuleManager {
         register(new AntiSpectator());
         register(new CrashClient());
         register(new SignBypass());
+        register(new AntiDesync());
+        register(new AntiTablist());
+        register(new BookBot());
+        register(new BypassCooldown());
+        register(new EntitySpammer());
+        register(new LagBack());
+        register(new PacketSniffer());
+        register(new SpeedHack());
+        register(new TabListSpoof());
+        register(new TeleportExploit());
 
         // -------- MISC --------
         register(new AntiDetect());
