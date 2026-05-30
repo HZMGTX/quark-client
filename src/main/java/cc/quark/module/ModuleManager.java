@@ -307,6 +307,11 @@ public class ModuleManager {
         register(new SlopeClimb());
         register(new SpringJump());
         register(new WaterJet());
+        register(new AirStrafe2());
+        register(new BouncePad2());
+        register(new DolphinSwim());
+        register(new FlyBoost());
+        register(new StairJump());
 
         // -------- PLAYER --------
         register(new AFKMode());
@@ -488,6 +493,13 @@ public class ModuleManager {
         register(new BeaconESP());
         register(new FreeCam());
         register(new Nametag());
+        register(new CompassHUD());
+        register(new CustomBobbing());
+        register(new GlowESP());
+        register(new HitboxColor());
+        register(new InventoryViewer());
+        register(new PlayerInfo());
+        register(new RegionBorders());
         register(new ActiveEffects());
         register(new AntiNausea());
         register(new AntiOverlay());
@@ -550,6 +562,14 @@ public class ModuleManager {
         register(new BlockRecorder());
         register(new AntiEnderpearl());
         register(new AutoDispenser());
+        register(new AutoCompost());
+        register(new AutoFlint());
+        register(new AutoMilk());
+        register(new AutoNetherFarm());
+        register(new AutoReplant2());
+        register(new FloodPlacement());
+        register(new PathFinder());
+        register(new StructureHighlight());
         register(new AutoAnvil());
         register(new AutoBrew());
         register(new AutoEnchanting());
