@@ -136,6 +136,21 @@ public class ModuleManager {
         register(new BlastProof());
         register(new NoHitCooldown());
         register(new AntiAutoClicker());
+        register(new AntiVelocity2());
+        register(new ArrowDodge());
+        register(new AutoShoot());
+        register(new AutoSmite());
+        register(new AutoTrap());
+        register(new BowSpam());
+        register(new CombatLog());
+        register(new CrystalSwitch());
+        register(new DamageIndicator());
+        register(new FightBot());
+        register(new QuickShield());
+        register(new SilentMine());
+        register(new SwordSprint());
+        register(new TargetFollow());
+        register(new TeamMode());
 
         // -------- MOVEMENT --------
         register(new Acceleration());
@@ -267,6 +282,21 @@ public class ModuleManager {
         register(new StepAssist());
         register(new SurfaceSwim());
         register(new WallJump());
+        register(new AntiSwim());
+        register(new BoatSpeed());
+        register(new FastBridge());
+        register(new FastElytra());
+        register(new GhostMode());
+        register(new HoverHeight());
+        register(new LegitFly());
+        register(new NoFallDamage3());
+        register(new NoJumpAnimation());
+        register(new NoSlowness());
+        register(new RidingSpeed());
+        register(new RocketBoost());
+        register(new SlopeClimb());
+        register(new SpringJump());
+        register(new WaterJet());
 
         // -------- PLAYER --------
         register(new AFKMode());
@@ -368,6 +398,8 @@ public class ModuleManager {
         register(new GhostHand());
         register(new AntiGrief());
         register(new StorageOrganizer());
+        register(new AutoSit());
+        register(new PotionRefill());
 
         // -------- RENDER --------
         register(new ActiveMods());
@@ -446,6 +478,17 @@ public class ModuleManager {
         register(new BeaconESP());
         register(new FreeCam());
         register(new Nametag());
+        register(new ActiveEffects());
+        register(new AntiNausea());
+        register(new AntiOverlay());
+        register(new ArmourOverlay());
+        register(new BlockHighlight2());
+        register(new CustomSky());
+        register(new DeathPosition());
+        register(new EntityOutlines());
+        register(new LightESP());
+        register(new PortalOverlay());
+        register(new WeaponInfo());
 
         // -------- WORLD --------
         register(new AutoBed());
@@ -497,6 +540,14 @@ public class ModuleManager {
         register(new BlockRecorder());
         register(new AntiEnderpearl());
         register(new AutoDispenser());
+        register(new AutoAnvil());
+        register(new AutoBrew());
+        register(new AutoEnchanting());
+        register(new AutoFarm2());
+        register(new AutoLoom());
+        register(new AutoStonecutter());
+        register(new EntityCleaner());
+        register(new LiquidFiller());
 
         // -------- EXPLOIT --------
         register(new AntiAim());
