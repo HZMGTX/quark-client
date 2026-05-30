@@ -415,6 +415,16 @@ public class ModuleManager {
         register(new StorageOrganizer());
         register(new AutoSit());
         register(new PotionRefill());
+        register(new ArmorDrop());
+        register(new AutoLead());
+        register(new AutoShear());
+        register(new CorpseESP());
+        register(new DeathLogger());
+        register(new FoodAlert());
+        register(new HotbarLock());
+        register(new ItemSucker());
+        register(new ItemTracker());
+        register(new SmartEat());
 
         // -------- RENDER --------
         register(new ActiveMods());
@@ -645,6 +655,16 @@ public class ModuleManager {
         register(new SessionStats());
         register(new ModuleHistory());
         register(new QuickMessages());
+        register(new ArmourComparator());
+        register(new AutoStatus());
+        register(new CPSDisplay());
+        register(new ChatHistory());
+        register(new ClockHUD());
+        register(new ConnectionInfo());
+        register(new MemoryHUD());
+        register(new Notifications2());
+        register(new ScoreboardHUD());
+        register(new TabListInfo());
     }
 
     // -------------------------------------------------------------------------
