@@ -6,6 +6,7 @@ import cc.quark.module.Category;
 import cc.quark.module.Module;
 import cc.quark.setting.IntSetting;
 import cc.quark.setting.ModeSetting;
+import cc.quark.setting.StringSetting;
 import cc.quark.util.TimerUtil;
 
 public class AutoStatus extends Module {
@@ -14,6 +15,8 @@ public class AutoStatus extends Module {
             "IntervalSec", "Seconds between status messages", 120, 30, 600));
     private final ModeSetting message = register(new ModeSetting(
             "Message", "Preset message to broadcast", "Hello", "Hello", "AFK", "Custom"));
+    private final StringSetting customText = register(new StringSetting(
+            "CustomText", "Text to broadcast when Message is set to Custom", "Quark.cc user"));
 
     private final TimerUtil timer = new TimerUtil();
 
@@ -33,7 +36,7 @@ public class AutoStatus extends Module {
 
         String msg = switch (message.get()) {
             case "AFK" -> "I am AFK";
-            case "Custom" -> "Quark.cc | Custom Status";
+            case "Custom" -> customText.get();
             default -> "Hello from Quark!";
         };
 

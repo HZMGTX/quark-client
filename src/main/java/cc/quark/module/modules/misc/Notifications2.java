@@ -8,6 +8,8 @@ import cc.quark.module.modules.render.NotificationOverlay;
 import cc.quark.setting.ModeSetting;
 import net.minecraft.network.packet.s2c.play.GameMessageS2CPacket;
 
+import java.util.Locale;
+
 public class Notifications2 extends Module {
 
     private final ModeSetting filter = register(new ModeSetting(
@@ -33,7 +35,7 @@ public class Notifications2 extends Module {
 
         if (content == null || content.isEmpty()) return;
 
-        String lower = content.toLowerCase();
+        String lower = content.toLowerCase(Locale.ROOT);
         boolean matched = false;
         for (String kw : KEYWORDS) {
             if (lower.contains(kw)) {
