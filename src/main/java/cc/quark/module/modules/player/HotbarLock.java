@@ -14,7 +14,7 @@ public class HotbarLock extends Module {
     private final BoolSetting allowManual = register(new BoolSetting(
             "AllowManual", "Allow manual slot changes, only block server-forced changes", true));
 
-    private int lastPlayerSelectedSlot = -1;
+    private int playerIntent = -1;
 
     public HotbarLock() {
         super("HotbarLock", "Prevents the selected hotbar slot from being changed by the server", Category.PLAYER);
@@ -22,7 +22,7 @@ public class HotbarLock extends Module {
 
     @Override
     public void onEnable() {
-        lastPlayerSelectedSlot = -1;
+        playerIntent = mc.player != null ? mc.player.getInventory().selectedSlot : lockedSlot.get();
     }
 
     @EventHandler
@@ -33,23 +33,19 @@ public class HotbarLock extends Module {
         int locked = lockedSlot.get();
 
         if (allowManual.isEnabled()) {
-            // Track what the player manually selects
-            // If the current slot matches what we last saw the player pick, it's manual
-            if (currentSlot != locked && currentSlot == lastPlayerSelectedSlot) {
-                // Player manually changed slot - update locked slot tracking but keep it
-                // Still enforce the lock
-                mc.player.getInventory().selectedSlot = locked;
-            } else if (currentSlot != locked && currentSlot != lastPlayerSelectedSlot) {
-                // Slot changed but player didn't do it manually - server forced it
-                mc.player.getInventory().selectedSlot = locked;
+            if (playerIntent == -1) playerIntent = currentSlot;
+            if (currentSlot != playerIntent) {
+                // Slot changed since we last confirmed the player's intent — treat as manual change
+                // and update playerIntent to follow the player
+                playerIntent = currentSlot;
             }
+            // Note: detecting server-forced changes reliably requires a packet mixin;
+            // with a tick handler alone we cannot distinguish them from player input.
         } else {
-            // Hard lock - always restore
+            // Hard lock — always restore to configured slot
             if (currentSlot != locked) {
                 mc.player.getInventory().selectedSlot = locked;
             }
         }
-
-        lastPlayerSelectedSlot = currentSlot;
     }
 }

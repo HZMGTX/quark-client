@@ -30,10 +30,7 @@ public class ChatHistory extends Module {
 
     @Override
     public void onEnable() {
-        if (mc.player == null) {
-            disable();
-            return;
-        }
+        if (mc.player == null) return;
 
         // Print last 10 stored messages
         int start = Math.max(0, history.size() - 10);
@@ -41,8 +38,6 @@ public class ChatHistory extends Module {
         for (int i = start; i < history.size(); i++) {
             ChatUtil.info(history.get(i));
         }
-
-        disable();
     }
 
     @EventHandler

@@ -12,6 +12,7 @@ import net.minecraft.component.type.FoodComponent;
 //?}
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
+import net.minecraft.network.packet.c2s.play.UpdateSelectedSlotC2SPacket;
 import net.minecraft.util.Hand;
 
 public class SmartEat extends Module {
@@ -37,9 +38,11 @@ public class SmartEat extends Module {
 
         // Check gapple priority first
         if (gapplePriority.isEnabled() && mc.player.getHealth() < hpThreshold.get()) {
-            int gappleSlot = findInHotbar(Items.GOLDEN_APPLE);
+            int gappleSlot = findInHotbar(Items.ENCHANTED_GOLDEN_APPLE);
+            if (gappleSlot == -1) gappleSlot = findInHotbar(Items.GOLDEN_APPLE);
             if (gappleSlot != -1) {
                 mc.player.getInventory().selectedSlot = gappleSlot;
+                mc.player.networkHandler.sendPacket(new UpdateSelectedSlotC2SPacket(gappleSlot));
                 mc.interactionManager.interactItem(mc.player, Hand.MAIN_HAND);
                 return;
             }
@@ -62,6 +65,7 @@ public class SmartEat extends Module {
         if (bestSlot == -1) return;
 
         mc.player.getInventory().selectedSlot = bestSlot;
+        mc.player.networkHandler.sendPacket(new UpdateSelectedSlotC2SPacket(bestSlot));
         mc.interactionManager.interactItem(mc.player, Hand.MAIN_HAND);
     }
 

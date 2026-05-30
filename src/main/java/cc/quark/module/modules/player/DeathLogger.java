@@ -16,8 +16,6 @@ public class DeathLogger extends Module {
 
     private final BoolSetting chatLog = register(new BoolSetting(
             "ChatLog", "Log death info to chat", true));
-    private final BoolSetting fileLog = register(new BoolSetting(
-            "FileLog", "Log death info to file (not yet implemented)", false));
 
     private static final DateTimeFormatter TIME_FMT = DateTimeFormatter.ofPattern("HH:mm:ss");
 
@@ -32,7 +30,7 @@ public class DeathLogger extends Module {
         if (event.getPacket() instanceof DeathMessageS2CPacket deathPacket) {
             if (!chatLog.isEnabled()) return;
             String time = LocalTime.now().format(TIME_FMT);
-            String cause = deathPacket.getMessage().getString();
+            String cause = deathPacket.message().getString();
             double x = mc.player.getX();
             double y = mc.player.getY();
             double z = mc.player.getZ();
