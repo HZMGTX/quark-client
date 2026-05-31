@@ -587,6 +587,21 @@ public class ModuleManager {
         register(new NoCrouchAnim());
         register(new NoOverlay());
         register(new QuickBank());
+        register(new AutoLift());
+        register(new AntiTeleport());
+        register(new StepSounds());
+        register(new SneakPersist());
+        register(new AutoBoat());
+        register(new AntiSteal());
+        register(new AntiSlip());
+        register(new WalkSpeed());
+        register(new AutoEscape());
+        register(new DropProtect());
+        register(new AutoMount2());
+        register(new LavaWalk());
+        register(new NightVision());
+        register(new FastPlace2());
+        register(new AutoTorch());
 
         // -------- RENDER --------
         register(new ActiveMods());
@@ -733,6 +748,20 @@ public class ModuleManager {
         register(new DurabilityHUD());
         register(new EnchantHUD());
         register(new StatHUD());
+        register(new PlayerModel());
+        register(new WaypointESP());
+        register(new BossBarESP());
+        register(new XPBarHUD());
+        register(new ChatESP());
+        register(new ItemESP2());
+        register(new FishHook());
+        register(new LightESP2());
+        register(new TrailESP());
+        register(new DebugHUD());
+        register(new OverlayESP());
+        register(new TimeHUD());
+        register(new VelocityHUD());
+        register(new EntityCount());
 
         // -------- WORLD --------
         register(new AutoBed());
