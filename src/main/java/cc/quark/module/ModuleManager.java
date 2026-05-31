@@ -219,6 +219,21 @@ public class ModuleManager {
         register(new NetherAnchor());
         register(new PearlAura());
         register(new TridentBoomerang());
+        register(new SilentBow());
+        register(new AutoSword());
+        register(new HitDelay());
+        register(new AntiCooldown());
+        register(new PearlPredict());
+        register(new AutoNet());
+        register(new CombatLag());
+        register(new AttackRange());
+        register(new SmartBlock());
+        register(new StabAura());
+        register(new ThrowBot());
+        register(new AntiSurrender());
+        register(new TrailBurst());
+        register(new AntiWither2());
+        register(new QuickHit());
 
         // -------- MOVEMENT --------
         register(new Acceleration());
@@ -417,6 +432,11 @@ public class ModuleManager {
         register(new HorseSpeed());
         register(new MinecartBoost());
         register(new SwimSprint());
+        register(new AirControl2());
+        register(new NoJumpCooldown());
+        register(new WallClimb());
+        register(new StrafeSpeed());
+        register(new WaterSpeed2());
 
         // -------- PLAYER --------
         register(new AFKMode());
