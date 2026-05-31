@@ -468,6 +468,28 @@ public class ModuleManager {
         register(new ItemSucker());
         register(new ItemTracker());
         register(new SmartEat());
+        register(new AntiEffect());
+        register(new AntiFirework());
+        register(new AntiGrief3());
+        register(new AntiItemDrop());
+        register(new AntiPoison2());
+        register(new AntiSleep());
+        register(new ArmorSwap());
+        register(new AutoFeed2());
+        register(new AutoHarvest2());
+        register(new AutoLavaWalk());
+        register(new AutoRecipe());
+        register(new AutoRefill());
+        register(new AutoSleep());
+        register(new BedSet());
+        register(new HealthDisplay());
+        register(new OffhandSwitch());
+        register(new PickupFilter());
+        register(new QuickCraft());
+        register(new SaturationDisplay());
+        register(new SpawnPoint());
+        register(new ThrowFilter());
+        register(new UseOnSelf());
 
         // -------- RENDER --------
         register(new ActiveMods());
@@ -564,6 +586,31 @@ public class ModuleManager {
         register(new LightESP());
         register(new PortalOverlay());
         register(new WeaponInfo());
+        register(new AmmoHUD());
+        register(new AntiBlindRender());
+        register(new ArmorESP());
+        register(new BiomeOverlay());
+        register(new BlockOverlay());
+        register(new ChestESP2());
+        register(new CombatOverlay());
+        register(new CrystalTimer());
+        register(new CustomCrosshair());
+        register(new EntityGlow());
+        register(new ExperienceHUD());
+        register(new FireworkESP());
+        register(new HealthBar());
+        register(new LightLevel());
+        register(new OxygenHUD());
+        register(new PopupCounter2());
+        register(new ProjectileESP());
+        register(new RainbowHUD());
+        register(new SaturationHUD());
+        register(new SlimeChunkESP());
+        register(new SpawnChunkESP());
+        register(new SwordESP());
+        register(new TotemCounter());
+        register(new TotemESP());
+        register(new VehicleESP());
 
         // -------- WORLD --------
         register(new AutoBed());
@@ -631,6 +678,26 @@ public class ModuleManager {
         register(new AutoStonecutter());
         register(new EntityCleaner());
         register(new LiquidFiller());
+        register(new AutoBarrel());
+        register(new AutoCartography());
+        register(new AutoCauldron());
+        register(new AutoCompost2());
+        register(new AutoDropper());
+        register(new AutoGrinder());
+        register(new AutoHopper());
+        register(new AutoLectern());
+        register(new AutoSorter());
+        register(new AutoWeed());
+        register(new AutoWorkbench2());
+        register(new ChestHarvest());
+        register(new ContainerFill());
+        register(new ItemMover());
+        register(new LavaRemover());
+        register(new MapArtHelper());
+        register(new PlantAll());
+        register(new TillLand());
+        register(new TreasureHunter2());
+        register(new WaterPlacer());
 
         // -------- EXPLOIT --------
         register(new AntiAim());
@@ -708,6 +775,20 @@ public class ModuleManager {
         register(new Notifications2());
         register(new ScoreboardHUD());
         register(new TabListInfo());
+        register(new AfkDuration());
+        register(new AutoResponse());
+        register(new ChatTranslator());
+        register(new CustomWatermark());
+        register(new DeathAlert());
+        register(new FriendAlert());
+        register(new JoinAlert());
+        register(new KillAlert());
+        register(new MessageHistory());
+        register(new PlayerRadar());
+        register(new PlayerTracker());
+        register(new ServerWatch());
+        register(new SpellCheck());
+        register(new TimeDisplay());
     }
 
     // -------------------------------------------------------------------------
