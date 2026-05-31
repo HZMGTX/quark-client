@@ -854,6 +854,10 @@ public class ModuleManager {
         register(new InventorySpoof());
         register(new PacketDuplicate());
         register(new PortalSpoof());
+        register(new BlockGlitch());
+        register(new ChunkBypass());
+        register(new EntityTP());
+        register(new NoSlowPacket());
 
         // -------- MISC --------
         register(new AntiDetect());
