@@ -835,6 +835,12 @@ public class ModuleManager {
         register(new MobKiller());
         register(new NetherRoof());
         register(new PortalTrap());
+        register(new AutoMine2());
+        register(new BlockBreaker());
+        register(new AutoCraft2());
+        register(new ChestOrganizer());
+        register(new WorldBridge());
+        register(new AutoPlant2());
 
         // -------- EXPLOIT --------
         register(new AntiAim());
@@ -894,6 +900,15 @@ public class ModuleManager {
         register(new NoSlowPacket());
         register(new CubeCraftBypass());
         register(new MineplexBypass());
+        register(new PacketFlood());
+        register(new SlotSpoof());
+        register(new AntiKick4());
+        register(new FakeDisconnect());
+        register(new DupExploit());
+        register(new EntitySpoof());
+        register(new TabComplete());
+        register(new BookCrash());
+        register(new PositionSpoof());
 
         // -------- MISC --------
         register(new AntiDetect());
@@ -958,6 +973,15 @@ public class ModuleManager {
         register(new PortInfo());
         register(new TPSGraph());
         register(new VanishSpy());
+        register(new AfkFish());
+        register(new AutoReconnect2());
+        register(new ChatRepeater());
+        register(new BroadcastCoords());
+        register(new AutoSave());
+        register(new FriendManager());
+        register(new CustomPrefix());
+        register(new AutoPause());
+        register(new NotifSound());
     }
 
     // -------------------------------------------------------------------------
