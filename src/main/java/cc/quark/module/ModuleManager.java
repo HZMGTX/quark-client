@@ -899,6 +899,13 @@ public class ModuleManager {
         register(new AltManager());
         register(new PingChecker());
         register(new TitleManager());
+        register(new ConfigSync());
+        register(new FontManager());
+        register(new HotkeyManager());
+        register(new ModuleSearch());
+        register(new ScreenCapture());
+        register(new SessionTimer());
+        register(new ThemeColor());
     }
 
     // -------------------------------------------------------------------------
