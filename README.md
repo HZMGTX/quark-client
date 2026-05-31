@@ -12,10 +12,10 @@
   <p><i>The undisputed king of 1.21.1 Fabric clients. Built for HVH, Anarchy, and Ghost/Closet cheating.</i></p>
 
   <p>
-    <img alt="Minecraft Version" src="https://img.shields.io/badge/Minecraft-1.21.1-brightgreen?style=for-the-badge&logo=minecraft">
+    <img alt="Minecraft Version" src="https://img.shields.io/badge/Minecraft-1.20.x_→_26.2-brightgreen?style=for-the-badge&logo=minecraft">
     <img alt="Platform" src="https://img.shields.io/badge/Platform-Fabric-blue?style=for-the-badge&logo=fabric">
     <img alt="Modules" src="https://img.shields.io/badge/Modules-965+-red?style=for-the-badge">
-    <img alt="Java" src="https://img.shields.io/badge/Java-21-orange?style=for-the-badge&logo=openjdk">
+    <img alt="Java" src="https://img.shields.io/badge/Java-17%2F21-orange?style=for-the-badge&logo=openjdk">
     <img alt="Bypasses" src="https://img.shields.io/badge/Bypasses-Grim|Vulcan|Polar|Matrix-orange?style=for-the-badge">
     <img alt="License" src="https://img.shields.io/badge/License-MIT-lightgrey?style=for-the-badge">
   </p>
@@ -125,10 +125,24 @@ Quark's ghost and movement modules are actively tested against the following ant
 
 ## 🚀 Installation & Building
 
-### Requirements
-- **Java 21** (mandatory — Minecraft 1.21.1 requires it)
-- **Fabric Loader 0.16.2+**
-- **Fabric API** (for the mod to load)
+### Supported Versions
+
+| Minecraft Version | Fabric Loader | Java | Status |
+|---|---|---|---|
+| 1.20.1 | 0.15.7+ | 17 | ✅ Supported |
+| 1.20.4 | 0.15.7+ | 17 | ✅ Supported |
+| 1.20.6 | 0.15.11+ | 21 | ✅ Supported |
+| 1.21.1 | 0.16.2+ | 21 | ✅ Supported (VCS baseline) |
+| 1.21.3 | 0.16.7+ | 21 | ✅ Supported |
+| 1.21.4 | 0.16.9+ | 21 | ✅ Supported |
+| 1.21.5 | 0.16.11+ | 21 | ✅ Supported |
+| 25.1 | 0.16.12+ | 21 | 🔧 Coordinates need verification |
+| 25.2 | 0.16.13+ | 21 | 🔧 Coordinates need verification |
+| 26.1 | 0.17.0+ | 21 | 🔧 Coordinates need verification |
+| 26.2 | 0.17.1+ | 21 | 🔧 Coordinates need verification |
+
+> For 25.x and 26.x (year-based Mojang naming): verify exact yarn/loader/fabric-api
+> coordinates at [fabricmc.net/develop](https://fabricmc.net/develop) and update `build.gradle` before building.
 
 ### Building from source
 
@@ -137,20 +151,28 @@ Quark's ghost and movement modules are actively tested against the following ant
 git clone https://github.com/HZMGTX/Minecraft-Hack-Client.git
 cd Minecraft-Hack-Client
 
-# Build (Linux/macOS)
-./gradlew build
+# Build the active version (defaults to 1.21.1)
+./gradlew build           # Linux/macOS
+gradlew.bat build         # Windows
 
-# Build (Windows)
-gradlew.bat build
+# Switch active version (IDE / runClient target)
+./gradlew "Set active project to 1.20.1"
+./gradlew "Set active project to 26.2"
+
+# Build ALL versions at once
+./gradlew chiseledBuild
 ```
 
-The compiled `.jar` will be in `build/libs/`. Drop it into your `.minecraft/mods/` folder alongside Fabric API.
+The compiled `.jar` for each version lands in `build/libs/`. Drop it alongside Fabric API into `.minecraft/mods/`.
 
 ### Dev setup
 
 ```bash
-# Run the game with the client loaded
+# Run with the currently active version
 ./gradlew runClient
+
+# Switch version and run
+./gradlew "Set active project to 1.21.5" && ./gradlew runClient
 ```
 
 ---

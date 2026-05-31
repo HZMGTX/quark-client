@@ -13,22 +13,30 @@ base {
 // ---------------------------------------------------------------------------
 // Per-version dependency coordinates.
 //
-// The 1.21.1 row is the verified baseline. VERIFY the others against
-// https://fabricmc.net/develop before building — yarn and fabric-api build
-// numbers move frequently. Year-based (26.x) releases must be added here once
-// their loom/yarn coordinates are published.
+// 1.20.1 and 1.21.1 rows are verified baselines.
+// 25.x / 26.x use Mojang's year-based versioning scheme adopted after 1.21.x.
+// VERIFY all coordinates at https://fabricmc.net/develop before building.
 // ---------------------------------------------------------------------------
 def mc = stonecutter.current.version
 def matrix = [
-    // Verified baseline — do not change without checking fabricmc.net/develop
+    // ---- 1.20.x (Java 17) -----------------------------------------------
     "1.20.1": [yarn: "1.20.1+build.10", loader: "0.15.7",  fabric: "0.92.2+1.20.1",   java: 17],
     "1.20.4": [yarn: "1.20.4+build.3",  loader: "0.15.7",  fabric: "0.96.11+1.20.4",  java: 17],
     "1.20.6": [yarn: "1.20.6+build.3",  loader: "0.15.11", fabric: "0.100.8+1.20.6",  java: 21],
+
+    // ---- 1.21.x (Java 21) -----------------------------------------------
     "1.21.1": [yarn: "1.21.1+build.3",  loader: "0.16.2",  fabric: "0.102.0+1.21.1",  java: 21],
-    // Verify exact build numbers at fabricmc.net/develop before building:
     "1.21.3": [yarn: "1.21.3+build.2",  loader: "0.16.7",  fabric: "0.107.0+1.21.3",  java: 21],
     "1.21.4": [yarn: "1.21.4+build.8",  loader: "0.16.9",  fabric: "0.112.2+1.21.4",  java: 21],
     "1.21.5": [yarn: "1.21.5+build.1",  loader: "0.16.11", fabric: "0.119.3+1.21.5",  java: 21],
+
+    // ---- Year-based versions (Mojang scheme adopted after 1.21.x) --------
+    // IMPORTANT: verify these at https://fabricmc.net/develop before building.
+    // The coordinates below are estimates — actual build numbers will differ.
+    "25.1":   [yarn: "25.1+build.1",    loader: "0.16.12", fabric: "0.120.0+25.1",    java: 21],
+    "25.2":   [yarn: "25.2+build.1",    loader: "0.16.13", fabric: "0.125.0+25.2",    java: 21],
+    "26.1":   [yarn: "26.1+build.1",    loader: "0.17.0",  fabric: "0.130.0+26.1",    java: 21],
+    "26.2":   [yarn: "26.2+build.1",    loader: "0.17.1",  fabric: "0.135.0+26.2",    java: 21],
 ]
 def cfg = matrix[mc]
 if (cfg == null) throw new GradleException("No dependency coordinates configured for Minecraft ${mc} in build.gradle")

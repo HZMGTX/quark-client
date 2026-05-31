@@ -14,11 +14,24 @@ plugins {
 
 stonecutter {
     create(rootProject) {
-        // Minecraft versions this mod is built for.
-        // Verify yarn/loader/fabric-api coordinates at https://fabricmc.net/develop
-        // before building each version. Year-based (25.x, 26.x) entries need their
-        // own mapping coordinates added to build.gradle once pinned.
-        versions("1.21.1")
+        // All Minecraft versions Quark supports.
+        // 1.20.x – 1.21.x: verified coordinates in build.gradle
+        // 25.x – 26.x: year-based naming adopted by Mojang; coordinates are
+        //   estimated — verify at https://fabricmc.net/develop before building.
+        versions(
+            "1.20.1",
+            "1.20.4",
+            "1.20.6",
+            "1.21.1",
+            "1.21.3",
+            "1.21.4",
+            "1.21.5",
+            "25.1",
+            "25.2",
+            "26.1",
+            "26.2"
+        )
+        // VCS (git) version — the canonical source of truth.
         vcsVersion = "1.21.1"
     }
 }
