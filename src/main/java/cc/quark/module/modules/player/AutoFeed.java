@@ -6,8 +6,10 @@ import cc.quark.module.Category;
 import cc.quark.module.Module;
 import cc.quark.setting.IntSetting;
 import cc.quark.util.TimerUtil;
+//? if mc >= "1.20.5" {
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.FoodComponent;
+//?}
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.Hand;
 
@@ -50,10 +52,17 @@ public class AutoFeed extends Module {
         for (int i = 0; i < 9; i++) {
             ItemStack stack = mc.player.getInventory().getStack(i);
             if (stack.isEmpty()) continue;
+            //? if mc >= "1.20.5" {
             if (stack.contains(DataComponentTypes.FOOD)) {
                 FoodComponent fc = stack.get(DataComponentTypes.FOOD);
                 if (fc != null && fc.nutrition() > 0) return i;
             }
+            //?} else {
+            /*if (stack.getItem().isFood()) {
+                net.minecraft.item.FoodComponent fc = stack.getItem().getFoodComponent();
+                if (fc != null && fc.getHunger() > 0) return i;
+            }*/
+            //?}
         }
         return -1;
     }

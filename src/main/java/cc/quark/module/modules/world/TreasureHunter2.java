@@ -30,7 +30,11 @@ public class TreasureHunter2 extends Module {
         for (int i = 0; i < mc.player.getInventory().size(); i++) {
             var stack = mc.player.getInventory().getStack(i);
             if (!stack.isOf(Items.FILLED_MAP)) continue;
+            //? if mc >= "1.20.5" {
             Integer mapId = stack.get(net.minecraft.component.DataComponentTypes.MAP_ID);
+            //?} else {
+            /*Integer mapId = net.minecraft.item.FilledMapItem.getMapId(stack);*/
+            //?}
             if (mapId == null) continue;
             MapState state = mc.world.getMapState(net.minecraft.item.FilledMapItem.getMapName(mapId));
             if (state == null) continue;
