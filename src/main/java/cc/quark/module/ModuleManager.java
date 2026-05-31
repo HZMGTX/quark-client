@@ -161,6 +161,31 @@ public class ModuleManager {
         register(new SwordSprint());
         register(new TargetFollow());
         register(new TeamMode());
+        register(new AntiBot2());
+        register(new AntiCrit());
+        register(new AntiGapple());
+        register(new AntiWitch());
+        register(new ArmorBreaker());
+        register(new AutoFortify());
+        register(new BloodEffect());
+        register(new BowCharge());
+        register(new CombatAssist());
+        register(new ComboExtender());
+        register(new CrystalBase());
+        register(new DeathCounter());
+        register(new GhostHit());
+        register(new HitSound());
+        register(new HitboxExpand());
+        register(new InstantPop());
+        register(new KillCounter());
+        register(new MaceAura());
+        register(new NoSwingDelay());
+        register(new PotionAura());
+        register(new Replenish2());
+        register(new SpeedCrit());
+        register(new SurroundBreak());
+        register(new SwordFilter());
+        register(new WeaponSwitch());
 
         // -------- MOVEMENT --------
         register(new Acceleration());
@@ -312,6 +337,24 @@ public class ModuleManager {
         register(new DolphinSwim());
         register(new FlyBoost());
         register(new StairJump());
+        register(new AirWalk());
+        register(new AntiSlow2());
+        register(new AntiVelocity3());
+        register(new AutoElytra());
+        register(new BunnyFly());
+        register(new CobwebBypass());
+        register(new CrouchBoost());
+        register(new GlideSpeed());
+        register(new GroundSneak());
+        register(new NoCobweb());
+        register(new NoFriction());
+        register(new Orbit());
+        register(new Skid());
+        register(new SoulSandSpeed());
+        register(new StepUp());
+        register(new StrafeBoost());
+        register(new TridentFly());
+        register(new WaterBoost());
 
         // -------- PLAYER --------
         register(new AFKMode());
