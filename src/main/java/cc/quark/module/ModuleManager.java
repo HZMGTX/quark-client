@@ -209,6 +209,8 @@ public class ModuleManager {
         register(new TargetSelector());
         register(new TotemAlert());
         register(new TrapDamage());
+        register(new CombatPause());
+        register(new ForcePush());
 
         // -------- MOVEMENT --------
         register(new Acceleration());
