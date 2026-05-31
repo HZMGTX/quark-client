@@ -211,6 +211,14 @@ public class ModuleManager {
         register(new TrapDamage());
         register(new CombatPause());
         register(new ForcePush());
+        register(new AntiSlap());
+        register(new AutoCrossbow());
+        register(new BedCrystal());
+        register(new CrystalTracker());
+        register(new FlameAura());
+        register(new NetherAnchor());
+        register(new PearlAura());
+        register(new TridentBoomerang());
 
         // -------- MOVEMENT --------
         register(new Acceleration());
@@ -403,6 +411,12 @@ public class ModuleManager {
         register(new XZFly());
         register(new YawLock());
         register(new ZeroVelocity());
+        register(new AirDash());
+        register(new AntiWall());
+        register(new BoatGlide());
+        register(new HorseSpeed());
+        register(new MinecartBoost());
+        register(new SwimSprint());
 
         // -------- PLAYER --------
         register(new AFKMode());
@@ -858,6 +872,8 @@ public class ModuleManager {
         register(new ChunkBypass());
         register(new EntityTP());
         register(new NoSlowPacket());
+        register(new CubeCraftBypass());
+        register(new MineplexBypass());
 
         // -------- MISC --------
         register(new AntiDetect());
@@ -912,6 +928,16 @@ public class ModuleManager {
         register(new ScreenCapture());
         register(new SessionTimer());
         register(new ThemeColor());
+        register(new AutoBroadcast());
+        register(new AutoReply2());
+        register(new ChatCleaner());
+        register(new CommandSpy());
+        register(new CoordsLogger());
+        register(new ItemShare());
+        register(new NickSpoof());
+        register(new PortInfo());
+        register(new TPSGraph());
+        register(new VanishSpy());
     }
 
     // -------------------------------------------------------------------------
