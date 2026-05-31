@@ -186,6 +186,29 @@ public class ModuleManager {
         register(new SurroundBreak());
         register(new SwordFilter());
         register(new WeaponSwitch());
+        register(new AnchorPlace());
+        register(new AntiTotem());
+        register(new AutoArrow());
+        register(new AutoBow());
+        register(new AutoEnchant());
+        register(new AutoObsidian2());
+        register(new AutoVelocity());
+        register(new AxisAura());
+        register(new Backtrack());
+        register(new BowPredict());
+        register(new CritBoost());
+        register(new CrystalPhase());
+        register(new DamageFlash());
+        register(new FastCrystal());
+        register(new GappleAura());
+        register(new HolePush());
+        register(new NoDebuff());
+        register(new ShieldPop());
+        register(new SurroundFill());
+        register(new SurroundPlus());
+        register(new TargetSelector());
+        register(new TotemAlert());
+        register(new TrapDamage());
 
         // -------- MOVEMENT --------
         register(new Acceleration());
@@ -355,6 +378,29 @@ public class ModuleManager {
         register(new StrafeBoost());
         register(new TridentFly());
         register(new WaterBoost());
+        register(new AntiLag());
+        register(new cc.quark.module.modules.movement.AntiVoid2());
+        register(new AutoRoll());
+        register(new FreeFly());
+        register(new GhostFly());
+        register(new KiteStrafe());
+        register(new NoSlowV());
+        register(new OverclockSprint());
+        register(new PearlPhase());
+        register(new Rappel());
+        register(new RocketJump());
+        register(new SilentStep());
+        register(new SlimeJump());
+        register(new SnowWalk());
+        register(new SoulWalk());
+        register(new TeleportStep());
+        register(new UnderwaterSpeed());
+        register(new VaultJump());
+        register(new VerticalFly());
+        register(new WindBoost());
+        register(new XZFly());
+        register(new YawLock());
+        register(new ZeroVelocity());
 
         // -------- PLAYER --------
         register(new AFKMode());
@@ -365,7 +411,7 @@ public class ModuleManager {
         register(new AntiDebuff());
         register(new AntiHungerLoss());
         register(new AntiKick());
-        register(new AntiVoid2());
+        register(new cc.quark.module.modules.player.AntiVoid2());
         register(new AutoArmorEquip());
         register(new AutoBridge());
         register(new AutoBucket());
@@ -490,6 +536,21 @@ public class ModuleManager {
         register(new SpawnPoint());
         register(new ThrowFilter());
         register(new UseOnSelf());
+        register(new AntiNausea2());
+        register(new AntiNocturia());
+        register(new AutoCure());
+        register(new AutoElytra2());
+        register(new AutoLevelUp());
+        register(new AutoNote2());
+        register(new AutoSwim());
+        register(new ChestSort());
+        register(new CustomGravity());
+        register(new DurabilityAlert());
+        register(new FakeLag2());
+        register(new HeadRoll());
+        register(new NoCrouchAnim());
+        register(new NoOverlay());
+        register(new QuickBank());
 
         // -------- RENDER --------
         register(new ActiveMods());
@@ -611,6 +672,31 @@ public class ModuleManager {
         register(new TotemCounter());
         register(new TotemESP());
         register(new VehicleESP());
+        register(new ArmorStandESP());
+        register(new BeeESP());
+        register(new BorderESP());
+        register(new CaveESP());
+        register(new ChunkLoadESP());
+        register(new CornerESP());
+        register(new DragonESP());
+        register(new EnderChestESP());
+        register(new FurnaceESP());
+        register(new HeatMap());
+        register(new ItemFrameESP());
+        register(new MessageESP());
+        register(new MobCounter());
+        register(new MobSpawnESP());
+        register(new PetESP());
+        register(new PlayerCount());
+        register(new PortalESP());
+        register(new SkyESP());
+        register(new SlimeESP());
+        register(new TNTTracers());
+        register(new WitherESP());
+        register(new CombatStats());
+        register(new DurabilityHUD());
+        register(new EnchantHUD());
+        register(new StatHUD());
 
         // -------- WORLD --------
         register(new AutoBed());
@@ -698,6 +784,21 @@ public class ModuleManager {
         register(new TillLand());
         register(new TreasureHunter2());
         register(new WaterPlacer());
+        register(new AntiFireSpread());
+        register(new AutoEndRod());
+        register(new AutoFlint2());
+        register(new AutoLeash());
+        register(new AutoRemove());
+        register(new AutoSaddle());
+        register(new AutoShear2());
+        register(new AutoStrip());
+        register(new BedBomb());
+        register(new BlockFilter());
+        register(new BonemealFarm());
+        register(new InventoryFill());
+        register(new MobKiller());
+        register(new NetherRoof());
+        register(new PortalTrap());
 
         // -------- EXPLOIT --------
         register(new AntiAim());
@@ -745,6 +846,12 @@ public class ModuleManager {
         register(new SpeedHack());
         register(new TabListSpoof());
         register(new TeleportExploit());
+        register(new AntiKick3());
+        register(new EntityDesync());
+        register(new FakeLatency());
+        register(new InventorySpoof());
+        register(new PacketDuplicate());
+        register(new PortalSpoof());
 
         // -------- MISC --------
         register(new AntiDetect());
@@ -789,6 +896,9 @@ public class ModuleManager {
         register(new ServerWatch());
         register(new SpellCheck());
         register(new TimeDisplay());
+        register(new AltManager());
+        register(new PingChecker());
+        register(new TitleManager());
     }
 
     // -------------------------------------------------------------------------
