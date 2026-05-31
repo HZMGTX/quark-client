@@ -7,13 +7,18 @@ import cc.quark.module.Module;
 import cc.quark.setting.BoolSetting;
 import cc.quark.util.ColorUtil;
 import net.minecraft.client.gui.DrawContext;
+//? if mc >= "1.20.5" {
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.ItemEnchantmentsComponent;
 import net.minecraft.enchantment.Enchantment;
-import net.minecraft.item.ItemStack;
 import net.minecraft.registry.entry.RegistryEntry;
-
 import java.util.Map;
+//?} else {
+/*import net.minecraft.enchantment.Enchantment;
+import net.minecraft.enchantment.EnchantmentHelper;
+import java.util.Map;*/
+//?}
+import net.minecraft.item.ItemStack;
 
 public class ArmorHUD extends Module {
 
@@ -74,20 +79,30 @@ public class ArmorHUD extends Module {
         }
 
         if (showEnchants.isEnabled()) {
+            StringBuilder enchStr = new StringBuilder();
+            //? if mc >= "1.20.5" {
             ItemEnchantmentsComponent enchantments = stack.get(DataComponentTypes.ENCHANTMENTS);
             if (enchantments != null && !enchantments.isEmpty()) {
-                StringBuilder enchStr = new StringBuilder();
                 for (Map.Entry<RegistryEntry<Enchantment>, Integer> entry : enchantments.getEnchantmentEntries()) {
-                    String eName = entry.getKey().getIdAsString();
+                    String abbr = abbreviate(entry.getKey().getIdAsString());
                     int lvl = entry.getValue();
-                    String abbr = abbreviate(eName);
                     if (!enchStr.isEmpty()) enchStr.append(" ");
                     enchStr.append(abbr);
                     if (lvl > 1) enchStr.append(lvl);
                 }
-                if (!enchStr.isEmpty()) {
-                    ctx.drawTextWithShadow(mc.textRenderer, enchStr.toString(), x + 18, y, 0xFFAAAAAA);
-                }
+            }
+            //?} else {
+            /*Map<Enchantment, Integer> enchantments = EnchantmentHelper.get(stack);
+            for (Map.Entry<Enchantment, Integer> entry : enchantments.entrySet()) {
+                String abbr = abbreviate(entry.getKey().getName(entry.getValue()).getString());
+                int lvl = entry.getValue();
+                if (!enchStr.isEmpty()) enchStr.append(" ");
+                enchStr.append(abbr);
+                if (lvl > 1) enchStr.append(lvl);
+            }*/
+            //?}
+            if (!enchStr.isEmpty()) {
+                ctx.drawTextWithShadow(mc.textRenderer, enchStr.toString(), x + 18, y, 0xFFAAAAAA);
             }
         }
     }
