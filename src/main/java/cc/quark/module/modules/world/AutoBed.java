@@ -9,7 +9,7 @@ import cc.quark.setting.DoubleSetting;
 import cc.quark.setting.ModeSetting;
 import cc.quark.util.TimerUtil;
 import net.minecraft.block.BedBlock;
-import net.minecraft.item.BedItem;
+import net.minecraft.item.BlockItem;
 import net.minecraft.util.Hand;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
@@ -78,7 +78,7 @@ public class AutoBed extends Module {
         // Find bed in hotbar
         int bedSlot = -1;
         for (int i = 0; i < 9; i++) {
-            if (mc.player.getInventory().getStack(i).getItem() instanceof BedItem) {
+            if (mc.player.getInventory().getStack(i).getItem() instanceof BlockItem __bi && __bi.getBlock() instanceof BedBlock) {
                 bedSlot = i;
                 break;
             }

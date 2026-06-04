@@ -34,9 +34,9 @@ public class FoodSpam extends Module {
         ItemStack off = mc.player.getOffHandStack();
 
         Hand hand = null;
-        if (main.getItem().getFoodComponent() != null) {
+        if (main.contains(net.minecraft.component.DataComponentTypes.FOOD)) {
             hand = Hand.MAIN_HAND;
-        } else if (off.getItem().getFoodComponent() != null) {
+        } else if (off.contains(net.minecraft.component.DataComponentTypes.FOOD)) {
             hand = Hand.OFF_HAND;
         }
 

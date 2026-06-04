@@ -45,13 +45,14 @@ public class ThornsAura extends Module {
 
         // Check if player has Thorns on any armor piece
         boolean hasThorns = false;
-        for (EquipmentSlot slot : new EquipmentSlot[]{
-                EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET}) {
-            var stack = mc.player.getEquippedStack(slot);
-            if (!stack.isEmpty()) {
-                var registry = mc.world.getRegistryManager();
-                // Check via item having thorns by inspecting NBT level
-                if (stack.getEnchantments().getLevel("thorns") > 0) {
+        var thornsKey = mc.world.getRegistryManager()
+                .get(net.minecraft.registry.RegistryKeys.ENCHANTMENT)
+                .getEntry(net.minecraft.enchantment.Enchantments.THORNS);
+        if (thornsKey.isPresent()) {
+            for (EquipmentSlot slot : new EquipmentSlot[]{
+                    EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET}) {
+                var stack = mc.player.getEquippedStack(slot);
+                if (!stack.isEmpty() && stack.getEnchantments().getLevel(thornsKey.get()) > 0) {
                     hasThorns = true;
                     break;
                 }

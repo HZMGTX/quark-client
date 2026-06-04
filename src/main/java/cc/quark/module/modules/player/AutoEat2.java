@@ -74,7 +74,7 @@ public class AutoEat2 extends Module {
             String id = Registries.ITEM.getId(stack.getItem()).getPath();
 
             // Check if it's edible
-            boolean isFood = stack.getItem().getFoodComponent() != null;
+            boolean isFood = stack.contains(net.minecraft.component.DataComponentTypes.FOOD);
             if (!isFood) continue;
 
             int prio = priorities.indexOf(id);

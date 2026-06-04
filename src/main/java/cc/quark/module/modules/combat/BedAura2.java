@@ -11,7 +11,7 @@ import cc.quark.util.TimerUtil;
 import net.minecraft.block.BedBlock;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.BedItem;
+import net.minecraft.item.BlockItem;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.Hand;
 import net.minecraft.util.hit.BlockHitResult;
@@ -39,8 +39,6 @@ public class BedAura2 extends Module {
         if (mc.player == null || mc.world == null || mc.interactionManager == null) return;
         if (!timer.hasReached(delay.get())) return;
 
-        // Beds only explode in Nether/End
-        World.Type dimType = mc.world.getDimension().ultrawarm() ? World.Type.NETHER : null;
         // Check if we're in nether or end (beds explode there)
         boolean explosive = mc.world.getDimension().ultrawarm()
                 || mc.world.getDimension().hasFixedTime();
@@ -58,7 +56,7 @@ public class BedAura2 extends Module {
         int bedSlot = -1;
         for (int i = 0; i < 9; i++) {
             ItemStack stack = mc.player.getInventory().getStack(i);
-            if (stack.getItem() instanceof BedItem) {
+            if (stack.getItem() instanceof BlockItem __bi && __bi.getBlock() instanceof BedBlock) {
                 bedSlot = i;
                 break;
             }

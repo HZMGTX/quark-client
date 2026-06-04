@@ -11,7 +11,6 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.network.packet.c2s.play.PlayerMoveC2SPacket;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.component.DataComponentTypes;
-import net.minecraft.item.equipment.EquipmentType;
 
 import java.util.ArrayList;
 import java.util.Comparator;

@@ -6,7 +6,7 @@ import cc.quark.module.Category;
 import cc.quark.module.Module;
 import cc.quark.setting.DoubleSetting;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.FoodComponent;
+import net.minecraft.component.type.FoodComponent;
 import net.minecraft.component.DataComponentTypes;
 
 public class QuickEat extends Module {

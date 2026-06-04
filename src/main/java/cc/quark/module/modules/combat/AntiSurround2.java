@@ -41,7 +41,7 @@ public class AntiSurround2 extends Module {
 
             BlockState state = mc.world.getBlockState(candidate);
             if (state.isAir()) continue;
-            if (!state.getBlock().getHardness() < 0) { // unbreakable check
+            if (state.getHardness(mc.world, candidate) >= 0) { // unbreakable check
                 mc.interactionManager.updateBlockBreakingProgress(candidate, dir);
                 timer.reset();
                 return;
