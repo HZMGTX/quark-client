@@ -4,28 +4,30 @@ import cc.quark.event.EventHandler;
 import cc.quark.event.events.EventTick;
 import cc.quark.module.Category;
 import cc.quark.module.Module;
-import cc.quark.setting.BoolSetting;
-import cc.quark.setting.DoubleSetting;
+import cc.quark.setting.IntSetting;
 
-public class CustomFOV extends Module {
+public class CustomFov extends Module {
 
-    private final DoubleSetting fov = register(new DoubleSetting(
-            "FOV", "Custom field of view value", 70.0, 30.0, 120.0));
+    private final IntSetting fov = register(new IntSetting("FOV", "Field of view value", 90, 30, 150));
+    private double saved = 70;
 
-    private final BoolSetting lock = register(new BoolSetting(
-            "Lock", "Lock FOV regardless of speed or status effects", true));
+    public CustomFov() {
+        super("CustomFov", "Forces a custom field of view value", Category.RENDER);
+    }
 
-    public CustomFOV() {
-        super("CustomFOV", "Sets custom FOV independent of speed", Category.RENDER);
+    @Override
+    public void onEnable() {
+        if (mc.options != null) saved = mc.options.getFov().getValue();
+    }
+
+    @Override
+    public void onDisable() {
+        if (mc.options != null) mc.options.getFov().setValue((int) saved);
     }
 
     @EventHandler
     public void onTick(EventTick event) {
         if (mc.options == null) return;
-
-        // Override the game's FOV option each tick
-        if (lock.isEnabled()) {
-            mc.options.getFov().setValue((int) fov.get());
-        }
+        mc.options.getFov().setValue(fov.get());
     }
 }
