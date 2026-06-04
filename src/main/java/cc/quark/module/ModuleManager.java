@@ -198,6 +198,15 @@ public class ModuleManager {
         register(new BowLead());
         register(new NecroAura());
         register(new SpeedAttack());
+        register(new AntiVelocity3());
+        register(new AutoWeapon());
+        register(new GhostHit());
+        register(new PunchAura());
+        register(new TrapAura());
+        register(new AntiSurround2());
+        register(new CrystalCalc());
+        register(new ForceAttack());
+        register(new SwordBlocker());
 
         // -------- MOVEMENT --------
         register(new Acceleration());
@@ -368,6 +377,8 @@ public class ModuleManager {
         register(new SuperJump());
         register(new TrampolineJump());
         register(new VineClimb());
+        register(new AntiLevitation2());
+        register(new AutoSprint2());
 
         // -------- PLAYER --------
         register(new AFKMode());
@@ -651,6 +662,12 @@ public class ModuleManager {
         register(new ComboCounter());
         register(new HealthIndicator());
         register(new HitColor());
+        register(new ArmourESP());
+        register(new ExplosionEffect());
+        register(new ProjectileTracer());
+        register(new ZoomPlus());
+        register(new FullBright2());
+        register(new RadarPlus());
 
         // -------- WORLD --------
         register(new AutoBed());
@@ -740,6 +757,12 @@ public class ModuleManager {
         register(new SeedAura());
         register(new VeinMine());
         register(new AutoPickupFilter());
+        register(new LiquidFloodFill());
+        register(new SignReader());
+        register(new SwitchActivator());
+        register(new SlimeFinder());
+        register(new AutoLight());
+        register(new AntiCreeper());
 
         // -------- EXPLOIT --------
         register(new AntiAim());
@@ -789,6 +812,9 @@ public class ModuleManager {
         register(new TeleportExploit());
         register(new CubeCraftBypass());
         register(new MineplexBypass());
+        register(new AntiTablist2());
+        register(new BrandSpoof());
+        register(new NoFall2());
 
         // -------- MISC --------
         register(new AntiDetect());
@@ -824,6 +850,8 @@ public class ModuleManager {
         register(new AutoLogin());
         register(new ChatAlert());
         register(new DiscordRPC());
+        register(new ModuleCounter());
+        register(new SessionTimer());
     }
 
     // -------------------------------------------------------------------------
