@@ -107,10 +107,10 @@ public class ArmorSwapper extends Module {
         if (comp == null) return 0;
         double total = 0;
         for (var entry : comp.modifiers()) {
-            if (entry.attribute().value().equals(EntityAttributes.GENERIC_ARMOR)) {
+            if (entry.attribute().equals(EntityAttributes.GENERIC_ARMOR)) {
                 total += entry.modifier().value();
             }
-            if (entry.attribute().value().equals(EntityAttributes.GENERIC_ARMOR_TOUGHNESS)) {
+            if (entry.attribute().equals(EntityAttributes.GENERIC_ARMOR_TOUGHNESS)) {
                 total += entry.modifier().value() * 0.5;
             }
         }

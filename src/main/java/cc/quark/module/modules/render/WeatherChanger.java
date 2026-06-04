@@ -27,20 +27,20 @@ public class WeatherChanger extends Module {
 
         if (weather.is("Clear")) {
             // Block any packet that would start or strengthen rain/thunder
-            if (reason == GameStateChangeS2CPacket.RAIN_STARTED
+            if (reason == GameStateChangeS2CPacket.BEGIN_RAINING
                     || reason == GameStateChangeS2CPacket.RAIN_GRADIENT_CHANGED
                     || reason == GameStateChangeS2CPacket.THUNDER_GRADIENT_CHANGED) {
                 event.cancel();
             }
         } else if (weather.is("Rain")) {
             // Block packets that would clear the sky or send thunder gradients away from 0
-            if (reason == GameStateChangeS2CPacket.RAIN_STOPPED
+            if (reason == GameStateChangeS2CPacket.END_RAINING
                     || reason == GameStateChangeS2CPacket.THUNDER_GRADIENT_CHANGED) {
                 event.cancel();
             }
         } else if (weather.is("Thunder")) {
             // Block packets that would clear rain or stop thunder
-            if (reason == GameStateChangeS2CPacket.RAIN_STOPPED) {
+            if (reason == GameStateChangeS2CPacket.END_RAINING) {
                 event.cancel();
             }
         }

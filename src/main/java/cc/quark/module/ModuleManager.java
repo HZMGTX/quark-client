@@ -67,7 +67,7 @@ public class ModuleManager {
         register(new AutoShield());
         register(new AutoSnowball());
         register(new AutoSoup());
-        register(new AutoTotem());
+        register(new cc.quark.module.modules.combat.AutoTotem());
         register(new AutoWeb());
         register(new AutoXP());
         register(new AxeOnly());

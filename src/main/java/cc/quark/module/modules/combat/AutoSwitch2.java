@@ -14,7 +14,6 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.SwordItem;
 import net.minecraft.item.AxeItem;
-import net.minecraft.item.enchantment.EnchantmentHelper;
 import net.minecraft.registry.RegistryKeys;
 
 import java.util.Comparator;
