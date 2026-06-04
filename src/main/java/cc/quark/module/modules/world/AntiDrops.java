@@ -28,7 +28,7 @@ public class AntiDrops extends Module {
         if (mc.player == null || mc.world == null) return;
         if (!(event.getPacket() instanceof ItemPickupAnimationS2CPacket pkt)) return;
 
-        int entityId = pkt.getEntityId();
+        int entityId = pkt.id();
         Entity entity = mc.world.getEntityById(entityId);
         if (!(entity instanceof ItemEntity itemEntity)) return;
 

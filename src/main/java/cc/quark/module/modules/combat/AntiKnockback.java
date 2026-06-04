@@ -37,13 +37,13 @@ public class AntiKnockback extends Module {
     public void onPacketReceive(EventPacketReceive event) {
         if (mc.player == null) return;
         if (!(event.getPacket() instanceof EntityVelocityUpdateS2CPacket pkt)) return;
-        if (pkt.getEntityId() != mc.player.getId()) return;
+        if (pkt.id() != mc.player.getId()) return;
 
         event.cancel();
 
-        double rawX = pkt.getVelocityX() / 8000.0;
-        double rawY = pkt.getVelocityY() / 8000.0;
-        double rawZ = pkt.getVelocityZ() / 8000.0;
+        double rawX = pkt.velocityX() / 8000.0;
+        double rawY = pkt.velocityY() / 8000.0;
+        double rawZ = pkt.velocityZ() / 8000.0;
 
         double newX, newY, newZ;
         switch (mode.get()) {

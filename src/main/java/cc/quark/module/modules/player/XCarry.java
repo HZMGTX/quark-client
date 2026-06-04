@@ -50,7 +50,7 @@ public class XCarry extends Module {
             // Find any food item in inventory
             for (int i = 9; i < 36; i++) {
                 var stack = mc.player.getInventory().getStack(i);
-                if (stack.isFood()) {
+                if (stack.contains(net.minecraft.component.DataComponentTypes.FOOD)) {
                     // Swap to offhand slot (slot 40 in screen handler)
                     mc.interactionManager.clickSlot(
                             mc.player.currentScreenHandler.syncId,

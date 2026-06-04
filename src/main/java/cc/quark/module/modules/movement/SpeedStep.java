@@ -5,9 +5,12 @@ import cc.quark.event.events.EventTick;
 import cc.quark.module.Category;
 import cc.quark.module.Module;
 import cc.quark.setting.DoubleSetting;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.entity.attribute.EntityAttributeInstance;
+import net.minecraft.entity.attribute.EntityAttributes;
 
 public class SpeedStep extends Module {
+
+    private static final double DEFAULT_STEP = 0.6;
 
     private final DoubleSetting speed = register(new DoubleSetting(
             "Speed", "Step height when running", 0.5, 0.1, 2.0));
@@ -18,17 +21,23 @@ public class SpeedStep extends Module {
 
     @Override
     public void onEnable() {
-        if (mc.player != null) mc.player.stepHeight = (float) speed.get() + 0.5f;
+        setStepHeight(speed.get() + 0.5);
     }
 
     @Override
     public void onDisable() {
-        if (mc.player != null) mc.player.stepHeight = 0.6f;
+        setStepHeight(DEFAULT_STEP);
     }
 
     @EventHandler
     public void onTick(EventTick event) {
         if (mc.player == null) return;
-        mc.player.stepHeight = (float) speed.get() + 0.5f;
+        setStepHeight(speed.get() + 0.5);
+    }
+
+    private void setStepHeight(double h) {
+        if (mc.player == null) return;
+        EntityAttributeInstance attr = mc.player.getAttributeInstance(EntityAttributes.GENERIC_STEP_HEIGHT);
+        if (attr != null) attr.setBaseValue(h);
     }
 }

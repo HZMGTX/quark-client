@@ -5,7 +5,7 @@ import cc.quark.event.events.EventTick;
 import cc.quark.module.Category;
 import cc.quark.module.Module;
 import cc.quark.setting.ModeSetting;
-import net.minecraft.item.FoodItem;
+import net.minecraft.component.DataComponentTypes;
 import net.minecraft.item.Item;
 import net.minecraft.util.Hand;
 
@@ -28,7 +28,7 @@ public class FastUse2 extends Module {
         if (mc.player == null || mc.interactionManager == null) return;
 
         Item heldItem = mc.player.getMainHandStack().getItem();
-        boolean isFood = mc.player.getMainHandStack().isFood();
+        boolean isFood = mc.player.getMainHandStack().contains(DataComponentTypes.FOOD);
 
         boolean apply = switch (mode.get()) {
             case "Food"  -> isFood;

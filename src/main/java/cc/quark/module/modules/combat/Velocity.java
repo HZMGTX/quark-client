@@ -33,14 +33,14 @@ public class Velocity extends Module {
     public void onPacketReceive(EventPacketReceive event) {
         if (mc.player == null) return;
         if (!(event.getPacket() instanceof EntityVelocityUpdateS2CPacket pkt)) return;
-        if (pkt.getEntityId() != mc.player.getId()) return;
+        if (pkt.id() != mc.player.getId()) return;
 
         // Cancel the original packet so vanilla code doesn't apply it
         event.cancel();
 
-        double velX = pkt.getVelocityX() / 8000.0;
-        double velY = pkt.getVelocityY() / 8000.0;
-        double velZ = pkt.getVelocityZ() / 8000.0;
+        double velX = pkt.velocityX() / 8000.0;
+        double velY = pkt.velocityY() / 8000.0;
+        double velZ = pkt.velocityZ() / 8000.0;
 
         double hScale = horizontal.get() / 100.0;
         double vScale = vertical.get() / 100.0;

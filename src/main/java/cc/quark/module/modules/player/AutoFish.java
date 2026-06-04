@@ -114,10 +114,10 @@ public class AutoFish extends Module {
             FishingBobberEntity bobber = mc.player.fishHook;
             if (bobber == null) return;
 
-            if (pkt.getEntityId() != bobber.getId()) return;
+            if (pkt.id() != bobber.getId()) return;
 
             // Bobber velocity spike (downward) means fish caught
-            double vy = pkt.getVelocityY() / 8000.0;
+            double vy = pkt.velocityY() / 8000.0;
             if (vy < -0.1) {
                 reelIn(rodHand);
             }

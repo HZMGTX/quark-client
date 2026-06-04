@@ -1,7 +1,7 @@
 {
   "required": true,
   "package": "cc.quark.mixin",
-  "compatibilityLevel": "JAVA_17",
+  "compatibilityLevel": "JAVA_21",
   "client": [
     "MixinMinecraft",
     "MixinClientPlayerEntity",
@@ -13,7 +13,9 @@
     "MixinClientConnection",
     "MixinClientPlayNetworkHandler",
     "MixinKeyboard",
-    "MixinBackgroundRenderer"
+    "MixinBackgroundRenderer",
+    "MixinAbstractBlockState",
+    "MixinWorldRenderer"
   ],
   "injectors": {
     "defaultRequire": 1

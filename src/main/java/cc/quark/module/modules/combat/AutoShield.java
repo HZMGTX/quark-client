@@ -52,7 +52,7 @@ public class AutoShield extends Module {
     public void onPacketReceive(EventPacketReceive event) {
         if (mc.player == null) return;
         if (!(event.getPacket() instanceof EntityVelocityUpdateS2CPacket pkt)) return;
-        if (pkt.getEntityId() != mc.player.getId()) return;
+        if (pkt.id() != mc.player.getId()) return;
         if (onlyProjectiles.isEnabled()) return;
         shouldRaise = true;
         timer.reset();

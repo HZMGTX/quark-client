@@ -26,16 +26,16 @@ public class VelocityBoost extends Module {
     public void onPacketReceive(EventPacketReceive event) {
         if (mc.player == null) return;
         if (!(event.getPacket() instanceof EntityVelocityUpdateS2CPacket pkt)) return;
-        if (pkt.getEntityId() != mc.player.getId()) return;
+        if (pkt.id() != mc.player.getId()) return;
 
         event.cancel();
 
         double hMult = multiplier.get();
         double vMult = vertMult.get();
 
-        double velX = (pkt.getVelocityX() / 8000.0) * hMult;
-        double velY = (pkt.getVelocityY() / 8000.0) * vMult;
-        double velZ = (pkt.getVelocityZ() / 8000.0) * hMult;
+        double velX = (pkt.velocityX() / 8000.0) * hMult;
+        double velY = (pkt.velocityY() / 8000.0) * vMult;
+        double velZ = (pkt.velocityZ() / 8000.0) * hMult;
 
         mc.player.setVelocity(velX, velY, velZ);
     }
