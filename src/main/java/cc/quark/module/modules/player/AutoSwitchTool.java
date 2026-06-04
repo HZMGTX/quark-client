@@ -6,8 +6,10 @@ import cc.quark.module.Category;
 import cc.quark.module.Module;
 import cc.quark.setting.BoolSetting;
 import net.minecraft.block.BlockState;
+import net.minecraft.enchantment.EnchantmentHelper;
 import net.minecraft.enchantment.Enchantments;
 import net.minecraft.item.ItemStack;
+import net.minecraft.registry.RegistryKeys;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.BlockPos;
@@ -94,11 +96,16 @@ public class AutoSwitchTool extends Module {
     }
 
     private boolean hasEnchant(ItemStack stack, String enchantId) {
-        var enchants = stack.getEnchantments();
-        for (var entry : enchants.getEnchantmentEntries()) {
-            if (entry.getKey().map(k -> k.getIdAsString().contains(enchantId)).orElse(false)) {
-                return true;
-            }
+        if (mc.world == null) return false;
+        var registry = mc.world.getRegistryManager().get(RegistryKeys.ENCHANTMENT);
+        var silkEntry = registry.getEntry(Enchantments.SILK_TOUCH);
+        var fortuneEntry = registry.getEntry(Enchantments.FORTUNE);
+
+        if (enchantId.equals("silk_touch") && silkEntry.isPresent()) {
+            return EnchantmentHelper.getLevel(silkEntry.get(), stack) > 0;
+        }
+        if (enchantId.equals("fortune") && fortuneEntry.isPresent()) {
+            return EnchantmentHelper.getLevel(fortuneEntry.get(), stack) > 0;
         }
         return false;
     }

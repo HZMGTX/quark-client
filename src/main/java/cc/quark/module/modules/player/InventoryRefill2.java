@@ -65,7 +65,9 @@ public class InventoryRefill2 extends Module {
     private void refillArmor() {
         // Armor slots: 36=boots, 37=leggings, 38=chestplate, 39=helmet
         int[] armorSlots = {36, 37, 38, 39};
-        Class<?>[] armorClasses = {BootsItem.class, LeggingsItem.class, ChestplateItem.class, HelmetsItem.class};
+        // Use ArmorItem.Type to match armor pieces correctly (no separate subclasses in 1.21.1)
+        ArmorItem.Type[] armorTypes = {ArmorItem.Type.BOOTS, ArmorItem.Type.LEGGINGS,
+                ArmorItem.Type.CHESTPLATE, ArmorItem.Type.HELMET};
 
         for (int ai = 0; ai < armorSlots.length; ai++) {
             ItemStack current = mc.player.getInventory().getStack(armorSlots[ai]);
@@ -74,7 +76,8 @@ public class InventoryRefill2 extends Module {
             for (int j = 9; j < 36; j++) {
                 ItemStack candidate = mc.player.getInventory().getStack(j);
                 if (candidate.isEmpty()) continue;
-                if (!armorClasses[ai].isInstance(candidate.getItem())) continue;
+                if (!(candidate.getItem() instanceof ArmorItem candidateArmor)) continue;
+                if (candidateArmor.getType() != armorTypes[ai]) continue;
 
                 int candidateProtection = getProtection(candidate);
                 if (candidateProtection > currentProtection) {
