@@ -83,7 +83,7 @@ public class StorageOrganizer extends Module {
         if (stack.getItem() instanceof PickaxeItem) return 900;
         if (stack.getItem() instanceof AxeItem)     return 850;
         if (stack.getItem() instanceof ShovelItem)  return 800;
-        if (stack.getItem() instanceof ArmorItem a) return 700 + a.getProtection();
+        if (stack.getItem() instanceof ArmorItem a) return 700 + a.getProtectionAmount();
         if (stack.getItem() instanceof BowItem)     return 600;
         if (stack.getItem() instanceof CrossbowItem) return 590;
         if (stack.contains(net.minecraft.component.DataComponentTypes.FOOD)) return 400;

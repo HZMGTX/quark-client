@@ -62,7 +62,7 @@ public class AutoArmor extends Module {
 
     private int score(ItemStack stack) {
         if (stack.isEmpty() || !(stack.getItem() instanceof ArmorItem armor)) return 0;
-        int base = armor.getProtection();
+        int base = armor.getProtectionAmount();
         if (preferProtection.isEnabled()) {
             var registry = mc.world != null ? mc.world.getRegistryManager().get(RegistryKeys.ENCHANTMENT) : null;
             if (registry != null) {

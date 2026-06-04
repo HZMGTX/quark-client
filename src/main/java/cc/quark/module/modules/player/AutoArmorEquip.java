@@ -81,7 +81,7 @@ public class AutoArmorEquip extends Module {
         }
 
         // Protection priority: base defense + enchantment bonus
-        int base = armor.getProtection();
+        int base = armor.getProtectionAmount();
         if (mc.world != null) {
             var registry = mc.world.getRegistryManager().get(RegistryKeys.ENCHANTMENT);
             var protEntry = registry.getEntry(Enchantments.PROTECTION);
