@@ -239,8 +239,6 @@ public class ModuleManager {
         register(new FlecheThrust());
         register(new SpawnKiller());
         register(new TrapDetector());
-        register(new BowAimbot());
-        register(new AntiHeal());
         register(new VelocityPlus());
 
         // -------- MOVEMENT --------
@@ -448,7 +446,6 @@ public class ModuleManager {
         register(new StealthWalk());
         register(new TunnelFly());
         register(new WallRide());
-        register(new IceSpeed());
         register(new AntiSlowdown());
         register(new NoFog2());
 
@@ -591,9 +588,7 @@ public class ModuleManager {
         register(new ArmorSwapper());
         register(new AutoDropBlacklist());
         register(new AutoOffhandSwap());
-        register(new AutoSneak());
         register(new AutoMine());
-        register(new AutoShield());
         register(new AutoSmith());
         register(new ItemDropper());
         register(new QuickEat());
@@ -648,7 +643,6 @@ public class ModuleManager {
         register(new NoSway());
         register(new QuickCraft());
         register(new AutoEnder());
-        register(new AutoTotem());
 
         // -------- RENDER --------
         register(new ActiveMods());
@@ -776,7 +770,6 @@ public class ModuleManager {
         register(new FullBright2());
         register(new RadarPlus());
         register(new MobESP2());
-        register(new StorageESP());
         register(new DistanceFog());
         register(new GlintOverride());
         register(new VehicleESP());
@@ -814,7 +807,6 @@ public class ModuleManager {
         register(new AutoFarm());
         register(new AutoFlatten());
         register(new AutoHarvest());
-        register(new AutoMine());
         register(new AutoPillar());
         register(new AutoSign());
         register(new AutoSmelt());
@@ -846,7 +838,6 @@ public class ModuleManager {
         register(new AutoFurnace());
         register(new VeinMiner2());
         register(new ChestStealer2());
-        register(new AutoSmith());
         register(new SpawnProofer());
         register(new AutoWorkbench());
         register(new BlockRecorder());
@@ -1029,8 +1020,6 @@ public class ModuleManager {
         register(new ScoreboardHUD());
         register(new TabListInfo());
         register(new cc.quark.module.modules.misc.ChatFilter());
-        register(new AntiAFK2());
-        register(new AutoLogin());
         register(new ChatAlert());
         register(new DiscordRPC());
         register(new ModuleCounter());

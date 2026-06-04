@@ -23,7 +23,7 @@ public class WeatherChanger extends Module {
         if (weather.is("Default")) return;
         if (!(event.getPacket() instanceof GameStateChangeS2CPacket pkt)) return;
 
-        GameStateChangeS2CPacket.Reason reason = pkt.getReason();
+        GameStateChangeS2CPacket.Reason reason = pkt.reason();
 
         if (weather.is("Clear")) {
             // Block any packet that would start or strengthen rain/thunder

@@ -34,7 +34,7 @@ public class NoPacketKick extends Module {
 
         if (cancelDisconnect.isEnabled() && event.getPacket() instanceof DisconnectS2CPacket pkt) {
             if (logDisconnect.isEnabled()) {
-                ChatUtil.warn("[NoPacketKick] Blocked disconnect: " + pkt.getReason().getString());
+                ChatUtil.warn("[NoPacketKick] Blocked disconnect: " + pkt.reason().getString());
             }
             event.cancel();
         }

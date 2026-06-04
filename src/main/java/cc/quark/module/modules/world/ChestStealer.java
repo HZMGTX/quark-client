@@ -10,7 +10,6 @@ import cc.quark.setting.ModeSetting;
 import cc.quark.util.TimerUtil;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.item.AxeItem;
-import net.minecraft.item.ArmorItem;
 import net.minecraft.item.BowItem;
 import net.minecraft.item.CrossbowItem;
 import net.minecraft.item.Item;
@@ -95,7 +94,10 @@ public class ChestStealer extends Module {
                 || item == Items.DIAMOND_AXE || item == Items.DIAMOND_SHOVEL
                 || item == Items.NETHERITE_SWORD || item == Items.NETHERITE_PICKAXE
                 || item == Items.NETHERITE_AXE || item == Items.NETHERITE_SHOVEL
-                || (item instanceof ArmorItem ai && isGoodTier(ai.getMaterial().toString()));
+                || item == Items.DIAMOND_HELMET || item == Items.DIAMOND_CHESTPLATE
+                || item == Items.DIAMOND_LEGGINGS || item == Items.DIAMOND_BOOTS
+                || item == Items.NETHERITE_HELMET || item == Items.NETHERITE_CHESTPLATE
+                || item == Items.NETHERITE_LEGGINGS || item == Items.NETHERITE_BOOTS;
     }
 
     private boolean isWeapon(Item item) {
@@ -104,7 +106,4 @@ public class ChestStealer extends Module {
                 || item instanceof TridentItem;
     }
 
-    private boolean isGoodTier(String material) {
-        return material.contains("diamond") || material.contains("netherite");
-    }
 }

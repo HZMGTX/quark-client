@@ -26,7 +26,7 @@ public class NoDeathScreen extends Module {
         if (!(event.getPacket() instanceof GameStateChangeS2CPacket pkt)) return;
         if (mc.player == null) return;
 
-        if (pkt.getReason() == GameStateChangeS2CPacket.GAME_WON) {
+        if (pkt.reason() == GameStateChangeS2CPacket.GAME_WON) {
             event.cancel();
         }
     }

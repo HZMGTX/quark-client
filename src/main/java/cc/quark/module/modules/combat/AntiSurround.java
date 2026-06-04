@@ -130,11 +130,11 @@ public class AntiSurround extends Module {
             if (stack.isEmpty()) continue;
             float speed = 0f;
             if (stack.getItem() instanceof PickaxeItem pick) {
-                speed = pick.getMaterial().getMiningSpeedMultiplier();
+                speed = pick.getMaterial().speed();
                 // Pickaxes are best for obsidian
                 speed += 5f;
             } else if (stack.getItem() instanceof AxeItem axe) {
-                speed = axe.getMaterial().getMiningSpeedMultiplier();
+                speed = axe.getMaterial().speed();
             }
             if (speed > bestSpeed) {
                 bestSpeed = speed;

@@ -30,7 +30,7 @@ public class InventoryUtil {
         for (int i = 0; i < 9; i++) {
             ItemStack stack = mc.player.getInventory().getStack(i);
             if (stack.getItem() instanceof SwordItem sword) {
-                float dmg = sword.getMaterial().getAttackDamage();
+                float dmg = sword.getMaterial().attackDamageBonus();
                 if (dmg > bestDmg) { bestDmg = dmg; best = i; }
             }
         }
@@ -44,7 +44,7 @@ public class InventoryUtil {
         for (int i = 0; i < 36; i++) {
             ItemStack stack = mc.player.getInventory().getStack(i);
             if (stack.getItem() instanceof PickaxeItem pick) {
-                float speed = pick.getMaterial().getMiningSpeedMultiplier();
+                float speed = pick.getMaterial().speed();
                 if (speed > bestSpeed) { bestSpeed = speed; best = i; }
             }
         }
@@ -58,7 +58,7 @@ public class InventoryUtil {
         for (int i = 0; i < 36; i++) {
             ItemStack stack = mc.player.getInventory().getStack(i);
             if (stack.getItem() instanceof AxeItem axe) {
-                float dmg = axe.getMaterial().getAttackDamage();
+                float dmg = axe.getMaterial().attackDamageBonus();
                 if (dmg > bestDmg) { bestDmg = dmg; best = i; }
             }
         }
