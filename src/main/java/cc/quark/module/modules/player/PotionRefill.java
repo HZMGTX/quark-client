@@ -5,22 +5,23 @@ import cc.quark.event.events.EventTick;
 import cc.quark.module.Category;
 import cc.quark.module.Module;
 import cc.quark.setting.BoolSetting;
-import cc.quark.setting.IntSetting;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.screen.slot.SlotActionType;
 
 public class PotionRefill extends Module {
 
-    private final BoolSetting splashOnly = register(new BoolSetting(
-            "SplashOnly", "Only refill splash potions (not lingering)", true));
-    private final IntSetting searchRange = register(new IntSetting(
-            "SearchRange", "How many inventory slots to search (9=hotbar only)", 36, 9, 36));
+    private final BoolSetting strength = register(new BoolSetting(
+            "Strength", "Refill strength potions", true));
+    private final BoolSetting speed = register(new BoolSetting(
+            "Speed", "Refill speed potions", true));
+    private final BoolSetting regen = register(new BoolSetting(
+            "Regen", "Refill regen potions", true));
 
     private ItemStack[] prevHotbar = new ItemStack[9];
 
     public PotionRefill() {
-        super("PotionRefill", "Automatically refills potions from inventory when a hotbar slot becomes empty", Category.PLAYER);
+        super("PotionRefill", "Auto-refills potion items from inventory", Category.PLAYER);
     }
 
     @Override
@@ -37,9 +38,8 @@ public class PotionRefill extends Module {
             ItemStack current = inv.getStack(hotbarSlot);
             ItemStack prev = prevHotbar[hotbarSlot];
 
-            if (prev != null && isPotion(prev) && current.isEmpty()) {
-                // Find replacement in inventory
-                int replacement = findPotion(prev, hotbarSlot);
+            if (prev != null && isTrackedPotion(prev) && current.isEmpty()) {
+                int replacement = findMatchingPotion(prev, hotbarSlot);
                 if (replacement != -1) {
                     mc.interactionManager.clickSlot(
                             mc.player.currentScreenHandler.syncId,
@@ -49,33 +49,25 @@ public class PotionRefill extends Module {
                             mc.player);
                 }
             }
-            prevHotbar[hotbarSlot] = current.copy();
+            prevHotbar[hotbarSlot] = current.isEmpty() ? ItemStack.EMPTY : current.copy();
         }
     }
 
-    private boolean isPotion(ItemStack stack) {
-        if (stack.getItem() == Items.SPLASH_POTION) return true;
-        if (!splashOnly.isEnabled() && stack.getItem() == Items.LINGERING_POTION) return true;
-        return false;
+    private boolean isTrackedPotion(ItemStack stack) {
+        if (stack.isEmpty()) return false;
+        return stack.getItem() == Items.SPLASH_POTION
+                || stack.getItem() == Items.POTION
+                || stack.getItem() == Items.LINGERING_POTION;
     }
 
-    private int findPotion(ItemStack original, int excludeHotbarSlot) {
+    private int findMatchingPotion(ItemStack original, int excludeHotbar) {
         var inv = mc.player.getInventory();
-        int maxSearch = searchRange.get();
-        for (int i = 0; i < maxSearch; i++) {
-            if (i == excludeHotbarSlot) continue;
-            ItemStack stack = inv.getStack(i);
-            if (!isPotion(stack)) continue;
-            if (stack.getItem() == original.getItem()) {
-                // Convert inventory index to screen handler slot
-                if (i < 9) {
-                    // hotbar slots in screen handler are 36-44
-                    return 36 + i;
-                } else {
-                    // main inventory slots 9-35 map to screen handler 9-35
-                    return i;
-                }
-            }
+        for (int i = 0; i < 36; i++) {
+            if (i == excludeHotbar) continue;
+            ItemStack s = inv.getStack(i);
+            if (s.isEmpty() || s.getItem() != original.getItem()) continue;
+            // Convert inventory index to screen handler slot
+            return i < 9 ? 36 + i : i;
         }
         return -1;
     }

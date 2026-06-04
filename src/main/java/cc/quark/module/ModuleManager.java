@@ -161,6 +161,43 @@ public class ModuleManager {
         register(new SwordSprint());
         register(new TargetFollow());
         register(new TeamMode());
+        register(new ClutchSilentAim());
+        register(new BlockInSilentAim());
+        register(new AntiCombatLog());
+        register(new AntiHeal());
+        register(new ArrowBot());
+        register(new AttackRange());
+        register(new AutoF3T());
+        register(new AutoRespawn2());
+        register(new BedAura2());
+        register(new CombatHelper());
+        register(new CombatRadar());
+        register(new ComboKiller());
+        register(new CritBot());
+        register(new DragClick());
+        register(new EndCrystal2());
+        register(new EntityAura());
+        register(new FlipFlop());
+        register(new HeadshotAim());
+        register(new HitboxExpander());
+        register(new KillAuraPlus());
+        register(new KillTracker());
+        register(new PotionHelper());
+        register(new PvPTimer());
+        register(new RageMode());
+        register(new SurvivalKit());
+        register(new TNTAura());
+        register(new TargetHealth());
+        register(new WeaponDelay());
+        register(new WeaponSwapper());
+        register(new AntiAutoClicker2());
+        register(new AutoNotch());
+        register(new CrystalSwitch2());
+        register(new TargetStrafe2());
+        register(new AutoSandCannon());
+        register(new BowLead());
+        register(new NecroAura());
+        register(new SpeedAttack());
 
         // -------- MOVEMENT --------
         register(new Acceleration());
@@ -312,6 +349,25 @@ public class ModuleManager {
         register(new DolphinSwim());
         register(new FlyBoost());
         register(new StairJump());
+        register(new AntiSlip());
+        register(new AntiWater());
+        register(new BunnyHop2());
+        register(new CarpetFly());
+        register(new CrawlFly());
+        register(new DolphinDash());
+        register(new ElytraBoost2());
+        register(new FastDescend());
+        register(new FlightBoost());
+        register(new FlightSwitch());
+        register(new GlideBoost());
+        register(new LiquidWalk());
+        register(new MomentumBoost());
+        register(new PistonMotion());
+        register(new SafeDescend());
+        register(new SneakBoost());
+        register(new SuperJump());
+        register(new TrampolineJump());
+        register(new VineClimb());
 
         // -------- PLAYER --------
         register(new AFKMode());
@@ -361,7 +417,7 @@ public class ModuleManager {
         register(new Blink());
         register(new BridgeAssist());
         register(new ChatBot());
-        register(new ChatFilter());
+        register(new cc.quark.module.modules.player.ChatFilter());
         register(new ChestAura());
         register(new cc.quark.module.modules.player.ChestStealer());
         register(new FakePlayer());
@@ -425,6 +481,56 @@ public class ModuleManager {
         register(new ItemSucker());
         register(new ItemTracker());
         register(new SmartEat());
+        register(new AntiHunger3());
+        register(new ArrowRefill());
+        register(new AutoCraft2());
+        register(new AutoFletch());
+        register(new AutoGapple3());
+        register(new AutoHealth());
+        register(new AutoPotion2());
+        register(new ChestFarm());
+        register(new ChestRestock());
+        register(new DurabilityAlert());
+        register(new ExpFarm());
+        register(new HandRefill());
+        register(new HotbarSaver());
+        register(new InvMove2());
+        register(new InvSpy());
+        register(new ItemRefill());
+        register(new KillOnLow());
+        register(new PearlRefill());
+        register(new SilentInventory());
+        register(new SlotSave());
+        register(new XPFarm());
+        register(new AntiCurse());
+        register(new AntiDropItems());
+        register(new AnvilRepair());
+        register(new ArmorSwapper());
+        register(new AutoDropBlacklist());
+        register(new AutoOffhandSwap());
+        register(new AutoSneak());
+        register(new AutoMine());
+        register(new AutoShield());
+        register(new AutoSmith());
+        register(new ItemDropper());
+        register(new QuickEat());
+        register(new SilentSwing());
+        register(new AntiHunger4());
+        register(new AntiWobble());
+        register(new AutoBank());
+        register(new AutoToss());
+        register(new BlockStats());
+        register(new ChestWalker());
+        register(new CraftHelper());
+        register(new HotbarFill());
+        register(new ItemGlow());
+        register(new LootSorter());
+        register(new PickupDelay());
+        register(new XPDisplay());
+        register(new AntiItemLoss());
+        register(new ChestCleaner());
+        register(new GhostItems());
+        register(new StairSit());
 
         // -------- RENDER --------
         register(new ActiveMods());
@@ -521,6 +627,30 @@ public class ModuleManager {
         register(new LightESP());
         register(new PortalOverlay());
         register(new WeaponInfo());
+        register(new PingHUD());
+        register(new TPSDisplay());
+        register(new ArmourDurability());
+        register(new ArrowCounter());
+        register(new DamageNumbers());
+        register(new JumpHeight());
+        register(new PlayerArrows());
+        register(new PotionTimer());
+        register(new SpeedMeter());
+        register(new BloodEffect());
+        register(new BossbarMod());
+        register(new HurtShake());
+        register(new NametagESP());
+        register(new OxygenBar());
+        register(new RainbowAccent());
+        register(new SaturationBar());
+        register(new ShaderESP());
+        register(new TotemPopHUD());
+        register(new TrailEffect());
+        register(new WorldBorderESP());
+        register(new WorldTimeClock());
+        register(new ComboCounter());
+        register(new HealthIndicator());
+        register(new HitColor());
 
         // -------- WORLD --------
         register(new AutoBed());
@@ -588,6 +718,28 @@ public class ModuleManager {
         register(new AutoStonecutter());
         register(new EntityCleaner());
         register(new LiquidFiller());
+        register(new AntiAnvil());
+        register(new AutoChop());
+        register(new AutoFish2());
+        register(new AutoLever());
+        register(new BoneMeal2());
+        register(new ChestSort());
+        register(new FloodFill());
+        register(new ItemAura());
+        register(new MapSave());
+        register(new Pathfinder());
+        register(new SignRead());
+        register(new TunnelBore());
+        register(new AntiBlock());
+        register(new AntiDragon());
+        register(new AutoBee());
+        register(new AutoEject());
+        register(new AutoWither());
+        register(new BlockSpammer());
+        register(new LootFilter());
+        register(new SeedAura());
+        register(new VeinMine());
+        register(new AutoPickupFilter());
 
         // -------- EXPLOIT --------
         register(new AntiAim());
@@ -635,6 +787,8 @@ public class ModuleManager {
         register(new SpeedHack());
         register(new TabListSpoof());
         register(new TeleportExploit());
+        register(new CubeCraftBypass());
+        register(new MineplexBypass());
 
         // -------- MISC --------
         register(new AntiDetect());
@@ -665,6 +819,11 @@ public class ModuleManager {
         register(new Notifications2());
         register(new ScoreboardHUD());
         register(new TabListInfo());
+        register(new cc.quark.module.modules.misc.ChatFilter());
+        register(new AntiAFK2());
+        register(new AutoLogin());
+        register(new ChatAlert());
+        register(new DiscordRPC());
     }
 
     // -------------------------------------------------------------------------
