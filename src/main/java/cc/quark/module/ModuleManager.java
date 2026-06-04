@@ -207,6 +207,22 @@ public class ModuleManager {
         register(new CrystalCalc());
         register(new ForceAttack());
         register(new SwordBlocker());
+        register(new AnchorBot());
+        register(new AntiSpeedHack());
+        register(new AutoBomb());
+        register(new BackTrack());
+        register(new BlockHit());
+        register(new ExplosiveBolt());
+        register(new FakeLag());
+        register(new GappleAlert());
+        register(new HorseKill());
+        register(new PacketAttack());
+        register(new PotionAura());
+        register(new QuickShield2());
+        register(new STap());
+        register(new StepKill());
+        register(new SwordFisher());
+        register(new ThornsReflect());
 
         // -------- MOVEMENT --------
         register(new Acceleration());
@@ -542,6 +558,20 @@ public class ModuleManager {
         register(new ChestCleaner());
         register(new GhostItems());
         register(new StairSit());
+        register(new AntiEffect());
+        register(new AntiExplosion());
+        register(new AntiGlitch());
+        register(new AutoEat2());
+        register(new AutoEnchant());
+        register(new AutoSwitchTool());
+        register(new ClickCPS());
+        register(new FoodSpam());
+        register(new GappleSwitch());
+        register(new ItemSorter());
+        register(new NightVision2());
+        register(new ShieldMode());
+        register(new SwapBack());
+        register(new TridentReturn());
 
         // -------- RENDER --------
         register(new ActiveMods());
@@ -763,6 +793,15 @@ public class ModuleManager {
         register(new SlimeFinder());
         register(new AutoLight());
         register(new AntiCreeper());
+        register(new AutoBarrel());
+        register(new AutoCauldron());
+        register(new AutoNetherFarm2());
+        register(new ChestLocker());
+        register(new PearlBlocker());
+        register(new PortalFinder());
+        register(new TreeChop());
+        register(new TreePlacer());
+        register(new WorldScanner());
 
         // -------- EXPLOIT --------
         register(new AntiAim());
