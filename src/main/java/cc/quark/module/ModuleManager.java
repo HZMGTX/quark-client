@@ -223,6 +223,8 @@ public class ModuleManager {
         register(new StepKill());
         register(new SwordFisher());
         register(new ThornsReflect());
+        register(new OffhandAttack());
+        register(new WTap3());
 
         // -------- MOVEMENT --------
         register(new Acceleration());
@@ -395,6 +397,18 @@ public class ModuleManager {
         register(new VineClimb());
         register(new AntiLevitation2());
         register(new AutoSprint2());
+        register(new NoFallFly());
+        register(new SneakFly());
+        register(new DashAbility());
+        register(new HoverFly());
+        register(new InertiaBoost());
+        register(new PhaseWalk());
+        register(new SprintJump());
+        register(new TurboSprint());
+        register(new AntiBoost());
+        register(new FastBridge2());
+        register(new HoverStep());
+        register(new PortalFly());
 
         // -------- PLAYER --------
         register(new AFKMode());
@@ -572,6 +586,14 @@ public class ModuleManager {
         register(new ShieldMode());
         register(new SwapBack());
         register(new TridentReturn());
+        register(new AutoShears());
+        register(new EmptyHanded());
+        register(new InventoryFill());
+        register(new QuickSwap());
+        register(new TotemsFirst());
+        register(new BuildAssist());
+        register(new InventoryRefill2());
+        register(new SmithingHelper());
 
         // -------- RENDER --------
         register(new ActiveMods());
@@ -698,6 +720,11 @@ public class ModuleManager {
         register(new ZoomPlus());
         register(new FullBright2());
         register(new RadarPlus());
+        register(new MobESP2());
+        register(new StorageESP());
+        register(new DistanceFog());
+        register(new GlintOverride());
+        register(new VehicleESP());
 
         // -------- WORLD --------
         register(new AutoBed());
@@ -802,6 +829,15 @@ public class ModuleManager {
         register(new TreeChop());
         register(new TreePlacer());
         register(new WorldScanner());
+        register(new AutoReplenish());
+        register(new BlockSwapper());
+        register(new ChunkSaver());
+        register(new AnimalTrap());
+        register(new DungeonFinder());
+        register(new AutoSplit());
+        register(new BrewAssist());
+        register(new CropBooster());
+        register(new WitchHunt());
 
         // -------- EXPLOIT --------
         register(new AntiAim());
