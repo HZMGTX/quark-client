@@ -251,6 +251,11 @@ public class ModuleManager {
         register(new ExplosionParticles());
         register(new TotemInfo());
         register(new PvPStat());
+        register(new HitConfirm());
+        register(new ThrowPot());
+        register(new AttackCooldown());
+        register(new ComboCounter2());
+        register(new CrystalPhase());
 
         // -------- MOVEMENT --------
         register(new Acceleration());
@@ -461,6 +466,10 @@ public class ModuleManager {
         register(new NoFog2());
         register(new AirStall());
         register(new HighJump2());
+        register(new ElytraRecast());
+        register(new TridentFly());
+        register(new StepPlus());
+        register(new SlipSpeed());
 
         // -------- PLAYER --------
         register(new AFKMode());
@@ -826,6 +835,12 @@ public class ModuleManager {
         register(new SprintIndicator());
         register(new ArrowTrajectory());
         register(new StorageESP2());
+        register(new ArmorBreakAlert());
+        register(new DirectionHUD());
+        register(new EntityInfo());
+        register(new FovChanger());
+        register(new SkyColor());
+        register(new WeatherIndicator());
 
         // -------- WORLD --------
         register(new AutoBed());
@@ -1041,6 +1056,10 @@ public class ModuleManager {
         register(new PacketManipulator());
         register(new AntiCheatAnalyzer());
         register(new Scaffold2());
+        register(new EntityAbuse());
+        register(new PearlPhase());
+        register(new PortalGodMode());
+        register(new SignEditor());
 
         // -------- MISC --------
         register(new AntiDetect());
@@ -1100,6 +1119,10 @@ public class ModuleManager {
         register(new ChatEmotes());
         register(new TabComplete());
         register(new PlayerLogger());
+        register(new NoteBlockPlayer());
+        register(new LightningNotifier());
+        register(new ChatRepeater());
+        register(new ItemRenamer());
 
         // -------- STAFF --------
         register(new cc.quark.module.modules.staff.StaffChat());
