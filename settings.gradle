@@ -25,9 +25,8 @@ stonecutter {
         //   1.20.4  - fabric-api 0.97.0+1.20.4
         //   1.21.1  - fabric-api 0.102.0+1.21.1  (primary)
         //
-        // Legacy versions (1.8.9-1.18.x) require a separate Legacy Fabric build.
-        // See docs/legacy-support.md for details.
-        versions("1.19.4", "1.20.1", "1.20.4", "1.21.1")
+        // 1.18.2 requires Java 17; uses loader 0.14.x and older Fabric API.
+        versions("1.18.2", "1.19.4", "1.20.1", "1.20.4", "1.20.6", "1.21.1", "1.21.4")
         vcsVersion = "1.21.1"
     }
 }

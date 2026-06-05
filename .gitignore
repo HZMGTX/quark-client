@@ -12,3 +12,10 @@ out/
 *.iml
 .DS_Store
 .claude/
+
+# Build error logs
+build_errors*.txt
+javac.*.args
+
+# VS Code
+.vscode/
