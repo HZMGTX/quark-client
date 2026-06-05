@@ -78,13 +78,22 @@ public class BlockReplace extends Module {
             if (placeDir != null) {
                 BlockPos neighbour = immutable.offset(placeDir.getOpposite());
                 int prevSlot = mc.player.getInventory().selectedSlot;
-                mc.player.getInventory().selectedSlot = replaceSlot;
+                boolean swapped = false;
+                int activeSlot = replaceSlot;
+                if (replaceSlot >= 9) {
+                    // Swap non-hotbar item into hotbar slot 0
+                    mc.player.getInventory().swapSlotWithHotbar(replaceSlot);
+                    activeSlot = 0;
+                    swapped = true;
+                }
+                mc.player.getInventory().selectedSlot = activeSlot;
                 Vec3d hitVec = Vec3d.ofCenter(neighbour).add(
                         placeDir.getOffsetX() * 0.5,
                         placeDir.getOffsetY() * 0.5,
                         placeDir.getOffsetZ() * 0.5);
                 BlockHitResult hit = new BlockHitResult(hitVec, placeDir, neighbour.toImmutable(), false);
                 mc.interactionManager.interactBlock(mc.player, Hand.MAIN_HAND, hit);
+                if (swapped) mc.player.getInventory().swapSlotWithHotbar(replaceSlot);
                 mc.player.getInventory().selectedSlot = prevSlot;
             }
 
