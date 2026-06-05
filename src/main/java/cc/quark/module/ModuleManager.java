@@ -256,6 +256,9 @@ public class ModuleManager {
         register(new AttackCooldown());
         register(new ComboCounter2());
         register(new CrystalPhase());
+        register(new AutoMLG());
+        register(new CrystalAura());
+        register(new AntiFireDamage());
 
         // -------- MOVEMENT --------
         register(new Acceleration());
@@ -673,6 +676,9 @@ public class ModuleManager {
         register(new MiddleClickPearl());
         register(new AntiItemDrop());
         register(new AutoSaddle());
+        register(new CraftAssist());
+        register(new NoSwing());
+        register(new AntiHurtCam());
 
         // -------- RENDER --------
         register(new ActiveMods());
@@ -980,6 +986,10 @@ public class ModuleManager {
         register(new CactusGrinder());
         register(new NetherHighwayHelper());
         register(new BaseBuilder());
+        register(new AutoSmelter2());
+        register(new StructureSave());
+        register(new AutoTrader());
+        register(new TreeChopper());
 
         // -------- EXPLOIT --------
         register(new AntiAim());
@@ -1060,6 +1070,11 @@ public class ModuleManager {
         register(new PearlPhase());
         register(new PortalGodMode());
         register(new SignEditor());
+        register(new FastPlace2());
+        register(new AntiTabComplete());
+        register(new AntiBook());
+        register(new CoordsESP());
+        register(new NoGhostBlock());
 
         // -------- MISC --------
         register(new AntiDetect());
@@ -1123,6 +1138,9 @@ public class ModuleManager {
         register(new LightningNotifier());
         register(new ChatRepeater());
         register(new ItemRenamer());
+        register(new BossBarInfo());
+        register(new ClipboardShare());
+        register(new Notifier());
 
         // -------- STAFF --------
         register(new cc.quark.module.modules.staff.StaffChat());
