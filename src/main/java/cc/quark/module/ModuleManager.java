@@ -1090,6 +1090,21 @@ public class ModuleManager {
         register(new cc.quark.module.modules.staff.Spy());
         register(new cc.quark.module.modules.staff.ForceOp());
         register(new cc.quark.module.modules.staff.StaffESP());
+        register(new cc.quark.module.modules.staff.StaffMode());
+        register(new cc.quark.module.modules.staff.TeleportToPlayer());
+        register(new cc.quark.module.modules.staff.PlayerInspector());
+        register(new cc.quark.module.modules.staff.WatchList());
+        register(new cc.quark.module.modules.staff.AntiGrief());
+        register(new cc.quark.module.modules.staff.ChatMonitor());
+        register(new cc.quark.module.modules.staff.GamemodeChanger());
+        register(new cc.quark.module.modules.staff.SummonPlayer());
+        register(new cc.quark.module.modules.staff.StaffNightVision());
+        register(new cc.quark.module.modules.staff.StaffGodMode());
+        register(new cc.quark.module.modules.staff.ReportHandler());
+        register(new cc.quark.module.modules.staff.StaffRadar());
+        register(new cc.quark.module.modules.staff.UnfreezeAll());
+        register(new cc.quark.module.modules.staff.BroadcastMessage());
+        register(new cc.quark.module.modules.staff.PermissionChecker());
     }
 
     // -------------------------------------------------------------------------
