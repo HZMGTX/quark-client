@@ -5,6 +5,7 @@ import cc.quark.gui.components.CategoryPanel;
 import cc.quark.module.Category;
 import cc.quark.module.ModuleManager;
 import cc.quark.util.ColorUtil;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.text.Text;
@@ -117,7 +118,7 @@ public class ClickGUI extends Screen {
             boolean active = cat == activeTab;
             int catColor = CAT_COLORS[i];
             String label  = cat.name().charAt(0) + cat.name().substring(1).toLowerCase();
-            int labelW    = net.minecraft.client.MinecraftClient.getInstance().textRenderer.getWidth(label);
+            int labelW    = MinecraftClient.getInstance().textRenderer.getWidth(label);
             int tabW      = labelW + 16;
 
             int tabTextColor = active ? 0xFFFFFFFF : ColorUtil.withAlpha(0xFFFFFF, (int)(160 * alpha));
@@ -166,7 +167,7 @@ public class ClickGUI extends Screen {
 
         // ── Watermark ────────────────────────────────────────────────────────
         String watermark = "Quark.cc | " + Quark.VERSION;
-        int wmW = net.minecraft.client.MinecraftClient.getInstance().textRenderer.getWidth(watermark) + 10;
+        int wmW = MinecraftClient.getInstance().textRenderer.getWidth(watermark) + 10;
         context.fill(screenW - wmW - 2, screenH - 14, screenW, screenH, ColorUtil.withAlpha(0x0A0A0A, (int)(180 * alpha)));
         cc.quark.util.RenderUtil.drawCustomText(context, watermark, screenW - wmW, screenH - 11, getAccentColor());
 
@@ -177,7 +178,7 @@ public class ClickGUI extends Screen {
         int total = 0;
         for (Category cat : cats) {
             String label = cat.name().charAt(0) + cat.name().substring(1).toLowerCase();
-            total += net.minecraft.client.MinecraftClient.getInstance().textRenderer.getWidth(label) + 16 + 4;
+            total += MinecraftClient.getInstance().textRenderer.getWidth(label) + 16 + 4;
         }
         return total - 4;
     }
@@ -203,7 +204,7 @@ public class ClickGUI extends Screen {
             int tabX = width / 2 - getTabsWidth(cats) / 2;
             for (int i = 0; i < cats.length; i++) {
                 String label = cats[i].name().charAt(0) + cats[i].name().substring(1).toLowerCase();
-                int tabW = net.minecraft.client.MinecraftClient.getInstance().textRenderer.getWidth(label) + 16;
+                int tabW = MinecraftClient.getInstance().textRenderer.getWidth(label) + 16;
                 if (ux >= tabX && ux <= tabX + tabW) {
                     activeTab = (cats[i] == activeTab) ? null : cats[i];
                     return true;

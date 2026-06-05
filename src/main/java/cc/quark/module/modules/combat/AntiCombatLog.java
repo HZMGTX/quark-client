@@ -8,6 +8,8 @@ import cc.quark.module.Module;
 import cc.quark.setting.BoolSetting;
 import cc.quark.setting.IntSetting;
 import cc.quark.util.TimerUtil;
+import net.minecraft.client.gui.screen.multiplayer.ConnectScreen;
+import net.minecraft.client.network.ServerAddress;
 import net.minecraft.network.packet.s2c.login.LoginDisconnectS2CPacket;
 import net.minecraft.network.packet.s2c.common.DisconnectS2CPacket;
 
@@ -58,7 +60,7 @@ public class AntiCombatLog extends Module {
             combatLogDetected = false;
             // Reconnect logic: re-connect to the last server
             if (mc.getCurrentServerEntry() != null) {
-                // ConnectScreen.connect
+                ConnectScreen.connect(mc, ServerAddress.parse(mc.getCurrentServerEntry().address), mc.getCurrentServerEntry(), null);
             }
         }
     }
