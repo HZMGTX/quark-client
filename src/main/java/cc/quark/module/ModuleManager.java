@@ -261,6 +261,10 @@ public class ModuleManager {
         register(new AntiFireDamage());
         register(new AutoTotem2());
         register(new Offhand());
+        register(new AntiCrit2());
+        register(new AutoArmor2());
+        register(new BowBomb());
+        register(new Criticals2());
 
         // -------- MOVEMENT --------
         register(new Acceleration());
@@ -480,6 +484,10 @@ public class ModuleManager {
         register(new InventoryWalk());
         register(new SlowFall());
         register(new AirBhop());
+        register(new RocketFly());
+        register(new GravityMod());
+        register(new IceWalk());
+        register(new ParkourAssist());
 
         // -------- PLAYER --------
         register(new AFKMode());
@@ -695,6 +703,9 @@ public class ModuleManager {
         register(new AutoSprint2());
         register(new NoSwing());
         register(new AntiHurtCam());
+        register(new AntiAFK3());
+        register(new AutoEquip());
+        register(new AutoLeave());
 
         // -------- RENDER --------
         register(new ActiveMods());
@@ -1019,6 +1030,11 @@ public class ModuleManager {
         register(new RapidMine());
         register(new CropCounter());
         register(new AnimalBreeder());
+        register(new AutoFeed());
+        register(new AutoFish3());
+        register(new AutoMine2());
+        register(new AutoRepair());
+        register(new BlockReplace());
 
         // -------- EXPLOIT --------
         register(new AntiAim());
@@ -1176,6 +1192,10 @@ public class ModuleManager {
         register(new Notifier());
         register(new SoundNotifier());
         register(new MapHelper());
+        register(new AutoGG());
+        register(new AutoSit());
+        register(new ChatColors());
+        register(new CoordTracker());
 
         // -------- STAFF --------
         register(new cc.quark.module.modules.staff.StaffChat());
@@ -1211,6 +1231,8 @@ public class ModuleManager {
         register(new cc.quark.module.modules.staff.NickChanger());
         register(new cc.quark.module.modules.staff.ConsoleLogger());
         register(new cc.quark.module.modules.staff.AltManager());
+        register(new cc.quark.module.modules.staff.CommandSpy2());
+        register(new cc.quark.module.modules.staff.MassKick());
     }
 
     // -------------------------------------------------------------------------
