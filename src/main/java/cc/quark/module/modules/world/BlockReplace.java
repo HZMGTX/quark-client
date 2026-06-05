@@ -115,13 +115,15 @@ public class BlockReplace extends Module {
     private int findReplaceSlot(Block block) {
         if (mc.player == null) return -1;
         net.minecraft.item.Item item = block.asItem();
-        int maxSlot = hotbarOnly.isEnabled() ? 9 : 36;
-        for (int i = 0; i < maxSlot; i++) {
-            if (mc.player.getInventory().getStack(i).isOf(item)) return i < 9 ? i : -1;
-        }
-        // For hotbar, remap: re-check just hotbar
+        // Hotbar first
         for (int i = 0; i < 9; i++) {
             if (mc.player.getInventory().getStack(i).isOf(item)) return i;
+        }
+        if (!hotbarOnly.isEnabled()) {
+            // Full inventory — only usable after swapping to hotbar; return slot index for reference
+            for (int i = 9; i < 36; i++) {
+                if (mc.player.getInventory().getStack(i).isOf(item)) return i;
+            }
         }
         return -1;
     }

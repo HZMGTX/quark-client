@@ -107,11 +107,14 @@ public class AutoRepair extends Module {
             ItemStack stack = anvil.slots.get(i).getStack();
             if (!stack.isEmpty() && ItemStack.areItemsEqual(stack, toRepair)) return i;
         }
-        // Fallback: any stack that is a valid repair ingredient
+        // Fallback: any stack that is a valid repair ingredient via ToolMaterial (1.21.1 API)
         for (int i = start; i < total; i++) {
             ItemStack stack = anvil.slots.get(i).getStack();
             if (!stack.isEmpty() && toRepair.getItem() instanceof net.minecraft.item.ToolItem tool) {
-                if (tool.getMaterial().getRepairIngredient().test(stack)) return i;
+                try {
+                    var ingredient = tool.getMaterial().value().repairIngredient();
+                    if (ingredient != null && ingredient.test(stack)) return i;
+                } catch (Exception ignored) {}
             }
         }
         return -1;

@@ -706,6 +706,8 @@ public class ModuleManager {
         register(new AntiAFK3());
         register(new AutoEquip());
         register(new AutoLeave());
+        register(new BetterTotem());
+        register(new NoInteract2());
 
         // -------- RENDER --------
         register(new ActiveMods());
@@ -1035,6 +1037,8 @@ public class ModuleManager {
         register(new AutoMine2());
         register(new AutoRepair());
         register(new BlockReplace());
+        register(new ChestOrganizer());
+        register(new FarmHelper());
 
         // -------- EXPLOIT --------
         register(new AntiAim());
@@ -1196,6 +1200,10 @@ public class ModuleManager {
         register(new AutoSit());
         register(new ChatColors());
         register(new CoordTracker());
+        register(new CustomSplash());
+        register(new ItemInfo());
+        register(new PanicButton());
+        register(new TimeAnnouncer());
 
         // -------- STAFF --------
         register(new cc.quark.module.modules.staff.StaffChat());
@@ -1233,6 +1241,11 @@ public class ModuleManager {
         register(new cc.quark.module.modules.staff.AltManager());
         register(new cc.quark.module.modules.staff.CommandSpy2());
         register(new cc.quark.module.modules.staff.MassKick());
+        register(new cc.quark.module.modules.staff.PlayerAnalyzer());
+        register(new cc.quark.module.modules.staff.ServerAnnounce());
+        register(new cc.quark.module.modules.staff.StaffFly2());
+        register(new cc.quark.module.modules.staff.WorldBackup());
+        register(new cc.quark.module.modules.staff.ZoneProtect());
     }
 
     // -------------------------------------------------------------------------
