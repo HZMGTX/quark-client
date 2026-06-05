@@ -1141,6 +1141,8 @@ public class ModuleManager {
         register(new BossBarInfo());
         register(new ClipboardShare());
         register(new Notifier());
+        register(new SoundNotifier());
+        register(new MapHelper());
 
         // -------- STAFF --------
         register(new cc.quark.module.modules.staff.StaffChat());
