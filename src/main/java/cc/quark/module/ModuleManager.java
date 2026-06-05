@@ -1051,9 +1051,6 @@ public class ModuleManager {
         register(new ChatTranslator());
         register(new AntiSpam());
         register(new NickHider());
-        register(new ChatTranslator());
-        register(new AntiSpam());
-        register(new NickHider());
         register(new AntiAFK2());
 
         // -------- STAFF --------
