@@ -473,6 +473,11 @@ public class ModuleManager {
         register(new TridentFly());
         register(new StepPlus());
         register(new SlipSpeed());
+        register(new HighFly());
+        register(new AntiVelocity());
+        register(new InventoryWalk());
+        register(new SlowFall());
+        register(new AirBhop());
 
         // -------- PLAYER --------
         register(new AFKMode());
