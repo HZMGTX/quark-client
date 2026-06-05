@@ -49,6 +49,7 @@ public class ModuleManager {
         register(new TargetStrafe());
         register(new AntiWeakness());
         register(new AttackSpeed());
+        register(new AimBot());
         register(new AuraDelay());
         register(new AutoAnchor());
         register(new AutoArmor());
