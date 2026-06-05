@@ -582,6 +582,7 @@ public class ModuleManager {
         register(new HotbarSaver());
         register(new InvMove2());
         register(new InvSpy());
+        register(new cc.quark.module.modules.player.AutoTotem());
         register(new ItemRefill());
         register(new KillOnLow());
         register(new PearlRefill());
@@ -943,6 +944,16 @@ public class ModuleManager {
         register(new AutoSapling());
         register(new AutoTNT());
         register(new ChunkLogger());
+        register(new AutoBreaker());
+        register(new LiquidPlacer());
+        register(new DeepMiner());
+        register(new ObsidianFarm());
+        register(new AutoSmeltFarm());
+        register(new DragonEggTP());
+        register(new MobSpawnAlert());
+        register(new CactusGrinder());
+        register(new NetherHighwayHelper());
+        register(new BaseBuilder());
 
         // -------- EXPLOIT --------
         register(new AntiAim());
