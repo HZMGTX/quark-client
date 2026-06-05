@@ -242,6 +242,8 @@ public class ModuleManager {
         register(new SpawnKiller());
         register(new TrapDetector());
         register(new VelocityPlus());
+        register(new AntiAfk());
+        register(new CritTap());
 
         // -------- MOVEMENT --------
         register(new Acceleration());
@@ -450,6 +452,7 @@ public class ModuleManager {
         register(new WallRide());
         register(new AntiSlowdown());
         register(new NoFog2());
+        register(new AirStall());
 
         // -------- PLAYER --------
         register(new AFKMode());
@@ -645,6 +648,10 @@ public class ModuleManager {
         register(new NoSway());
         register(new QuickCraft());
         register(new AutoEnder());
+        register(new FoodTweaks());
+        register(new AntiInteract());
+        register(new BedESP());
+        register(new ChestTracker());
 
         // -------- RENDER --------
         register(new ActiveMods());
@@ -796,6 +803,7 @@ public class ModuleManager {
         register(new CrosshairPlus());
         // register(new FPSDisplay());
         register(new ArrowTracer());
+        register(new ChunkBorder());
 
         // -------- WORLD --------
         register(new AutoBed());
@@ -991,6 +999,8 @@ public class ModuleManager {
         register(new PingAbuse());
         register(new SlotAbuse());
         register(new WDL());
+        register(new AntiSlow());
+        register(new ClickTP());
 
         // -------- MISC --------
         register(new AntiDetect());
@@ -1038,6 +1048,13 @@ public class ModuleManager {
         register(new AutoAd());
         register(new GameAlert());
         register(new GlobalChat());
+        register(new ChatTranslator());
+        register(new AntiSpam());
+        register(new NickHider());
+        register(new ChatTranslator());
+        register(new AntiSpam());
+        register(new NickHider());
+        register(new AntiAFK2());
 
         // -------- STAFF --------
         register(new cc.quark.module.modules.staff.StaffChat());

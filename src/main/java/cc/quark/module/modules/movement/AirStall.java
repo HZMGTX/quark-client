@@ -1,7 +1,6 @@
 package cc.quark.module.modules.movement;
 
 import cc.quark.event.EventHandler;
-import cc.quark.event.events.EventMove;
 import cc.quark.event.events.EventTick;
 import cc.quark.module.Category;
 import cc.quark.module.Module;

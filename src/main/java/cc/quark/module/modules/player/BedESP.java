@@ -30,8 +30,8 @@ public class BedESP extends Module {
     private final ColorSetting outlineColor = register(new ColorSetting(
             "Outline Color", "Bed highlight outline color", 0xFFFF4444));
 
-    private final BoolSetting showDistance = register(new BoolSetting(
-            "Show Distance", "Show distance to each bed in the 3D world", false));
+    private final BoolSetting showFill = register(new BoolSetting(
+            "Show Fill", "Fill bed boxes with a translucent color", true));
 
     private final DoubleSetting lineWidth = register(new DoubleSetting(
             "Line Width", "Outline line width", 1.5, 1.0, 3.0));
@@ -59,8 +59,6 @@ public class BedESP extends Module {
                     BlockState state = mc.world.getBlockState(pos);
                     if (!(state.getBlock() instanceof BedBlock)) continue;
 
-                    // Only render one part of the bed (the foot or head, not both)
-                    // BedBlock has a PART property; we render both parts independently
                     Box box = new Box(pos.getX(), pos.getY(), pos.getZ(),
                             pos.getX() + 1.0, pos.getY() + 0.5625, pos.getZ() + 1.0);
 
@@ -69,7 +67,15 @@ public class BedESP extends Module {
                     float fb = outlineColor.getBlueF();
                     float fa = outlineColor.getAlphaF();
 
-                    RenderUtil.drawBox(matrices, box, fr, fg, fb, fillColor.getAlphaF() / 255f, (float) lineWidth.get());
+                    RenderUtil.drawESPBox(matrices, box, fr, fg, fb, fa, (float) lineWidth.get());
+
+                    if (showFill.isEnabled()) {
+                        RenderUtil.drawFilledBox(matrices, box,
+                                fillColor.getRedF(),
+                                fillColor.getGreenF(),
+                                fillColor.getBlueF(),
+                                fillColor.getAlphaF());
+                    }
                 }
             }
         }
