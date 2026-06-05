@@ -653,6 +653,7 @@ public class ModuleManager {
         register(new AntiInteract());
         register(new BedESP());
         register(new ChestTracker());
+        register(new MiddleClickPearl());
 
         // -------- RENDER --------
         register(new ActiveMods());
@@ -805,6 +806,14 @@ public class ModuleManager {
         // register(new FPSDisplay());
         register(new ArrowTracer());
         register(new ChunkBorder());
+        register(new BlockOutline());
+        register(new AntiAliasing());
+        register(new TotemCounter());
+        register(new EffectDisplay());
+        register(new ItemCount());
+        register(new LagMeter());
+        register(new CrystalDamage());
+        register(new SprintIndicator());
 
         // -------- WORLD --------
         register(new AutoBed());
@@ -932,6 +941,8 @@ public class ModuleManager {
         register(new RoofBuilder());
         register(new IceRoad());
         register(new AutoSapling());
+        register(new AutoTNT());
+        register(new ChunkLogger());
 
         // -------- EXPLOIT --------
         register(new AntiAim());
@@ -1053,6 +1064,9 @@ public class ModuleManager {
         register(new AntiSpam());
         register(new NickHider());
         register(new AntiAFK2());
+        register(new AutoScreenshot());
+        register(new PingAlert());
+        register(new AntiAFKfish());
 
         // -------- STAFF --------
         register(new cc.quark.module.modules.staff.StaffChat());
