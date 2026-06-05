@@ -101,7 +101,7 @@ public class AutoTool extends Module {
         for (int i = 0; i < 9; i++) {
             ItemStack stack = mc.player.getInventory().getStack(i);
             if (stack.getItem() instanceof SwordItem sword) {
-                float dmg = sword.getMaterial().getAttackDamage();
+                float dmg = sword.getMaterial().value().attackDamageBonus();
                 if (dmg > bestDmg) {
                     bestDmg = dmg;
                     bestSlot = i;
