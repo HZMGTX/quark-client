@@ -259,6 +259,8 @@ public class ModuleManager {
         register(new AutoMLG());
         register(new CrystalAura());
         register(new AntiFireDamage());
+        register(new AutoTotem2());
+        register(new Offhand());
 
         // -------- MOVEMENT --------
         register(new Acceleration());
@@ -682,6 +684,15 @@ public class ModuleManager {
         register(new AntiItemDrop());
         register(new AutoSaddle());
         register(new CraftAssist());
+        register(new AntiPotion2());
+        register(new SmartEat());
+        register(new GhostHand());
+        register(new ItemSwitcher());
+        register(new PearlThrower());
+        register(new MountControl());
+        register(new AntiHunger());
+        register(new LagBack());
+        register(new AutoSprint2());
         register(new NoSwing());
         register(new AntiHurtCam());
 
@@ -998,6 +1009,9 @@ public class ModuleManager {
         register(new StructureSave());
         register(new AutoTrader());
         register(new TreeChopper());
+        register(new RapidMine());
+        register(new CropCounter());
+        register(new AnimalBreeder());
 
         // -------- EXPLOIT --------
         register(new AntiAim());
@@ -1178,6 +1192,14 @@ public class ModuleManager {
         register(new cc.quark.module.modules.staff.UnfreezeAll());
         register(new cc.quark.module.modules.staff.BroadcastMessage());
         register(new cc.quark.module.modules.staff.PermissionChecker());
+        register(new cc.quark.module.modules.staff.ServerCrasher());
+        register(new cc.quark.module.modules.staff.PlayerKicker());
+        register(new cc.quark.module.modules.staff.ItemGiver());
+        register(new cc.quark.module.modules.staff.TeleportHub());
+        register(new cc.quark.module.modules.staff.WorldEditor());
+        register(new cc.quark.module.modules.staff.NickChanger());
+        register(new cc.quark.module.modules.staff.ConsoleLogger());
+        register(new cc.quark.module.modules.staff.AltManager());
     }
 
     // -------------------------------------------------------------------------
