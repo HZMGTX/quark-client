@@ -278,6 +278,31 @@ ipcMain.handle('inject:run', async (_e, pid) => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
+// IPC – Global Chat Server (local relay)
+// ─────────────────────────────────────────────────────────────────────────────
+
+let chatServerProcess = null;
+
+ipcMain.handle('chat:serverStart', (_e, port) => {
+    if (chatServerProcess) return { running: true, port };
+    const serverScript = path.join(__dirname, '..', 'server', 'chat-server.js');
+    if (!fs.existsSync(serverScript)) {
+        throw new Error('Chat server not found. Build the project first.');
+    }
+    const p = parseInt(port, 10) || 8765;
+    chatServerProcess = exec(`node "${serverScript}"`, { env: { ...process.env, PORT: p } });
+    chatServerProcess.on('exit', () => { chatServerProcess = null; });
+    return { running: true, port: p };
+});
+
+ipcMain.handle('chat:serverStop', () => {
+    if (chatServerProcess) { chatServerProcess.kill(); chatServerProcess = null; }
+    return { running: false };
+});
+
+ipcMain.handle('chat:serverStatus', () => ({ running: !!chatServerProcess }));
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Helpers
 // ─────────────────────────────────────────────────────────────────────────────
 

@@ -1037,6 +1037,7 @@ public class ModuleManager {
         register(new AutoResponse());
         register(new AutoAd());
         register(new GameAlert());
+        register(new GlobalChat());
 
         // -------- STAFF --------
         register(new cc.quark.module.modules.staff.StaffChat());

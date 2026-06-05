@@ -21,4 +21,9 @@ contextBridge.exposeInMainWorld('quark', {
 
     // App info
     getVersion : () => ipcRenderer.invoke('app:version'),
+
+    // Global Chat Server
+    chatServerStart  : (port) => ipcRenderer.invoke('chat:serverStart', port),
+    chatServerStop   : ()     => ipcRenderer.invoke('chat:serverStop'),
+    chatServerStatus : ()     => ipcRenderer.invoke('chat:serverStatus'),
 });
