@@ -15,7 +15,7 @@ import net.minecraft.entity.player.PlayerEntity;
  * combat timer in the module suffix.
  * Also announces elapsed combat time every 5 seconds.
  */
-public class PvpTimer extends Module {
+public class PvPTimer extends Module {
 
     private final DoubleSetting range = register(new DoubleSetting("Range", "Combat detection range", 6.0, 2.0, 20.0));
 
@@ -27,8 +27,8 @@ public class PvpTimer extends Module {
     private static final String[] KILL_PATTERNS   = { " was slain by ", " was killed by ", " was shot by " };
     private static final String[] DEATH_PATTERNS  = { " died", " fell ", " drowned", " burned", " blew up" };
 
-    public PvpTimer() {
-        super("PvpTimer", "Tracks K/D ratio and combat timer via chat detection", Category.COMBAT);
+    public PvPTimer() {
+        super("PvPTimer", "Tracks K/D ratio and combat timer via chat detection", Category.COMBAT);
     }
 
     @Override

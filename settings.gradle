@@ -18,7 +18,16 @@ stonecutter {
         // Verify yarn/loader/fabric-api coordinates at https://fabricmc.net/develop
         // before building each version. Year-based (25.x, 26.x) entries need their
         // own mapping coordinates added to build.gradle once pinned.
-        versions("1.21.1")
+        //
+        // Supported version targets (Modern Fabric / Stonecutter):
+        //   1.19.4  - fabric-api 0.87.0+1.19.4
+        //   1.20.1  - fabric-api 0.92.2+1.20.1
+        //   1.20.4  - fabric-api 0.97.0+1.20.4
+        //   1.21.1  - fabric-api 0.102.0+1.21.1  (primary)
+        //
+        // Legacy versions (1.8.9-1.18.x) require a separate Legacy Fabric build.
+        // See docs/legacy-support.md for details.
+        versions("1.19.4", "1.20.1", "1.20.4", "1.21.1")
         vcsVersion = "1.21.1"
     }
 }
