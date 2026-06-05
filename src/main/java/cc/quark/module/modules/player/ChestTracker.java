@@ -10,11 +10,12 @@ import cc.quark.setting.ColorSetting;
 import cc.quark.setting.DoubleSetting;
 import cc.quark.setting.IntSetting;
 import cc.quark.util.RenderUtil;
-import net.minecraft.block.*;
+import net.minecraft.block.entity.*;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.math.ChunkPos;
+import net.minecraft.world.chunk.WorldChunk;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -22,12 +23,12 @@ import java.util.Map;
 /**
  * ChestTracker - Remembers and renders all chests, barrels, and shulker boxes
  * that were within range at any point during the session. Draws ESP boxes
- * and labels over their world positions.
+ * over their world positions.
  */
 public class ChestTracker extends Module {
 
     private final DoubleSetting range = register(new DoubleSetting(
-            "Scan Range", "Block scan range around the player", 32.0, 8.0, 64.0));
+            "Scan Range", "Block scan range around the player", 64.0, 16.0, 128.0));
 
     private final BoolSetting trackBarrels = register(new BoolSetting(
             "Barrels", "Also track barrel blocks", true));
@@ -44,18 +45,15 @@ public class ChestTracker extends Module {
     private final ColorSetting shulkerColor = register(new ColorSetting(
             "Shulker Color", "Outline color for shulkers", 0xFFAA00FF));
 
-    private final BoolSetting showLabels = register(new BoolSetting(
-            "Labels", "Show block type label above each tracked container", true));
-
     private final IntSetting scanDelay = register(new IntSetting(
             "Scan Delay", "Ticks between area scans", 20, 5, 100));
 
-    // Map of BlockPos -> type label
+    // Map of BlockPos -> type label ("Chest", "Barrel", "Shulker")
     private final Map<BlockPos, String> tracked = new HashMap<>();
     private int scanTick = 0;
 
     public ChestTracker() {
-        super("ChestTracker", "Tracks and highlights opened chests and containers in range", Category.PLAYER);
+        super("ChestTracker", "Tracks and highlights chests and containers found in range", Category.PLAYER);
     }
 
     @Override
@@ -77,32 +75,36 @@ public class ChestTracker extends Module {
         if (scanTick < scanDelay.get()) return;
         scanTick = 0;
 
-        BlockPos center = mc.player.getBlockPos();
-        int r = (int) Math.ceil(range.get());
+        BlockPos playerPos = mc.player.getBlockPos();
+        int chunkRadius = ((int) Math.ceil(range.get()) >> 4) + 1;
+        ChunkPos playerChunk = new ChunkPos(playerPos);
 
-        for (int dx = -r; dx <= r; dx++) {
-            for (int dy = -r; dy <= r; dy++) {
-                for (int dz = -r; dz <= r; dz++) {
-                    BlockPos pos = center.add(dx, dy, dz);
-                    if (mc.player.getPos().distanceTo(Vec3d.ofCenter(pos)) > range.get()) continue;
+        for (int cx = playerChunk.x - chunkRadius; cx <= playerChunk.x + chunkRadius; cx++) {
+            for (int cz = playerChunk.z - chunkRadius; cz <= playerChunk.z + chunkRadius; cz++) {
+                WorldChunk chunk = mc.world.getChunkManager().getWorldChunk(cx, cz);
+                if (chunk == null) continue;
 
-                    Block block = mc.world.getBlockState(pos).getBlock();
-                    if (block instanceof ChestBlock || block instanceof TrappedChestBlock) {
+                for (BlockEntity be : chunk.getBlockEntities().values()) {
+                    BlockPos pos = be.getPos();
+                    if (playerPos.getManhattanDistance(pos) > range.get() * 1.5) continue;
+
+                    if (be instanceof ChestBlockEntity) {
                         tracked.put(pos, "Chest");
-                    } else if (trackBarrels.isEnabled() && block instanceof BarrelBlock) {
+                    } else if (trackBarrels.isEnabled() && be instanceof BarrelBlockEntity) {
                         tracked.put(pos, "Barrel");
-                    } else if (trackShulkers.isEnabled() && block instanceof ShulkerBoxBlock) {
+                    } else if (trackShulkers.isEnabled() && be instanceof ShulkerBoxBlockEntity) {
                         tracked.put(pos, "Shulker");
                     }
                 }
             }
         }
 
-        // Clean up entries that are no longer valid blocks (e.g., broken)
+        // Clean up entries whose block entities no longer exist
         tracked.entrySet().removeIf(entry -> {
-            Block b = mc.world.getBlockState(entry.getKey()).getBlock();
-            return !(b instanceof ChestBlock) && !(b instanceof TrappedChestBlock)
-                    && !(b instanceof BarrelBlock) && !(b instanceof ShulkerBoxBlock);
+            BlockPos pos = entry.getKey();
+            ChunkPos cp = new ChunkPos(pos);
+            WorldChunk c = mc.world.getChunkManager().getWorldChunk(cp.x, cp.z);
+            return c == null || c.getBlockEntity(pos) == null;
         });
     }
 
@@ -116,8 +118,7 @@ public class ChestTracker extends Module {
             BlockPos pos = entry.getKey();
             String label = entry.getValue();
 
-            Box box = new Box(pos.getX(), pos.getY(), pos.getZ(),
-                    pos.getX() + 1.0, pos.getY() + 1.0, pos.getZ() + 1.0);
+            Box box = new Box(pos);
 
             float r, g, b;
             switch (label) {
