@@ -852,6 +852,9 @@ public class ModuleManager {
         register(new FovChanger());
         register(new SkyColor());
         register(new WeatherIndicator());
+        register(new TunnelVision());
+        register(new NametagsPlus());
+        register(new BlockHighlight3());
 
         // -------- WORLD --------
         register(new AutoBed());
