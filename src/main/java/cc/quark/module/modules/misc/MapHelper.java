@@ -8,7 +8,8 @@ import cc.quark.module.Module;
 import cc.quark.setting.BoolSetting;
 import cc.quark.setting.IntSetting;
 import net.minecraft.client.gui.DrawContext;
-import net.minecraft.item.FilledMapItem;
+import net.minecraft.component.DataComponentTypes;
+import net.minecraft.component.type.MapIdComponent;
 import net.minecraft.item.Items;
 
 public class MapHelper extends Module {
@@ -29,6 +30,8 @@ public class MapHelper extends Module {
         int sh = ctx.getScaledWindowHeight();
         int s = size.get();
         ctx.fill(sw/2 - s/2 - 2, sh/2 - s/2 - 2, sw/2 + s/2 + 2, sh/2 + s/2 + 2, 0xFF333333);
-        cc.quark.util.RenderUtil.drawCustomText(ctx, "Map #" + FilledMapItem.getMapId(held), sw/2 - 20, sh/2 + s/2 + 4, 0xFFAAAAAA);
+        MapIdComponent mapId = held.get(DataComponentTypes.MAP_ID);
+        String mapLabel = mapId != null ? "Map #" + mapId.id() : "Map";
+        cc.quark.util.RenderUtil.drawCustomText(ctx, mapLabel, sw/2 - 20, sh/2 + s/2 + 4, 0xFFAAAAAA);
     }
 }

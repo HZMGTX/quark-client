@@ -8,7 +8,6 @@ import cc.quark.setting.BoolSetting;
 import cc.quark.setting.ColorSetting;
 import cc.quark.setting.IntSetting;
 import cc.quark.setting.ModeSetting;
-import cc.quark.util.ColorUtil;
 import net.minecraft.client.gui.DrawContext;
 
 public class Crosshair extends Module {
@@ -28,7 +27,7 @@ public class Crosshair extends Module {
         int sh = ctx.getScaledWindowHeight();
         int cx = sw / 2, cy = sh / 2;
         int sz = size.get(), th = thickness.get();
-        int c = ColorUtil.fromSettingARGB(color.getRedF(), color.getGreenF(), color.getBlueF(), color.getAlphaF());
+        int c = color.get();
 
         switch (style.get()) {
             case "Classic" -> {
