@@ -54,7 +54,6 @@ public class AntiCurse extends Module {
         if (enchants == null) return false;
 
         for (RegistryEntry<Enchantment> entry : enchants.getEnchantments()) {
-            Enchantment ench = entry.value();
             String key = entry.getKey().map(k -> k.getValue().toString()).orElse("");
             if (binding.isEnabled() && key.contains("binding_curse")) return true;
             if (vanishing.isEnabled() && key.contains("vanishing_curse")) return true;
