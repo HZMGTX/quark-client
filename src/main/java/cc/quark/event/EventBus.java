@@ -127,6 +127,10 @@ public class EventBus {
     public <T extends Event> T post(T event) {
         if (event == null) return null;
 
+        if (cc.quark.module.Module.mc == null) {
+            cc.quark.module.Module.mc = net.minecraft.client.MinecraftClient.getInstance();
+        }
+
         List<ListenerEntry> entries = listenerMap.get(event.getClass());
         if (entries == null || entries.isEmpty()) return event;
 

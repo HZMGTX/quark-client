@@ -51,7 +51,7 @@ public class MobAura extends Module {
         List<MobEntity> mobs = new ArrayList<>();
         for (Entity entity : mc.world.getEntities()) {
             if (!(entity instanceof MobEntity mob)) continue;
-            if (mob.isDead() || mob.getHealth() <= 0f) continue;
+            if (mob.isRemoved() || mob.getHealth() <= 0f) continue;
             if (mc.player.distanceTo(mob) > range.get()) continue;
             mobs.add(mob);
         }

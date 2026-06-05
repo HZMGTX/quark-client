@@ -55,7 +55,7 @@ public class DoubleJump extends Module {
                 mc.player.setVelocity(vel.x, boost.get(), vel.z);
                 usedDoubleJump = true;
                 cooldownTimer.reset();
-                event.setCancelled(true); // Cancel vanilla jump attempt in air
+                event.cancel(); // Cancel vanilla jump attempt in air
             }
         }
     }

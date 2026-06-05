@@ -27,16 +27,16 @@ public class Velocity2 extends Module {
     public void onPacketReceive(EventPacketReceive event) {
         if (mc.player == null) return;
         if (!(event.getPacket() instanceof EntityVelocityUpdateS2CPacket pkt)) return;
-        if (pkt.id() != mc.player.getId()) return;
+        if (pkt.getEntityId() != mc.player.getId()) return;
 
         event.cancel();
 
         double hMult = horizontal.get() / 100.0;
         double vMult = vertical.get()   / 100.0;
 
-        double velX = (pkt.velocityX() / 8000.0) * hMult;
-        double velY = (pkt.velocityY() / 8000.0) * vMult;
-        double velZ = (pkt.velocityZ() / 8000.0) * hMult;
+        double velX = (pkt.getVelocityX() / 8000.0) * hMult;
+        double velY = (pkt.getVelocityY() / 8000.0) * vMult;
+        double velZ = (pkt.getVelocityZ() / 8000.0) * hMult;
 
         mc.player.setVelocity(velX, velY, velZ);
     }

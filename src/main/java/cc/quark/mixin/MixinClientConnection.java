@@ -10,7 +10,7 @@ import net.minecraft.network.packet.Packet;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.ModifyArg;
+import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(ClientConnection.class)
@@ -24,10 +24,9 @@ public class MixinClientConnection {
     // ---- Outgoing packets ------------------------------------------------
 
     // Step 1: post the event and allow packet replacement via the return value.
-    // @ModifyArg fires before @Inject at the same injection point.
-    @ModifyArg(method = "send(Lnet/minecraft/network/packet/Packet;Lnet/minecraft/network/PacketCallbacks;)V",
-               at = @At("HEAD"), index = 0)
-    private Packet<?> onSendModifyArg(Packet<?> packet) {
+    @ModifyVariable(method = "send(Lnet/minecraft/network/packet/Packet;Lnet/minecraft/network/PacketCallbacks;)V",
+               at = @At("HEAD"), argsOnly = true, ordinal = 0)
+    private Packet<?> onSendModifyVariable(Packet<?> packet) {
         if (Quark.getInstance() == null) return packet;
         EventPacketSend event = new EventPacketSend(packet);
         Quark.getInstance().getEventBus().post(event);
@@ -49,9 +48,9 @@ public class MixinClientConnection {
 
     // ---- Incoming packets ------------------------------------------------
 
-    @ModifyArg(method = "channelRead0(Lio/netty/channel/ChannelHandlerContext;Lnet/minecraft/network/packet/Packet;)V",
-               at = @At("HEAD"), index = 1)
-    private Packet<?> onReceiveModifyArg(Packet<?> packet) {
+    @ModifyVariable(method = "channelRead0(Lio/netty/channel/ChannelHandlerContext;Lnet/minecraft/network/packet/Packet;)V",
+               at = @At("HEAD"), argsOnly = true, ordinal = 0)
+    private Packet<?> onReceiveModifyVariable(Packet<?> packet) {
         if (Quark.getInstance() == null) return packet;
         EventPacketReceive event = new EventPacketReceive(packet);
         Quark.getInstance().getEventBus().post(event);

@@ -20,6 +20,9 @@ public class MixinMinecraft {
      */
     @Inject(method = "tick", at = @At("HEAD"))
     private void onTick(CallbackInfo ci) {
+        if (cc.quark.module.Module.mc == null) {
+            cc.quark.module.Module.mc = MinecraftClient.getInstance();
+        }
         Quark instance = Quark.getInstance();
         if (instance == null) return;
         instance.getEventBus().post(new EventTick());

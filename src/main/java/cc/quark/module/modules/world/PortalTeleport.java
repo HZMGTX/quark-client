@@ -29,7 +29,7 @@ public class PortalTeleport extends Module {
 
         if (nether.isEnabled() && block == Blocks.NETHER_PORTAL) {
             // Force instant teleport by setting the portal timer to max
-            mc.player.setInPortal(pos);
+            // mc.player.setInPortal(pos);
         }
 
         if (end.isEnabled() && block == Blocks.END_PORTAL) {

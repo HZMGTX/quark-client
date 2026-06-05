@@ -73,7 +73,7 @@ public class GappleAlert extends Module {
                     String gappleType = enchanted ? "Notch Apple" : "Golden Apple";
 
                     if (chat.isEnabled()) {
-                        ChatUtil.sendMessage("[GappleAlert] " + name + " is eating a " + gappleType + "!");
+                        cc.quark.util.ChatUtil.info("[GappleAlert] " + name + " is eating a " + gappleType + "!");
                     }
                     if (sound.isEnabled() && mc.world != null) {
                         mc.world.playSound(mc.player,

@@ -48,7 +48,7 @@ public class DragClick extends Module {
         if (System.currentTimeMillis() - lastClickTime >= delay) {
             // Simulate attack on nearest target
             List<LivingEntity> targets = EntityUtil.getEntitiesOfType(LivingEntity.class, 4.0);
-            targets.removeIf(e -> e == mc.player || e.isDead());
+            targets.removeIf(e -> e == mc.player || e.isRemoved());
             targets.removeIf(e -> !(e instanceof PlayerEntity));
 
             if (!targets.isEmpty()) {

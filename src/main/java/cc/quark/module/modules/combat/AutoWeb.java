@@ -56,7 +56,7 @@ public class AutoWeb extends Module {
         for (Entity e : mc.world.getEntities()) {
             if (e == mc.player) continue;
             if (!(e instanceof LivingEntity living)) continue;
-            if (living.isDead() || living.getHealth() <= 0f) continue;
+            if (living.isRemoved() || living.getHealth() <= 0f) continue;
             double d = mc.player.distanceTo(e);
             if (d < best) { best = d; target = living; }
         }

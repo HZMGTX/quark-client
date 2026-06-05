@@ -26,7 +26,7 @@ public class CritBot extends Module {
         if (mc.player.isTouchingWater() || mc.player.isInLava()) return;
 
         List<LivingEntity> targets = EntityUtil.getEntitiesOfType(LivingEntity.class, range.get());
-        targets.removeIf(e -> e == mc.player || e.isDead());
+        targets.removeIf(e -> e == mc.player || e.isRemoved());
         targets.removeIf(e -> !(e instanceof PlayerEntity));
 
         if (targets.isEmpty()) return;

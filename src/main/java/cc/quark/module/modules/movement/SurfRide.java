@@ -44,7 +44,7 @@ public class SurfRide extends Module {
             if (entity == mc.player) continue;
             if (!(entity instanceof MobEntity)) continue;
             LivingEntity living = (LivingEntity) entity;
-            if (living.isDead() || living.getHealth() <= 0f) continue;
+            if (living.isRemoved() || living.getHealth() <= 0f) continue;
 
             double dist = mc.player.distanceTo(entity);
             if (dist > range.get()) continue;

@@ -18,7 +18,7 @@ import java.util.List;
 public abstract class Module {
 
     /** Shared MC instance â€” safe to access from module code on the render/game thread. */
-    protected static final MinecraftClient mc = MinecraftClient.getInstance();
+    public static MinecraftClient mc;
 
     private final String   name;
     private final String   description;

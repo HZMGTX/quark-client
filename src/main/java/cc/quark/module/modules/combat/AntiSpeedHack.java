@@ -61,7 +61,7 @@ public class AntiSpeedHack extends Module {
                     if (lastAlert == null || now - lastAlert > 3000) {
                         if (alert.isEnabled()) {
                             String name = player.getGameProfile().getName();
-                            ChatUtil.sendMessage("[AntiSpeedHack] " + name +
+                            cc.quark.util.ChatUtil.info("[AntiSpeedHack] " + name +
                                     " may be speed-hacking! Speed: " +
                                     String.format("%.2f", speed * 20) + " BPS");
                         }

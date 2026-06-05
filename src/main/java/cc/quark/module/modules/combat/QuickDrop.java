@@ -33,7 +33,7 @@ public class QuickDrop extends Module {
         ItemStack stack = mc.player.getInventory().getStack(targetSlot);
         if (stack.isEmpty()) {
             // Nothing to drop, disable self
-            this.setEnabled(false);
+            this.toggle();
             return;
         }
 

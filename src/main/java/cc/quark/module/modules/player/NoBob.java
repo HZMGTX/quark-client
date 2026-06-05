@@ -25,7 +25,7 @@ public class NoBob extends Module {
     @Override
     public void onDisable() {
         if (mc.options != null) {
-            mc.options.bobView().setValue(true);
+            mc.options.getBobView().setValue(true);
         }
     }
 
@@ -38,7 +38,7 @@ public class NoBob extends Module {
         if (mc.options == null || mc.player == null) return;
 
         if (walk.isEnabled()) {
-            mc.options.bobView().setValue(false);
+            mc.options.getBobView().setValue(false);
         }
 
         if (hand.isEnabled() && mc.player != null) {

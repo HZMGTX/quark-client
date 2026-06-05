@@ -32,9 +32,9 @@ public class Glitch extends Module {
 
         for (int i = 0; i < count.get(); i++) {
             mc.getNetworkHandler().sendPacket(
-                    new PlayerMoveC2SPacket.OnGroundOnly(true, hCol));
+                    new PlayerMoveC2SPacket.OnGroundOnly(true));
             mc.getNetworkHandler().sendPacket(
-                    new PlayerMoveC2SPacket.OnGroundOnly(false, hCol));
+                    new PlayerMoveC2SPacket.OnGroundOnly(false));
         }
     }
 }

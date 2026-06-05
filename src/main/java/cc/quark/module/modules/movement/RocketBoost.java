@@ -36,7 +36,7 @@ public class RocketBoost extends Module {
     @EventHandler
     public void onTick(EventTick event) {
         if (mc.player == null || mc.interactionManager == null) return;
-        if (!mc.player.isGliding()) return;
+        if (!mc.player.isFallFlying()) return;
 
         if (cooldown > 0) {
             cooldown--;

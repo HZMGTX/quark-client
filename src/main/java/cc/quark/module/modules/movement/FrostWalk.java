@@ -45,7 +45,7 @@ public class FrostWalk extends Module {
                 // Replace water surface blocks with frosted ice
                 if (state.isOf(Blocks.WATER)) {
                     // Check it's a full water source block at the top surface
-                    if (state.getFluidState().isSource()) {
+                    if (state.getFluidState().isStill()) {
                         mc.world.setBlockState(checkPos, Blocks.FROSTED_ICE.getDefaultState());
                     }
                 }

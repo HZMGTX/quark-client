@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "id": "quark",
+  "version": "1.0.0+mc1.21.1",
+  "name": "Quark.cc",
+  "description": "A Minecraft Fabric ghost/hack client.",
+  "authors": [
+    "Quark Team"
+  ],
+  "contact": {
+    "homepage": "https://github.com/HZMGTX",
+    "sources": "https://github.com/HZMGTX/quark-client"
+  },
+  "license": "MIT",
+  "icon": "assets/quark/icon.png",
+  "environment": "client",
+  "entrypoints": {
+    "main": [
+      "cc.quark.Quark"
+    ],
+    "client": [
+      "cc.quark.Quark"
+    ]
+  },
+  "mixins": [
+    "quark.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": "\u003e\u003d0.15.7",
+    "fabric-api": "*",
+    "minecraft": "\u003e\u003d1.20.1",
+    "java": "\u003e\u003d21"
+  },
+  "suggests": {
+    "viafabric": "*",
+    "viafabricplus": "*"
+  },
+  "jars": [
+    {
+      "file": "META-INF/jars/gson-2.10.1.jar"
+    }
+  ]
+}

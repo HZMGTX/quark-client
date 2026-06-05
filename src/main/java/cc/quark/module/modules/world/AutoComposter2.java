@@ -36,7 +36,7 @@ public class AutoComposter2 extends Module {
         for (int i = 0; i < 9; i++) {
             ItemStack stack = mc.player.getInventory().getStack(i);
             if (stack.getItem() == Items.WHEAT_SEEDS || stack.getItem() == Items.BEETROOT_SEEDS
-                    || stack.getItem() == Items.OAK_LEAVES || stack.getItem() == Items.GRASS) {
+                    || stack.getItem() == Items.OAK_LEAVES || stack.getItem() == Items.SHORT_GRASS) {
                 slot = i; break;
             }
         }
@@ -49,7 +49,7 @@ public class AutoComposter2 extends Module {
                 for (int z = -(int)r; z <= (int)r; z++) {
                     BlockPos pos = origin.add(x, y, z);
                     if (mc.world.getBlockState(pos).getBlock() != Blocks.COMPOSTER) continue;
-                    if (mc.player.distanceTo(Vec3d.ofCenter(pos)) > r) continue;
+                    if (mc.player.getPos().distanceTo(Vec3d.ofCenter(pos)) > r) continue;
 
                     int prev = mc.player.getInventory().selectedSlot;
                     mc.player.getInventory().selectedSlot = slot;

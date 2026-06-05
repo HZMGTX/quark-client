@@ -32,7 +32,7 @@ public class ExpFarm extends Module {
         List<MobEntity> mobs = mc.world.getEntitiesByClass(
                 MobEntity.class,
                 mc.player.getBoundingBox().expand(r),
-                mob -> !mob.isDead()
+                mob -> !mob.isRemoved()
                         && mob.squaredDistanceTo(mc.player) <= rSq
                         && mob.isAlive()
         );

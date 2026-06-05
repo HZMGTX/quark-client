@@ -77,7 +77,7 @@ public class RodAura extends Module {
         for (Entity entity : mc.world.getEntities()) {
             if (entity == mc.player) continue;
             if (!(entity instanceof LivingEntity living)) continue;
-            if (living.isDead() || living.getHealth() <= 0f) continue;
+            if (living.isRemoved() || living.getHealth() <= 0f) continue;
             if (!(entity instanceof PlayerEntity)) continue;
             double dist = mc.player.distanceTo(entity);
             if (dist > range.get() || dist >= bestDist) continue;

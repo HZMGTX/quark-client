@@ -107,7 +107,7 @@ public class MultiAura extends Module {
         for (Entity entity : mc.world.getEntities()) {
             if (entity == mc.player) continue;
             if (!(entity instanceof LivingEntity living)) continue;
-            if (living.isDead() || living.getHealth() <= 0f) continue;
+            if (living.isRemoved() || living.getHealth() <= 0f) continue;
             if (onlyPlayers.isEnabled() && !(entity instanceof PlayerEntity)) continue;
             if (entity instanceof PlayerEntity player
                     && Quark.getInstance() != null

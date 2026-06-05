@@ -31,9 +31,9 @@ public class KillOnLow extends Module {
 
         float threshold = (float) hpThreshold.get();
 
-        List<PlayerEntity> lowHpPlayers = mc.world.getPlayers().stream()
+        java.util.List<net.minecraft.client.network.AbstractClientPlayerEntity> lowHpPlayers = mc.world.getPlayers().stream()
                 .filter(p -> p != mc.player)
-                .filter(p -> !p.isDead())
+                .filter(p -> !p.isRemoved())
                 .filter(p -> p.getHealth() <= threshold)
                 .sorted(Comparator.comparingDouble(p -> p.squaredDistanceTo(mc.player)))
                 .toList();

@@ -44,7 +44,7 @@ public class AutoSword extends Module {
         boolean enemyNear = false;
         for (var e : mc.world.getEntities()) {
             if (e == mc.player) continue;
-            if (!(e instanceof LivingEntity le) || le.isDead()) continue;
+            if (!(e instanceof LivingEntity le) || le.isRemoved()) continue;
             if (mc.player.distanceTo(le) <= range.get()) {
                 enemyNear = true;
                 break;

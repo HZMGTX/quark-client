@@ -49,7 +49,7 @@ public class NoFall extends Module {
             // Set onGround = true every tick — risky but bypasses simple checks
             case SPOOF -> {
                 if (mc.player.fallDistance > minHeight.get()) {
-                    mc.player.onGround = true;
+                    mc.player.setOnGround(true);
                 }
             }
 

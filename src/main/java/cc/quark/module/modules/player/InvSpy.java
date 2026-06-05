@@ -55,7 +55,7 @@ public class InvSpy extends Module {
         double r = range.get();
         double rSq = r * r;
 
-        List<PlayerEntity> nearby = mc.world.getPlayers().stream()
+        java.util.List<net.minecraft.client.network.AbstractClientPlayerEntity> nearby = mc.world.getPlayers().stream()
                 .filter(p -> p != mc.player)
                 .filter(p -> p.squaredDistanceTo(mc.player) <= rSq)
                 .sorted(Comparator.comparingDouble(p -> p.squaredDistanceTo(mc.player)))

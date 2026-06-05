@@ -38,7 +38,7 @@ public class SmartCrit extends Module {
         } else if (mode.is("Jump")) {
             if (mc.player.isOnGround()) {
                 mc.player.setVelocity(mc.player.getVelocity().x, 0.42, mc.player.getVelocity().z);
-                mc.player.onGround = false;
+                mc.player.setOnGround(false);
             }
         } else if (mode.is("Legit")) {
             if (mc.player.isOnGround()) {

@@ -28,7 +28,7 @@ public class HealBlock extends Module {
         for (var entity : mc.world.getEntities()) {
             if (!(entity instanceof LivingEntity living)) continue;
             if (living == mc.player) continue;
-            if (living.isDead()) continue;
+            if (living.isRemoved()) continue;
             if (mc.player.distanceTo(living) > r) continue;
             // Attack enemies that have regeneration or saturation healing
             if (living.hasStatusEffect(StatusEffects.REGENERATION)

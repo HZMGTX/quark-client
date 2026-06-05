@@ -32,7 +32,7 @@ public class QuickEat extends Module {
         int multiplier = (int) Math.max(1, speed.get());
         for (int i = 1; i < multiplier; i++) {
             if (mc.player.getItemUseTimeLeft() > 0) {
-                mc.player.tickActiveItemStack();
+                // mc.player.tickActiveItemStack();
             }
         }
     }

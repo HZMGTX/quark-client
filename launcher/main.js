@@ -212,12 +212,69 @@ ipcMain.handle('inject:scan', () => {
     });
 });
 
+const fs = require('fs');
+
 ipcMain.handle('inject:run', async (_e, pid) => {
     console.log(`[Inject] Attaching to PID ${pid}`);
-    // Real injection would use Java attach API / agent JAR here.
-    // For now we simulate a brief delay and return success.
-    await new Promise(r => setTimeout(r, 1200));
-    return { success: true, pid };
+    
+    return new Promise((resolve, reject) => {
+        const injectorExe = path.join(__dirname, '..', 'quark-cpp', 'build', 'Release', 'quark-injector.exe');
+        
+        if (!fs.existsSync(injectorExe)) {
+            return reject(new Error("C++ Injector not found. Please compile it first."));
+        }
+
+        // 1. First, ALWAYS stage the Fabric JAR so their modules actually load on next restart
+        // Dynamically resolve --gameDir from the running process to support ALL launchers
+        exec(`wmic process where processid=${pid} get commandline`, (errCmd, stdoutCmd) => {
+            let gameDir = null;
+            if (!errCmd && stdoutCmd) {
+                // Match --gameDir "path" or --gameDir path
+                const match = stdoutCmd.match(/--gameDir\s+"?([^"]+)"?/);
+                if (match && match[1]) {
+                    gameDir = match[1].trim();
+                } else {
+                    // Fallback to extracting from -Djava.library.path if possible, or just default
+                    const libMatch = stdoutCmd.match(/-Djava\.library\.path="?([^"]+)"?/);
+                    if (libMatch && libMatch[1]) {
+                        // Usually something like .minecraft/bin/natives, we can traverse up
+                        gameDir = path.resolve(libMatch[1], '..', '..');
+                    }
+                }
+            }
+
+            let modsFolder;
+            if (gameDir) {
+                modsFolder = path.join(gameDir, 'mods');
+                console.log(`[Inject] Detected GameDir from launcher: ${gameDir}`);
+            } else {
+                const appdata = process.env.APPDATA || (process.platform == 'darwin' ? process.env.HOME + '/Library/Application Support' : process.env.HOME + "/.local/share");
+                modsFolder = path.join(appdata, '.minecraft', 'mods'); // Vanilla fallback
+                console.log(`[Inject] GameDir not found in args, falling back to: ${modsFolder}`);
+            }
+
+            if (!fs.existsSync(modsFolder)) fs.mkdirSync(modsFolder, { recursive: true });
+            const jarSource = path.join(__dirname, '..', 'versions', '1.21.1', 'build', 'libs', 'quark-1.21.1-1.0.0+mc1.21.1.jar');
+            const jarDest = path.join(modsFolder, 'quark-1.21.1-1.0.0+mc1.21.1.jar');
+            
+            try {
+                if (fs.existsSync(jarSource)) fs.copyFileSync(jarSource, jarDest);
+            } catch (e) { console.error("Could not stage JAR:", e); }
+            
+            // 2. Second, execute the native C++ injector for true Ghost Client runtime injection
+            exec(`"${injectorExe}"`, { cwd: path.dirname(injectorExe) }, (err, stdout, stderr) => {
+                console.log(stdout);
+                if (err || stdout.includes('Failed') || stderr.includes('Failed')) {
+                    console.error(stderr);
+                    return reject(new Error("C++ Injection failed. Make sure Minecraft is running."));
+                }
+                
+                // True Ghost Client Injection successful!
+                resolve({ success: true, pid: pid, gameDir: gameDir || 'Vanilla .minecraft', requiresRestart: false });
+            });
+        });
+        
+    });
 });
 
 // ─────────────────────────────────────────────────────────────────────────────

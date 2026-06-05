@@ -37,7 +37,7 @@ public class FastElytra extends Module {
     @EventHandler
     public void onTick(EventTick event) {
         if (mc.player == null) return;
-        if (!mc.player.isGliding()) return;
+        if (!mc.player.isFallFlying()) return;
 
         // Apply extra forward velocity in look direction proportional to SpeedMult
         Vec3d look = mc.player.getRotationVector();

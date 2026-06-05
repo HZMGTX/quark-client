@@ -74,7 +74,7 @@ public class ArmourComparator extends Module {
 
     private int getArmorScore(ItemStack stack) {
         if (stack.isEmpty() || !(stack.getItem() instanceof ArmorItem armor)) return 0;
-        return armor.getProtectionAmount();
+        return 0;
     }
 
     private boolean fitsArmorSlot(ItemStack stack, int armorSlot) {

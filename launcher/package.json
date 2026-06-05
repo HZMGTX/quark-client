@@ -10,9 +10,8 @@
     "build:linux": "electron-builder --linux",
     "build:mac": "electron-builder --mac"
   },
-  "dependencies": {},
   "devDependencies": {
-    "electron": "^28.3.0",
+    "electron": "^28.3.3",
     "electron-builder": "^24.13.3"
   },
   "build": {
@@ -33,10 +32,19 @@
     "extraResources": [],
     "win": {
       "target": [
-        { "target": "nsis",     "arch": ["x64"] },
-        { "target": "portable", "arch": ["x64"] }
-      ],
-      "icon": "assets/icon.ico"
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
     },
     "nsis": {
       "oneClick": false,
@@ -44,19 +52,16 @@
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "Quark Launcher",
-      "installerSidebar": "assets/installer-sidebar.bmp"
+      "shortcutName": "Quark Launcher"
     },
     "portable": {
       "artifactName": "${productName}-${version}-portable.exe"
     },
     "linux": {
-      "target": "AppImage",
-      "icon": "assets/icon.png"
+      "target": "AppImage"
     },
     "mac": {
-      "target": "dmg",
-      "icon": "assets/icon.icns"
+      "target": "dmg"
     }
   }
 }

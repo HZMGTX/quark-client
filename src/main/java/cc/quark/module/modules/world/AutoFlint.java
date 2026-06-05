@@ -33,7 +33,7 @@ public class AutoFlint extends Module {
     public void onTick(EventTick event) {
         if (mc.player == null || mc.world == null || mc.interactionManager == null) return;
         if (brokenCount >= maxBreaks.get()) {
-            setEnabled(false);
+            toggle();
             return;
         }
         if (!timer.hasReached(100)) return;

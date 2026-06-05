@@ -26,7 +26,7 @@ public class AntiHunger4 extends Module {
             mc.player.getHungerManager().addExhaustion(-0.1f);
         }
 
-        if (noJump.isEnabled() && mc.player.jumping) {
+        if (noJump.isEnabled() && mc.player.input.jumping) {
             mc.player.getHungerManager().addExhaustion(-0.05f);
         }
     }

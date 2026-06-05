@@ -39,7 +39,7 @@ public class AutoLog2 extends Module {
                 mc.getNetworkHandler().getConnection().disconnect(
                         net.minecraft.text.Text.literal("AutoLog2: Health critical"));
                 belowHpSince = -1;
-                this.setEnabled(false);
+                this.toggle();
             }
         } else {
             belowHpSince = -1;

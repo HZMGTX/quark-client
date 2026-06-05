@@ -39,7 +39,7 @@ public class TargetHUD extends Module {
         if (mc.player == null || mc.world == null) return;
 
         // Auto-clear target after 3 seconds of no attacks
-        if (target != null && (System.currentTimeMillis() - lastAttackTime > 3000 || target.isDead() || !target.isAlive())) {
+        if (target != null && (System.currentTimeMillis() - lastAttackTime > 3000 || target.isRemoved() || !target.isAlive())) {
             target = null;
         }
 

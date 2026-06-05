@@ -90,8 +90,8 @@ public class AutoCompost extends Module {
                 || item == Items.MELON_SEEDS
                 || item == Items.PUMPKIN_SEEDS
                 || item == Items.DRIED_KELP
-                || item == Items.LEAVES
-                || item == Items.GRASS
+                || item == Items.OAK_LEAVES
+                || item == Items.SHORT_GRASS
                 || item == Items.FERN
                 || item == Items.WHEAT
                 || item == Items.CARROT

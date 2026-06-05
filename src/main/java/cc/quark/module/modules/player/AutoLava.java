@@ -53,7 +53,7 @@ public class AutoLava extends Module {
         double best = range.get();
         for (var entity : mc.world.getEntities()) {
             if (entity == mc.player) continue;
-            if (!(entity instanceof LivingEntity le) || le.isDead()) continue;
+            if (!(entity instanceof LivingEntity le) || le.isRemoved()) continue;
             double dist = mc.player.distanceTo(le);
             if (dist < best) { best = dist; target = le; }
         }

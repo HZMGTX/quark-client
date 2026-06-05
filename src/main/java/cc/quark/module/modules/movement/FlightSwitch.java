@@ -35,7 +35,7 @@ public class FlightSwitch extends Module {
     @EventHandler
     public void onKey(EventKey event) {
         if (keybind.get() == 0) return;
-        if (event.getKey() != keybind.get()) return;
+        if (event.getKeyCode() != keybind.get()) return;
 
         mode.cycle();
         applyMode();

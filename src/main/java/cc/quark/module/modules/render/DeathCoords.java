@@ -71,7 +71,7 @@ public class DeathCoords extends Module {
     public void onRender2D(EventRender2D event) {
         if (mc.player == null) return;
 
-        boolean isDead = mc.player.isDead() || mc.player.getHealth() <= 0;
+        boolean isDead = mc.player.isRemoved() || mc.player.getHealth() <= 0;
         if (isDead && deathPositions.isEmpty()) {
             BlockPos pos = mc.player.getBlockPos();
             deathPositions.add(0, pos);

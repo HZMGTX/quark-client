@@ -65,7 +65,7 @@ public class ArrowBot extends Module {
 
         // Find nearest player target
         List<LivingEntity> targets = EntityUtil.getEntitiesOfType(LivingEntity.class, range.get());
-        targets.removeIf(e -> e == mc.player || e.isDead() || e.getHealth() <= 0f || !(e instanceof PlayerEntity));
+        targets.removeIf(e -> e == mc.player || e.isRemoved() || e.getHealth() <= 0f || !(e instanceof PlayerEntity));
         targets.removeIf(EntityUtil::isFriend);
 
         if (targets.isEmpty()) {

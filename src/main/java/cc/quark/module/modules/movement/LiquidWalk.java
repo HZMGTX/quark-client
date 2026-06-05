@@ -43,6 +43,6 @@ public class LiquidWalk extends Module {
         if (vel.y < 0) {
             mc.player.setVelocity(vel.x, 0.0, vel.z);
         }
-        mc.player.onGround = true;
+        mc.player.setOnGround(true);
     }
 }

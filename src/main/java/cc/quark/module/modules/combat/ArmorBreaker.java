@@ -49,7 +49,7 @@ public class ArmorBreaker extends Module {
         for (var entity : mc.world.getEntities()) {
             if (!(entity instanceof PlayerEntity p)) continue;
             if (p == mc.player) continue;
-            if (p.isDead()) continue;
+            if (p.isRemoved()) continue;
             if (mc.player.distanceTo(p) > r) continue;
             if (p.getArmor() < lowestArmor) {
                 lowestArmor = p.getArmor();

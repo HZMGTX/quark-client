@@ -145,7 +145,7 @@ public class AutoBot extends Module {
         for (Entity e : mc.world.getEntities()) {
             if (e == mc.player) continue;
             if (!(e instanceof HostileEntity living)) continue;
-            if (living.isDead() || living.getHealth() <= 0) continue;
+            if (living.isRemoved() || living.getHealth() <= 0) continue;
             double d = mc.player.distanceTo(living);
             if (d > r) continue;
             if (d < nearestDist) {
@@ -192,7 +192,7 @@ public class AutoBot extends Module {
         for (int i = 0; i < 9; i++) {
             ItemStack stack = mc.player.getInventory().getStack(i);
             if (stack.getItem() instanceof SwordItem sword) {
-                float dmg = sword.getMaterial().attackDamageBonus();
+                float dmg = sword.getMaterial().getAttackDamage();
                 if (dmg > bestDmg) {
                     bestDmg = dmg;
                     best    = i;

@@ -122,7 +122,7 @@ public class CrystalESP extends Module {
                 dmgColor, false,
                 matrices.peek().getPositionMatrix(),
                 immediate,
-                TextRenderer.TextLayerType.SEE_THROUGH,
+                net.minecraft.client.font.TextRenderer.TextLayerType.SEE_THROUGH,
                 0x44000000,
                 0xF000F0
         );

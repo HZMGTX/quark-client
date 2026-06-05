@@ -62,7 +62,7 @@ public class AutoEgg extends Module {
         for (Entity entity : mc.world.getEntities()) {
             if (entity == mc.player) continue;
             if (!(entity instanceof LivingEntity living)) continue;
-            if (living.isDead()) continue;
+            if (living.isRemoved()) continue;
             if (living instanceof PlayerEntity player && player.isSpectator()) continue;
             double distSq = mc.player.squaredDistanceTo(entity);
             if (distSq < best) {

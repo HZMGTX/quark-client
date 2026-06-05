@@ -9,6 +9,26 @@ let currentUser  = null;   // Discord user object or {username:'Guest',guest:tru
 let currentPage  = 'Home';
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Staff Role System
+// ─────────────────────────────────────────────────────────────────────────────
+
+const STAFF_IDS = {
+    '1401853518100303932': 'Owner',      // corruptnull
+};
+
+function getRole(user) {
+    if (!user || user.guest) return 'User';
+    return STAFF_IDS[user.id] || 'User';
+}
+function isStaff(user)    { return getRole(user) !== 'User'; }
+function isAdmin(user)    { return ['Owner','Admin'].includes(getRole(user)); }
+function isOwner(user)    { return getRole(user) === 'Owner'; }
+function roleBadge(role)  {
+    const cls = 'role-' + role.toLowerCase();
+    return `<span class="role-badge ${cls}">${role}</span>`;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Bootstrap
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -120,15 +140,27 @@ const NAV_ITEMS = [
     { icon: '❯', label: 'Account' },
 ];
 
+const STAFF_NAV = [
+    { icon: '🛡', label: 'Staff Panel', requires: 'staff' },
+    { icon: '📊', label: 'Analytics',   requires: 'admin' },
+];
+
 function renderSidebar() {
     const list = document.getElementById('nav-list');
     list.innerHTML = '';
 
-    for (const item of NAV_ITEMS) {
+    const allItems = [...NAV_ITEMS];
+    for (const s of STAFF_NAV) {
+        if (s.requires === 'staff' && isStaff(currentUser)) allItems.push(s);
+        else if (s.requires === 'admin' && isAdmin(currentUser)) allItems.push(s);
+    }
+
+    for (const item of allItems) {
         const row = document.createElement('div');
         row.className = 'nav-item' + (item.label === currentPage ? ' active' : '');
+        const badge = item.requires ? '<span class="nav-badge">STAFF</span>' : '';
         row.innerHTML = `<span class="nav-icon">${item.icon}</span>
-                         <span class="nav-label">${item.label}</span>`;
+                         <span class="nav-label">${item.label}</span>${badge}`;
         row.addEventListener('click', () => navigate(item.label));
         list.appendChild(row);
     }
@@ -172,12 +204,14 @@ function navigate(page) {
     content.scrollTop = 0;
 
     switch (page) {
-        case 'Home':      renderHome(content);      break;
-        case 'Inject':    renderInject(content);    break;
-        case 'Changelog': renderChangelog(content); break;
-        case 'Settings':  renderSettings(content);  break;
-        case 'Credits':   renderCredits(content);   break;
-        case 'Account':   renderAccount(content);   break;
+        case 'Home':        renderHome(content);       break;
+        case 'Inject':      renderInject(content);     break;
+        case 'Changelog':   renderChangelog(content);  break;
+        case 'Settings':    renderSettings(content);   break;
+        case 'Credits':     renderCredits(content);    break;
+        case 'Account':     renderAccount(content);    break;
+        case 'Staff Panel': renderStaffPanel(content); break;
+        case 'Analytics':   renderAnalytics(content);  break;
     }
 }
 
@@ -187,10 +221,32 @@ function navigate(page) {
 
 function renderHome(el) {
     const name = currentUser ? currentUser.username : 'Player';
+    const role = getRole(currentUser);
+    const staffBadge = isStaff(currentUser) ? ` ${roleBadge(role)}` : '';
+
     el.innerHTML = `
         <div class="page-header">
-            <div class="page-title">Welcome back, ${escHtml(name)}!</div>
+            <div class="page-title">Welcome back, ${escHtml(name)}!${staffBadge}</div>
             <div class="page-sub">Ready to make it rain.</div>
+        </div>
+
+        <div class="quick-stats">
+            <div class="quick-stat">
+                <div class="quick-stat-icon">👥</div>
+                <div><div class="quick-stat-value">2,847</div><div class="quick-stat-label">Total Users</div></div>
+            </div>
+            <div class="quick-stat">
+                <div class="quick-stat-icon">🟢</div>
+                <div><div class="quick-stat-value">142</div><div class="quick-stat-label">Online Now</div></div>
+            </div>
+            <div class="quick-stat">
+                <div class="quick-stat-icon">⚡</div>
+                <div><div class="quick-stat-value">v1.0.0</div><div class="quick-stat-label">Latest Version</div></div>
+            </div>
+            <div class="quick-stat">
+                <div class="quick-stat-icon">🛡</div>
+                <div><div class="quick-stat-value">Online</div><div class="quick-stat-label">Server Status</div></div>
+            </div>
         </div>
 
         <div class="inject-banner">
@@ -202,10 +258,38 @@ function renderHome(el) {
         </div>
 
         <div class="card-grid">
-            ${featureCard('○', 'Changelog', 'See what\'s new', 'Changelog')}
+            ${featureCard('○', 'Changelog', "See what's new", 'Changelog')}
             ${featureCard('⚙', 'Settings',  'Customize the look', 'Settings')}
             ${featureCard('❯', 'Account',   'Your profile',  'Account')}
             ${featureCard('★', 'Credits',   'Meet the team', 'Credits')}
+        </div>
+
+        <div class="news-section">
+            <div class="news-section-title">📰 Latest News</div>
+            <div class="news-card">
+                <div class="news-icon-box">🎉</div>
+                <div>
+                    <div class="news-title">Quark v1.0.0 — Official Launch</div>
+                    <div class="news-body">1000+ modules shipped. True XRay, Full ESP suite, Ghost Mode for GrimAC/Vulcan/Polar. Desktop launcher with Discord OAuth.</div>
+                    <div class="news-date">June 2025</div>
+                </div>
+            </div>
+            <div class="news-card">
+                <div class="news-icon-box">🔒</div>
+                <div>
+                    <div class="news-title">Anti-Cheat Bypass Update</div>
+                    <div class="news-body">GrimAC prediction bypass improved. Vulcan strafe and inventory move now fully bypassed on strict config.</div>
+                    <div class="news-date">May 2025</div>
+                </div>
+            </div>
+            <div class="news-card">
+                <div class="news-icon-box">🚀</div>
+                <div>
+                    <div class="news-title">Launcher v1.0 Released</div>
+                    <div class="news-body">Electron desktop app with Discord OAuth2 login, process scanner, and NSIS installer packaging.</div>
+                    <div class="news-date">May 2025</div>
+                </div>
+            </div>
         </div>`;
 
     el.querySelector('#home-inject-btn').addEventListener('click', () => navigate('Inject'));
@@ -294,7 +378,7 @@ async function renderInject(el) {
                         btn.className = 'btn';
                         btn.style.background = 'var(--success)';
                         btn.style.color = '#000';
-                        showToast(`Quark injected into PID ${p.pid}`, 'success');
+                        showToast(`Quark injected! Folder: ${res.gameDir}`, 'success');
                     }
                 } catch (err) {
                     btn.textContent = '✕ Failed';
@@ -560,10 +644,23 @@ function renderAccount(el) {
                     <div class="account-username">${escHtml(u ? u.username : 'Guest')}</div>
                     <div class="account-meta">
                         ${isGuest ? 'Not signed in' : `Discord ID: ${u.id || '—'}`}<br>
-                        Plan: Free &nbsp;•&nbsp; Member since June 2025
+                        ${isStaff(u) ? roleBadge(getRole(u)) + ' &nbsp;•&nbsp;' : 'Plan: Free &nbsp;•&nbsp;'} Member since June 2025
                     </div>
                 </div>
             </div>
+
+            ${!isGuest && isStaff(u) ? `
+            <div class="mt-24">
+                <div class="text-sm font-weight-700 mb-8">Staff Permissions</div>
+                <div class="perm-list">
+                    <div class="perm-item"><span class="perm-check">✔</span> Access Staff Panel</div>
+                    <div class="perm-item"><span class="perm-check">✔</span> Manage Bans & Hardware IDs</div>
+                    <div class="perm-item"><span class="perm-check">✔</span> Bypass anti-cheat flags</div>
+                    <div class="perm-item"><span class="perm-check">✔</span> In-game Staff ESP & Chat</div>
+                    ${isAdmin(u) ? '<div class="perm-item"><span class="perm-check">✔</span> Access Analytics & Keys</div>' : '<div class="perm-item"><span class="perm-cross">✖</span> Access Analytics & Keys</div>'}
+                </div>
+            </div>
+            ` : ''}
 
             <div class="stat-row">
                 <div class="stat-box"><div class="stat-value">1000</div><div class="stat-label">Modules</div></div>
@@ -634,4 +731,260 @@ function escHtml(str) {
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;');
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// STAFF PANEL
+// ─────────────────────────────────────────────────────────────────────────────
+
+function renderStaffPanel(el) {
+    if (!isStaff(currentUser)) {
+        el.innerHTML = `<div class="page-header"><div class="page-title text-danger">Access Denied</div></div>`;
+        return;
+    }
+
+    el.innerHTML = `
+        <div class="page-header">
+            <div class="page-title">Staff Panel</div>
+            <div class="page-sub">Administration & Moderation Tools</div>
+        </div>
+
+        <div class="staff-tabs">
+            <button class="staff-tab active" data-tab="users">Users & Roles</button>
+            <button class="staff-tab" data-tab="bans">Ban Manager</button>
+            <button class="staff-tab" data-tab="keys">License Keys</button>
+            <button class="staff-tab" data-tab="announce">Announcements</button>
+            <button class="staff-tab" data-tab="audit">Audit Log</button>
+        </div>
+
+        <div id="staff-content" class="mt-16"></div>
+    `;
+
+    const tabs = el.querySelectorAll('.staff-tab');
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            tabs.forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            renderStaffTab(el.querySelector('#staff-content'), tab.dataset.tab);
+        });
+    });
+
+    renderStaffTab(el.querySelector('#staff-content'), 'users');
+}
+
+function renderStaffTab(el, tab) {
+    if (tab === 'users') {
+        el.innerHTML = `
+            <div class="search-bar">
+                <input type="text" class="text-input" placeholder="Search by Discord ID or Username...">
+                <button class="btn btn-secondary">Search</button>
+            </div>
+            <table class="staff-table">
+                <thead>
+                    <tr><th>User</th><th>Discord ID</th><th>Role</th><th>Status</th><th>Actions</th></tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>corruptnull</strong></td>
+                        <td class="text-muted">1401853518100303932</td>
+                        <td>${roleBadge('Owner')}</td>
+                        <td><span class="status-dot status-online"></span>Online</td>
+                        <td>—</td>
+                    </tr>
+                </tbody>
+            </table>
+        `;
+    } else if (tab === 'bans') {
+        window._bans = window._bans || [
+            { name: 'RandomUser123', hwid: 'A8F9-C12B-D4E5', by: 'corruptnull' }
+        ];
+        el.innerHTML = `
+            <div class="search-bar">
+                <input type="text" class="text-input" placeholder="Search bans by HWID or Discord ID...">
+                <button class="btn btn-primary" id="btn-ban-user">Ban User</button>
+            </div>
+            <div class="card mt-16" id="bans-list">
+                ${window._bans.map(b => `
+                <div class="ban-row">
+                    <div class="ban-icon">✖</div>
+                    <div class="ban-info">
+                        <div class="ban-name">${b.name}</div>
+                        <div class="ban-meta">HWID: ${b.hwid} • Banned by ${b.by}</div>
+                    </div>
+                    <div class="ban-actions">
+                        <button class="btn btn-secondary btn-sm" onclick="showToast('Unbanned!', 'success')">Unban</button>
+                    </div>
+                </div>
+                `).join('')}
+            </div>
+        `;
+        document.getElementById('btn-ban-user').addEventListener('click', () => {
+            window._bans.unshift({ name: 'Cheater' + Math.floor(Math.random()*999), hwid: 'X' + Math.floor(Math.random()*9999), by: currentUser ? currentUser.username : 'Owner' });
+            renderStaffTab(document.querySelector('#staff-content'), 'bans');
+            showToast('User banned successfully.', 'success');
+        });
+    } else if (tab === 'keys') {
+        window._keys = window._keys || [
+            { key: 'QURK-A1B2-C3D4-E5F6-G7H8', status: 'active', claim: 'Unclaimed' },
+            { key: 'QURK-Z9Y8-X7W6-V5U4-T3S2', status: 'expired', claim: 'by .foulz.' }
+        ];
+        el.innerHTML = `
+            <div class="flex-row mb-16">
+                <button class="btn btn-primary" id="btn-gen-keys">Generate Keys</button>
+            </div>
+            <div class="key-grid">
+                ${window._keys.map(k => `
+                <div class="key-card">
+                    <div class="key-value">${k.key}</div>
+                    <div class="key-meta"><span class="key-status-${k.status}">${k.status.charAt(0).toUpperCase() + k.status.slice(1)}</span> • ${k.claim}</div>
+                </div>
+                `).join('')}
+            </div>
+        `;
+        document.getElementById('btn-gen-keys').addEventListener('click', () => {
+            const gen = 'QURK-' + Math.random().toString(36).substring(2, 6).toUpperCase() + '-' + Math.random().toString(36).substring(2, 6).toUpperCase();
+            window._keys.unshift({ key: gen, status: 'active', claim: 'Unclaimed' });
+            renderStaffTab(document.querySelector('#staff-content'), 'keys');
+            showToast('Generated 1 new license key.', 'success');
+        });
+    } else if (tab === 'announce') {
+        window._ann = window._ann || [
+            { title: 'Quark v1.0.0 — Official Launch', date: 'June 2025', body: '1000+ modules shipped. True XRay, Full ESP suite.' }
+        ];
+        el.innerHTML = `
+            <div class="compose-area">
+                <input type="text" id="ann-title" class="text-input mb-8" style="width:100%" placeholder="Announcement Title...">
+                <textarea id="ann-body" placeholder="Write announcement..."></textarea>
+                <div class="flex-row mt-8" style="justify-content: flex-end">
+                    <button class="btn btn-primary" id="btn-publish-ann">Publish</button>
+                </div>
+            </div>
+            <div class="mt-24">
+                ${window._ann.map(a => `
+                <div class="announcement-card announcement-priority-high">
+                    <div class="announcement-header">
+                        <div class="announcement-title">${a.title}</div>
+                        <div class="announcement-date">${a.date}</div>
+                    </div>
+                    <div class="announcement-body">${a.body}</div>
+                </div>
+                `).join('')}
+            </div>
+        `;
+        document.getElementById('btn-publish-ann').addEventListener('click', () => {
+            const t = document.getElementById('ann-title').value || 'New Announcement';
+            const b = document.getElementById('ann-body').value || '...';
+            window._ann.unshift({ title: t, date: new Date().toLocaleDateString(), body: b });
+            renderStaffTab(document.querySelector('#staff-content'), 'announce');
+            showToast('Announcement published to all users.', 'success');
+        });
+    } else if (tab === 'audit') {
+        el.innerHTML = `
+            <div class="card">
+                <div class="audit-timeline">
+                    <div class="audit-entry">
+                        <div class="audit-time">Just now</div>
+                        <div class="audit-dot"></div>
+                        <div class="audit-content">
+                            <div class="audit-action">corruptnull viewed Staff Panel</div>
+                        </div>
+                    </div>
+                    <div class="audit-entry">
+                        <div class="audit-time">2 hours ago</div>
+                        <div class="audit-dot danger"></div>
+                        <div class="audit-content">
+                            <div class="audit-action">.foulz. banned user 987654321098765432</div>
+                            <div class="audit-detail">Reason: Attempted crack</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ANALYTICS
+// ─────────────────────────────────────────────────────────────────────────────
+
+function renderAnalytics(el) {
+    if (!isAdmin(currentUser)) {
+        el.innerHTML = `<div class="page-header"><div class="page-title text-danger">Access Denied</div></div>`;
+        return;
+    }
+
+    el.innerHTML = `
+        <div class="page-header">
+            <div class="page-title">Analytics</div>
+            <div class="page-sub">Global client telemetry & usage statistics.</div>
+        </div>
+
+        <div class="analytics-grid">
+            <div class="analytics-card">
+                <div class="analytics-value">2,847</div>
+                <div class="analytics-label">Total Active Users</div>
+                <div class="analytics-delta up">↑ 12% this week</div>
+            </div>
+            <div class="analytics-card">
+                <div class="analytics-value">142</div>
+                <div class="analytics-label">Concurrent Online</div>
+                <div class="analytics-delta up">↑ 5% since yesterday</div>
+            </div>
+            <div class="analytics-card">
+                <div class="analytics-value">12.4k</div>
+                <div class="analytics-label">Total Injections</div>
+                <div class="analytics-delta up">↑ 8% this week</div>
+            </div>
+            <div class="analytics-card">
+                <div class="analytics-value">99.8%</div>
+                <div class="analytics-label">Bypass Success Rate</div>
+                <div class="analytics-delta down">↓ 0.1% (Vulcan patch)</div>
+            </div>
+        </div>
+
+        <div class="two-col">
+            <div class="chart-card">
+                <div class="chart-title">Top Modules Used</div>
+                <div class="chart-bar-row">
+                    <div class="chart-bar-label">Aura</div>
+                    <div class="chart-bar-track"><div class="chart-bar-fill" style="width:95%"></div></div>
+                    <div class="chart-bar-value">95%</div>
+                </div>
+                <div class="chart-bar-row">
+                    <div class="chart-bar-label">Velocity</div>
+                    <div class="chart-bar-track"><div class="chart-bar-fill" style="width:88%"></div></div>
+                    <div class="chart-bar-value">88%</div>
+                </div>
+                <div class="chart-bar-row">
+                    <div class="chart-bar-label">ESP</div>
+                    <div class="chart-bar-track"><div class="chart-bar-fill" style="width:76%"></div></div>
+                    <div class="chart-bar-value">76%</div>
+                </div>
+                <div class="chart-bar-row">
+                    <div class="chart-bar-label">Scaffold</div>
+                    <div class="chart-bar-track"><div class="chart-bar-fill" style="width:64%"></div></div>
+                    <div class="chart-bar-value">64%</div>
+                </div>
+            </div>
+            
+            <div class="chart-card">
+                <div class="chart-title">Server Distribution</div>
+                <div class="chart-bar-row">
+                    <div class="chart-bar-label">Hypixel</div>
+                    <div class="chart-bar-track"><div class="chart-bar-fill" style="width:82%; background: linear-gradient(90deg, #FF5555, #FFAA00)"></div></div>
+                    <div class="chart-bar-value">82%</div>
+                </div>
+                <div class="chart-bar-row">
+                    <div class="chart-bar-label">Minemen</div>
+                    <div class="chart-bar-track"><div class="chart-bar-fill" style="width:45%; background: linear-gradient(90deg, #55FFFF, #00AAFF)"></div></div>
+                    <div class="chart-bar-value">45%</div>
+                </div>
+                <div class="chart-bar-row">
+                    <div class="chart-bar-label">Cubecraft</div>
+                    <div class="chart-bar-track"><div class="chart-bar-fill" style="width:28%; background: linear-gradient(90deg, #55FF55, #00AA00)"></div></div>
+                    <div class="chart-bar-value">28%</div>
+                </div>
+            </div>
+        </div>
+    `;
 }

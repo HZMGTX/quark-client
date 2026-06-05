@@ -32,7 +32,7 @@ public class HealthTags extends Module {
             if (entity == mc.player) continue;
             if (onlyPlayers.isEnabled() && !(entity instanceof PlayerEntity)) continue;
             if (!(entity instanceof net.minecraft.entity.LivingEntity living)) continue;
-            if (living.isDead() || living.getHealth() <= 0) continue;
+            if (living.isRemoved() || living.getHealth() <= 0) continue;
             if (mc.player.distanceTo(entity) > range.get()) continue;
 
             Vec3d worldPos = new Vec3d(entity.getX(), entity.getY() + entity.getHeight() + 0.35, entity.getZ());

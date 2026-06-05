@@ -11,6 +11,6 @@ public class NoFog2 extends Module {
     public void onTick(EventTick event) {
         if (mc.player==null) return;
         // Fog removal handled via FogCallback mixin; this module exposes the toggle.
-        mc.options.getCloudHeight().setValue(0.0f);
+        // cloud render
     }
 }

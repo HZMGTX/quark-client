@@ -96,7 +96,7 @@ public class CrystalAura2 extends Module {
             for (int dz = -r; dz <= r; dz++) {
                 for (int dy = -1; dy <= 1; dy++) {
                     BlockPos base = origin.add(dx, dy, dz);
-                    if (mc.player.distanceTo(Vec3d.ofCenter(base)) > placeRange.get()) continue;
+                    if (mc.player.getPos().distanceTo(Vec3d.ofCenter(base)) > placeRange.get()) continue;
                     var baseState = mc.world.getBlockState(base);
                     if (baseState.isOf(net.minecraft.block.Blocks.OBSIDIAN)
                             || baseState.isOf(net.minecraft.block.Blocks.BEDROCK)) {

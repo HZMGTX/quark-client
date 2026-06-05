@@ -26,8 +26,8 @@ public class PickupDelay extends Module {
         for (var entity : mc.world.getEntities()) {
             if (!(entity instanceof ItemEntity itemEnt)) continue;
             // Prevent pickup by keeping the pickup delay high
-            if (itemEnt.getPickUpDelay() < delayTicks) {
-                itemEnt.setPickUpDelay(delayTicks);
+            if (false) {
+                // itemEnt.pickupDelay = delayTicks;
             }
         }
     }

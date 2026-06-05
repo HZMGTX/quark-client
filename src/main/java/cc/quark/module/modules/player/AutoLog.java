@@ -38,7 +38,7 @@ public class AutoLog extends Module {
         triggered = true;
 
         if (confirm.isEnabled()) {
-            ChatUtil.sendMessage("AutoLog: disconnecting (HP: " + String.format("%.1f", health) + ")");
+            cc.quark.util.ChatUtil.info("AutoLog: disconnecting (HP: " + String.format("%.1f", health) + ")");
         }
 
         mc.execute(() -> mc.world.disconnect());

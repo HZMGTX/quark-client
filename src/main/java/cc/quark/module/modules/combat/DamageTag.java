@@ -56,7 +56,7 @@ public class DamageTag extends Module {
         for (Entity entity : mc.world.getEntities()) {
             if (entity == mc.player) continue;
             if (!(entity instanceof LivingEntity living)) continue;
-            if (living.isDead()) continue;
+            if (living.isRemoved()) continue;
 
             float hp = living.getHealth();
             float prev = lastHealth.getOrDefault(entity.getId(), hp);
@@ -84,11 +84,11 @@ public class DamageTag extends Module {
         for (Entity entity : mc.world.getEntities()) {
             if (entity == mc.player) continue;
             if (!(entity instanceof LivingEntity living)) continue;
-            if (living.isDead()) continue;
+            if (living.isRemoved()) continue;
             if (onlyPlayers.isEnabled() && !(entity instanceof PlayerEntity)) continue;
             if (mc.player.distanceTo(entity) > range.get()) continue;
 
-            float baseY = entity.getY() + entity.getHeight() + 0.35f;
+            float baseY = (float) entity.getY() + entity.getHeight() + 0.35f;
 
             // Health tag
             if (healthTag.isEnabled()) {

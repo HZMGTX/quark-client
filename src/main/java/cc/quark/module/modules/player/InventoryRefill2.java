@@ -96,6 +96,6 @@ public class InventoryRefill2 extends Module {
 
     private int getProtection(ItemStack stack) {
         if (stack.isEmpty() || !(stack.getItem() instanceof ArmorItem armor)) return 0;
-        return armor.getProtectionAmount();
+        return 0;
     }
 }

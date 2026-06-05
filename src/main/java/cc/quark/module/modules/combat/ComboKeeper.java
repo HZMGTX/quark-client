@@ -56,7 +56,7 @@ public class ComboKeeper extends Module {
     public void onTick(EventTick event) {
         if (mc.player == null || mc.world == null || mc.interactionManager == null) return;
 
-        if (comboTarget != null && (comboTarget.isDead() || comboTarget.getHealth() <= 0f
+        if (comboTarget != null && (comboTarget.isRemoved() || comboTarget.getHealth() <= 0f
                 || mc.player.distanceTo(comboTarget) > range.get() + 3.0)) {
             currentCombo = 0;
             comboTarget = null;
@@ -79,7 +79,7 @@ public class ComboKeeper extends Module {
     }
 
     private LivingEntity findTarget() {
-        if (comboTarget != null && !comboTarget.isDead() && comboTarget.getHealth() > 0f
+        if (comboTarget != null && !comboTarget.isRemoved() && comboTarget.getHealth() > 0f
                 && mc.player.distanceTo(comboTarget) <= range.get()) {
             return comboTarget;
         }
@@ -89,7 +89,7 @@ public class ComboKeeper extends Module {
         for (Entity entity : mc.world.getEntities()) {
             if (entity == mc.player) continue;
             if (!(entity instanceof PlayerEntity living)) continue;
-            if (living.isDead() || living.getHealth() <= 0f) continue;
+            if (living.isRemoved() || living.getHealth() <= 0f) continue;
             double dist = mc.player.distanceTo(entity);
             if (dist > range.get() || dist >= bestDist) continue;
             bestDist = dist;

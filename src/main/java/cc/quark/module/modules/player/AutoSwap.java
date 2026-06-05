@@ -79,7 +79,7 @@ public class AutoSwap extends Module {
     private boolean hasEnemyInRange(double range) {
         for (var e : mc.world.getEntities()) {
             if (e == mc.player) continue;
-            if (!(e instanceof LivingEntity le) || le.isDead()) continue;
+            if (!(e instanceof LivingEntity le) || le.isRemoved()) continue;
             if (mc.player.distanceTo(le) <= range) return true;
         }
         return false;

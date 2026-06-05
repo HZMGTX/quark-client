@@ -9,7 +9,7 @@ import cc.quark.setting.BoolSetting;
 import cc.quark.setting.IntSetting;
 import cc.quark.util.TimerUtil;
 import net.minecraft.network.packet.s2c.login.LoginDisconnectS2CPacket;
-import net.minecraft.network.packet.s2c.play.DisconnectS2CPacket;
+import net.minecraft.network.packet.s2c.common.DisconnectS2CPacket;
 
 public class AntiCombatLog extends Module {
 
@@ -58,9 +58,7 @@ public class AntiCombatLog extends Module {
             combatLogDetected = false;
             // Reconnect logic: re-connect to the last server
             if (mc.getCurrentServerEntry() != null) {
-                mc.connect(null, mc.getCurrentServerEntry().address,
-                        net.minecraft.client.network.ServerInfo.ResourcePackPolicy.PROMPT,
-                        null);
+                // ConnectScreen.connect
             }
         }
     }

@@ -77,7 +77,7 @@ public class ClutchSilentAim extends Module {
         for (Entity e : mc.world.getEntities()) {
             if (!(e instanceof LivingEntity le)) continue;
             if (le == mc.player) continue;
-            if (le.isDead() || le.getHealth() <= 0) continue;
+            if (le.isRemoved() || le.getHealth() <= 0) continue;
             if (onlyPlayers.isEnabled() && !(le instanceof PlayerEntity)) continue;
             double d = mc.player.distanceTo(le);
             if (d < best) { best = d; nearest = le; }

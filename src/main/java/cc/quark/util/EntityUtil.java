@@ -20,7 +20,7 @@ public final class EntityUtil {
     private EntityUtil() {}
 
     public static boolean isAlive(Entity entity) {
-        return entity instanceof LivingEntity living && !living.isDead() && living.getHealth() > 0f;
+        return entity instanceof LivingEntity living && !living.isRemoved() && living.getHealth() > 0f;
     }
 
     public static boolean isAnimal(Entity entity) {
@@ -51,7 +51,7 @@ public final class EntityUtil {
             if (!type.isInstance(entity)) continue;
             if (entity == mc.player) continue;
             LivingEntity living = (LivingEntity) entity;
-            if (living.isDead() || living.getHealth() <= 0f) continue;
+            if (living.isRemoved() || living.getHealth() <= 0f) continue;
             if (distanceTo(entity) <= range) result.add((T) entity);
         }
         return result;
@@ -87,7 +87,7 @@ public final class EntityUtil {
         for (Entity entity : mc.world.getEntities()) {
             if (entity == mc.player) continue;
             if (!(entity instanceof LivingEntity living)) continue;
-            if (living.isDead() || living.getHealth() <= 0f) continue;
+            if (living.isRemoved() || living.getHealth() <= 0f) continue;
             if (distanceTo(entity) > range) continue;
             result.add(living);
         }

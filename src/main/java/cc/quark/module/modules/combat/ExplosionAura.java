@@ -31,10 +31,10 @@ public class ExplosionAura extends Module {
         if (System.currentTimeMillis() - lastUse < 500) return;
 
         double r = range.get();
-        boolean hasTarget = mc.world.getEntities().stream()
+        boolean hasTarget = java.util.stream.StreamSupport.stream(mc.world.getEntities().spliterator(), false)
                 .anyMatch(e -> e instanceof LivingEntity living
                         && living != mc.player
-                        && !living.isDead()
+                        && !living.isRemoved()
                         && mc.player.distanceTo(living) <= r);
         if (!hasTarget) return;
 

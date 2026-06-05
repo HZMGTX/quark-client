@@ -27,7 +27,7 @@ public class NoFallDamage3 extends Module {
         if (mc.player.fallDistance < 3.0) return;
 
         // Replace packet with an OnGroundOnly packet indicating the player is on the ground
-        event.setPacket(new PlayerMoveC2SPacket.OnGroundOnly(true, mc.player.horizontalCollision));
+        event.setPacket(new PlayerMoveC2SPacket.OnGroundOnly(true));
         mc.player.fallDistance = 0;
     }
 }

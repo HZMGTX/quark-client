@@ -34,7 +34,7 @@ public class TridentReturn extends Module {
 
         List<TridentEntity> tridents = mc.world.getEntitiesByClass(
                 TridentEntity.class, searchBox,
-                t -> t.getOwner() == mc.player && t.isReturning());
+                t -> t.getOwner() == mc.player );
 
         if (tridents.isEmpty()) return;
 

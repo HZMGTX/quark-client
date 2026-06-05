@@ -26,11 +26,11 @@ public class NoFatigue extends Module {
         if (mc.player == null) return;
 
         // Block server-side mining fatigue effect from being applied
-        int effectId = pkt.getEffectId();
+        // int effectId = pkt.getEffectId();
         // Mining Fatigue effect registry ID = 4
-        if (effectId == net.minecraft.registry.Registries.STATUS_EFFECT.getRawId(StatusEffects.MINING_FATIGUE.value())) {
-            event.cancel();
-        }
+        // if (effectId == net.minecraft.registry.Registries.STATUS_EFFECT.getRawId(StatusEffects.MINING_FATIGUE.value())) {
+        //    event.cancel();
+        // }
     }
 
     @EventHandler

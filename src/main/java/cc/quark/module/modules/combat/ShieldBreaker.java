@@ -46,7 +46,7 @@ public class ShieldBreaker extends Module {
         for (Entity entity : mc.world.getEntities()) {
             if (!(entity instanceof PlayerEntity p)) continue;
             if (p == mc.player) continue;
-            if (p.isDead() || p.getHealth() <= 0f) continue;
+            if (p.isRemoved() || p.getHealth() <= 0f) continue;
             double d = mc.player.distanceTo(p);
             if (d > best) continue;
 

@@ -1,0 +1,4 @@
+Agent-Class: cc.quark.agent.QuarkAgent
+Can-Redefine-Classes: true
+Can-Retransform-Classes: true
+

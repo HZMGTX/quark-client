@@ -32,7 +32,7 @@ public class DeathLogger extends Module {
         if (event.getPacket() instanceof DeathMessageS2CPacket deathPacket) {
             if (!chatLog.isEnabled()) return;
             String time = LocalTime.now().format(TIME_FMT);
-            String cause = deathPacket.getMessage().getString();
+            String cause = deathPacket.message().getString();
             double x = mc.player.getX();
             double y = mc.player.getY();
             double z = mc.player.getZ();

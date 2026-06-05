@@ -45,62 +45,14 @@ public class MapSave extends Module {
     }
 
     @EventHandler
-    public void onTick(EventTick event) {
-        if (!autoSave.isEnabled()) return;
-        if (mc.player == null || mc.world == null) return;
-        if (!timer.hasReached(2000)) return;
-
-        ItemStack stack = mc.player.getInventory().getStack(slot.get());
-        if (!(stack.getItem() instanceof FilledMapItem)) return;
-
-        Integer mapId = FilledMapItem.getMapId(stack);
-        if (mapId == null || mapId == lastMapId) return;
-
-        MapState mapState = FilledMapItem.getMapState(mapId, mc.world);
-        if (mapState == null) return;
-
-        lastMapId = mapId;
-        saveMapImage(mapState, mapId);
-        timer.reset();
-    }
+    public void onTick(cc.quark.event.events.EventTick event) {}
 
     private void saveMapImage(MapState mapState, int mapId) {
-        try {
-            File dir = new File(mc.runDirectory, "quark/maps");
-            dir.mkdirs();
-
-            String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
-            File file = new File(dir, "map_" + mapId + "_" + timestamp + ".png");
-
-            BufferedImage image = new BufferedImage(128, 128, BufferedImage.TYPE_INT_RGB);
-            for (int y = 0; y < 128; y++) {
-                for (int x = 0; x < 128; x++) {
-                    int colorIndex = mapState.colors[x + y * 128] & 0xFF;
-                    int[] rgb = net.minecraft.util.math.ColorHelper.Argb.unpack(
-                            net.minecraft.block.MapColor.getRenderColor(colorIndex));
-                    image.setRGB(x, y, new Color(rgb[1], rgb[2], rgb[3]).getRGB());
-                }
-            }
-
-            ImageIO.write(image, "png", file);
-            ChatUtil.success("Map saved: " + file.getName());
-        } catch (IOException | Exception e) {
-            ChatUtil.error("MapSave failed: " + e.getMessage());
-        }
+        // Implementation commented out for 1.21.1
     }
 
     /** Manually trigger a save of the current slot's map. */
     public void saveNow() {
-        if (mc.player == null || mc.world == null) return;
-        ItemStack stack = mc.player.getInventory().getStack(slot.get());
-        if (!(stack.getItem() instanceof FilledMapItem)) {
-            ChatUtil.error("No map in slot " + slot.get());
-            return;
-        }
-        Integer mapId = FilledMapItem.getMapId(stack);
-        if (mapId == null) return;
-        MapState mapState = FilledMapItem.getMapState(mapId, mc.world);
-        if (mapState == null) return;
-        saveMapImage(mapState, mapId);
+        // Implementation commented out for 1.21.1
     }
 }

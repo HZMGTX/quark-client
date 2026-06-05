@@ -70,7 +70,7 @@ public class AutoSwitch2 extends Module {
             }
 
             if (stack.getItem() instanceof SwordItem sword) {
-                score += sword.getMaterial().attackDamageBonus();
+                score += sword.getMaterial().getAttackDamage();
             }
 
             if (score > bestScore) {

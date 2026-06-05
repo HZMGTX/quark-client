@@ -52,7 +52,7 @@ public class Cleave extends Module {
             if (entity == mc.player) continue;
             if (entity == primary) continue;
             if (!(entity instanceof LivingEntity living)) continue;
-            if (living.isDead() || living.getHealth() <= 0f) continue;
+            if (living.isRemoved() || living.getHealth() <= 0f) continue;
             if (mc.player.distanceTo(entity) > range.get()) continue;
 
             // Cone check

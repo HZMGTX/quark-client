@@ -6,9 +6,9 @@ import cc.quark.module.Category;
 import cc.quark.module.Module;
 import cc.quark.setting.BoolSetting;
 import cc.quark.util.ChatUtil;
-import net.minecraft.network.packet.c2s.play.KeepAliveC2SPacket;
-import net.minecraft.network.packet.s2c.play.DisconnectS2CPacket;
-import net.minecraft.network.packet.s2c.play.KeepAliveS2CPacket;
+import net.minecraft.network.packet.c2s.common.KeepAliveC2SPacket;
+import net.minecraft.network.packet.s2c.common.DisconnectS2CPacket;
+import net.minecraft.network.packet.s2c.common.KeepAliveS2CPacket;
 
 public class NoPacketKick extends Module {
 
@@ -28,7 +28,7 @@ public class NoPacketKick extends Module {
         if (mc.player == null) return;
 
         if (autoRespond.isEnabled() && event.getPacket() instanceof KeepAliveS2CPacket pkt) {
-            mc.player.networkHandler.sendPacket(new KeepAliveC2SPacket(pkt.id()));
+            mc.player.networkHandler.sendPacket(new KeepAliveC2SPacket(pkt.getId()));
             event.cancel();
         }
 

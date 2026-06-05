@@ -47,7 +47,7 @@ public class AutoEndPortal extends Module {
             for (int y = -2; y <= 2; y++) {
                 for (int z = -5; z <= 5; z++) {
                     BlockPos pos = origin.add(x, y, z);
-                    if (mc.player.distanceTo(Vec3d.ofCenter(pos)) > r) continue;
+                    if (mc.player.getPos().distanceTo(Vec3d.ofCenter(pos)) > r) continue;
                     var state = mc.world.getBlockState(pos);
                     if (state.getBlock() == Blocks.END_PORTAL_FRAME
                             && !state.get(EndPortalFrameBlock.EYE)) {

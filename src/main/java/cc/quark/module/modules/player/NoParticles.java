@@ -45,7 +45,7 @@ public class NoParticles extends Module {
             if (effect.getType() == ParticleTypes.EFFECT
                     || effect.getType() == ParticleTypes.INSTANT_EFFECT
                     || effect.getType() == ParticleTypes.ENTITY_EFFECT
-                    || effect.getType() == ParticleTypes.AMBIENT_ENTITY_EFFECT
+                    || effect.getType() == ParticleTypes.ENTITY_EFFECT
                     || effect.getType() == ParticleTypes.WITCH
                     || effect.getType() == ParticleTypes.ANGRY_VILLAGER
                     || effect.getType() == ParticleTypes.HAPPY_VILLAGER) {

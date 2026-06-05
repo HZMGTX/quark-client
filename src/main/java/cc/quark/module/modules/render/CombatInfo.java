@@ -51,7 +51,7 @@ public class CombatInfo extends Module {
     public void onTick(EventTick event) {
         if (target == null) return;
 
-        if (System.currentTimeMillis() - lastAttackTime > 5000 || !target.isAlive() || target.isDead()) {
+        if (System.currentTimeMillis() - lastAttackTime > 5000 || !target.isAlive() || target.isRemoved()) {
             target = null;
             return;
         }

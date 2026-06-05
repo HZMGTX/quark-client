@@ -33,7 +33,7 @@ public class AntiFireAura extends Module {
         for (var entity : mc.world.getEntities()) {
             if (!(entity instanceof LivingEntity living)) continue;
             if (living == mc.player) continue;
-            if (living.isDead()) continue;
+            if (living.isRemoved()) continue;
             if (mc.player.distanceTo(living) > r) continue;
             if (!living.isOnFire()) {
                 // Simulate fire by setting fire ticks

@@ -8,7 +8,7 @@ import cc.quark.setting.BoolSetting;
 import cc.quark.setting.ModeSetting;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.scoreboard.ScoreboardPlayerActor;
+
 import net.minecraft.scoreboard.Team;
 
 import java.util.ArrayList;

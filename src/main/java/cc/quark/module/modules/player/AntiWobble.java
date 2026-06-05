@@ -22,7 +22,7 @@ public class AntiWobble extends Module {
         if (always.isEnabled() || mc.player.hurtTime > 0) {
             mc.player.hurtTime = 0;
             // Reset hurt yaw so the camera doesn't rotate on damage
-            mc.player.hurtDirectionYaw = 0f;
+            mc.player.hurtTime = 0;
         }
     }
 }

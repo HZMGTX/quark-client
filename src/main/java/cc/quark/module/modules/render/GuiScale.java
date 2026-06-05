@@ -18,15 +18,15 @@ public class GuiScale extends Module {
     @Override
     public void onEnable() {
         if (mc.options != null) {
-            savedScale = mc.options.guiScale.getValue();
-            mc.options.guiScale.setValue(scale.get());
+            savedScale = mc.options.getGuiScale().getValue();
+            mc.options.getGuiScale().setValue(scale.get());
         }
     }
 
     @Override
     public void onDisable() {
         if (mc.options != null) {
-            mc.options.guiScale.setValue(savedScale);
+            mc.options.getGuiScale().setValue(savedScale);
         }
     }
 

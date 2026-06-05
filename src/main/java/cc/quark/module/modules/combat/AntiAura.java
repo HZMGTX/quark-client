@@ -47,7 +47,7 @@ public class AntiAura extends Module {
         for (Entity entity : mc.world.getEntities()) {
             if (entity == mc.player) continue;
             if (!(entity instanceof PlayerEntity player)) continue;
-            if (player.isDead()) continue;
+            if (player.isRemoved()) continue;
             if (mc.player.distanceTo(player) > range.get()) continue;
 
             Vec3d lookVec = player.getRotationVec(1.0f).normalize();

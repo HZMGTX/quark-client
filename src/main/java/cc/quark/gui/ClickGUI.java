@@ -26,7 +26,7 @@ public class ClickGUI extends Screen {
     private Category activeTab = null; // null = show all
 
     // Category display metadata
-    private static final String[] CAT_ICONS = { "⚔", "🏃", "☻", "✦", "⛏", "⚡", "⚙" };
+    private static final String[] CAT_ICONS = { "⚔", "🏃", "☻", "✦", "⛏", "⚡", "⚙", "🛡" };
     private static final int[] CAT_COLORS = {
         0xFFFF5555, // COMBAT
         0xFF55FF55, // MOVEMENT
@@ -35,6 +35,7 @@ public class ClickGUI extends Screen {
         0xFFFF9944, // WORLD
         0xFFFF55FF, // EXPLOIT
         0xFFAAAAAA, // MISC
+        0xFFFF3333, // STAFF
     };
 
     public static int getAccentColor() {
@@ -89,7 +90,7 @@ public class ClickGUI extends Screen {
 
         // ── Scale-in animation ───────────────────────────────────────────────
         float ease = alpha >= 1f ? 1f : 1f - (float)Math.pow(2, -10 * alpha);
-        currentScale = 0.8f + 0.2f * ease;
+        currentScale = 0.6f + 0.15f * ease;
 
         context.getMatrices().push();
         int centerX = screenW / 2;
@@ -116,7 +117,7 @@ public class ClickGUI extends Screen {
             boolean active = cat == activeTab;
             int catColor = CAT_COLORS[i];
             String label  = cat.name().charAt(0) + cat.name().substring(1).toLowerCase();
-            int labelW    = mc.textRenderer.getWidth(label);
+            int labelW    = net.minecraft.client.MinecraftClient.getInstance().textRenderer.getWidth(label);
             int tabW      = labelW + 16;
 
             int tabTextColor = active ? 0xFFFFFFFF : ColorUtil.withAlpha(0xFFFFFF, (int)(160 * alpha));
@@ -165,7 +166,7 @@ public class ClickGUI extends Screen {
 
         // ── Watermark ────────────────────────────────────────────────────────
         String watermark = "Quark.cc | " + Quark.VERSION;
-        int wmW = mc.textRenderer.getWidth(watermark) + 10;
+        int wmW = net.minecraft.client.MinecraftClient.getInstance().textRenderer.getWidth(watermark) + 10;
         context.fill(screenW - wmW - 2, screenH - 14, screenW, screenH, ColorUtil.withAlpha(0x0A0A0A, (int)(180 * alpha)));
         cc.quark.util.RenderUtil.drawCustomText(context, watermark, screenW - wmW, screenH - 11, getAccentColor());
 
@@ -176,7 +177,7 @@ public class ClickGUI extends Screen {
         int total = 0;
         for (Category cat : cats) {
             String label = cat.name().charAt(0) + cat.name().substring(1).toLowerCase();
-            total += mc.textRenderer.getWidth(label) + 16 + 4;
+            total += net.minecraft.client.MinecraftClient.getInstance().textRenderer.getWidth(label) + 16 + 4;
         }
         return total - 4;
     }
@@ -202,7 +203,7 @@ public class ClickGUI extends Screen {
             int tabX = width / 2 - getTabsWidth(cats) / 2;
             for (int i = 0; i < cats.length; i++) {
                 String label = cats[i].name().charAt(0) + cats[i].name().substring(1).toLowerCase();
-                int tabW = mc.textRenderer.getWidth(label) + 16;
+                int tabW = net.minecraft.client.MinecraftClient.getInstance().textRenderer.getWidth(label) + 16;
                 if (ux >= tabX && ux <= tabX + tabW) {
                     activeTab = (cats[i] == activeTab) ? null : cats[i];
                     return true;

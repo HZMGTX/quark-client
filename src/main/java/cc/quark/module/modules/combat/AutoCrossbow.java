@@ -67,7 +67,7 @@ public class AutoCrossbow extends Module {
         double closestDist = Double.MAX_VALUE;
         for (var entity : mc.world.getEntities()) {
             if (!(entity instanceof LivingEntity living)) continue;
-            if (living == mc.player || living.isDead()) continue;
+            if (living == mc.player || living.isRemoved()) continue;
             double dist = mc.player.distanceTo(living);
             if (dist <= r && dist < closestDist) {
                 closestDist = dist;

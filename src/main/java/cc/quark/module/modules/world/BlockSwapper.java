@@ -82,7 +82,7 @@ public class BlockSwapper extends Module {
         try {
             String id = name.trim().toLowerCase();
             if (!id.contains(":")) id = "minecraft:" + id;
-            return Registries.BLOCK.get(new Identifier(id));
+            return Registries.BLOCK.get(Identifier.of(id));
         } catch (Exception e) {
             return null;
         }

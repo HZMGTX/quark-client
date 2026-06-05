@@ -12,10 +12,10 @@ import net.minecraft.entity.effect.StatusEffects;
 public class Fullbright extends Module {
 
     private final ModeSetting mode = register(new ModeSetting(
-            "Mode", "Fullbright implementation method", "Gamma", "Gamma", "Night Vision", "Both"));
+            "Mode", "Fullbright implementation method", "Night Vision", "Gamma", "Night Vision", "Both"));
 
     private final DoubleSetting gammaValue = register(new DoubleSetting(
-            "Gamma Value", "Gamma level to apply (vanilla max is ~1.0, higher = brighter)", 16.0, 1.0, 1000.0));
+            "Gamma Value", "Gamma level to apply (vanilla max is 1.0)", 1.0, 0.0, 1.0));
 
     private double savedGamma = 1.0;
 

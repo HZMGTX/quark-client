@@ -6,7 +6,7 @@ import cc.quark.module.Category;
 import cc.quark.module.Module;
 import cc.quark.setting.DoubleSetting;
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.passive.HorseBaseEntity;
+import net.minecraft.entity.passive.AbstractHorseEntity;
 import net.minecraft.entity.passive.PigEntity;
 import net.minecraft.entity.passive.StriderEntity;
 import net.minecraft.util.math.Vec3d;
@@ -32,7 +32,7 @@ public class RidingSpeed extends Module {
         if (vehicle == null) return;
 
         // Only apply to horse, pig, or strider
-        if (!(vehicle instanceof HorseBaseEntity)
+        if (!(vehicle instanceof AbstractHorseEntity)
                 && !(vehicle instanceof PigEntity)
                 && !(vehicle instanceof StriderEntity)) {
             return;

@@ -159,7 +159,7 @@ public class ESP extends Module {
                 textColor, false,
                 matrices.peek().getPositionMatrix(),
                 immediate,
-                TextRenderer.TextLayerType.SEE_THROUGH,
+                net.minecraft.client.font.TextRenderer.TextLayerType.SEE_THROUGH,
                 0x55000000,
                 0xF000F0
         );

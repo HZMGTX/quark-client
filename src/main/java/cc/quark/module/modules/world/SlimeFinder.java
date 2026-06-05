@@ -29,7 +29,7 @@ public class SlimeFinder extends Module {
         if (mc.player == null || mc.world == null) return;
         slimeChunks.clear();
 
-        int seed = (int)(mc.world.getSeed() & 0xFFFFFFFFL);
+        int seed = 0; // mc.world.getSeed()
         int cx = mc.player.getChunkPos().x;
         int cz = mc.player.getChunkPos().z;
         int r = radius.get();

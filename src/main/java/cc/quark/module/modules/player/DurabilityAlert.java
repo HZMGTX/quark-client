@@ -62,7 +62,7 @@ public class DurabilityAlert extends Module {
         if (alerted) {
             if (sound.isEnabled() && mc.getSoundManager() != null) {
                 mc.getSoundManager().play(
-                        PositionedSoundInstance.master(SoundEvents.BLOCK_NOTE_BLOCK_PLING, 0.3f, 0.7f));
+                        PositionedSoundInstance.master(SoundEvents.BLOCK_NOTE_BLOCK_PLING.value(), 0.3f, 0.7f));
             }
             timer.reset();
         }

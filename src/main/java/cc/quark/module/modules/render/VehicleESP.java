@@ -10,7 +10,7 @@ import net.minecraft.client.gui.DrawContext;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.vehicle.AbstractMinecartEntity;
 import net.minecraft.entity.vehicle.BoatEntity;
-import net.minecraft.entity.passive.HorseBaseEntity;
+import net.minecraft.entity.passive.AbstractHorseEntity;
 import net.minecraft.util.math.Vec3d;
 
 public class VehicleESP extends Module {
@@ -38,7 +38,7 @@ public class VehicleESP extends Module {
             if (entity.isRemoved()) continue;
             boolean isVehicle = entity instanceof BoatEntity
                     || entity instanceof AbstractMinecartEntity
-                    || entity instanceof HorseBaseEntity;
+                    || entity instanceof AbstractHorseEntity;
             if (!isVehicle) continue;
 
             double dist = mc.player.distanceTo(entity);

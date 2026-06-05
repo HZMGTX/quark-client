@@ -48,6 +48,6 @@ public class PlayerModel extends Module {
         Quaternionf rotation = new Quaternionf().rotateZ((float) Math.PI);
         Quaternionf bodyRot = new Quaternionf().rotateY((float) Math.toRadians(mc.player.getYaw() % 360));
 
-        ctx.drawEntity(x, y, scale, -mouseX, -mouseY, mc.player);
+        // net.minecraft.client.gui.screen.ingame.InventoryScreen.drawEntity(x, y, scale, -mouseX, -mouseY, mc.player);
     }
 }

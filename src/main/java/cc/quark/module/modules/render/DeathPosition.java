@@ -49,7 +49,7 @@ public class DeathPosition extends Module {
         if (mc.world == null || mc.player == null) return;
 
         // Also check if player just died locally
-        if (!wasDead && (mc.player.isDead() || mc.player.getHealth() <= 0f)) {
+        if (!wasDead && (mc.player.isRemoved() || mc.player.getHealth() <= 0f)) {
             wasDead = true;
             recordDeath(mc.player.getPos());
         } else if (wasDead && mc.player.getHealth() > 0f) {

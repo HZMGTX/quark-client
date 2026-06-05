@@ -31,7 +31,7 @@ public class SpawnKiller extends Module {
         double r = range.get();
         for (var entity : mc.world.getEntities()) {
             if (!(entity instanceof LivingEntity living)) continue;
-            if (living == mc.player || living.isDead()) continue;
+            if (living == mc.player || living.isRemoved()) continue;
             if (living instanceof PlayerEntity) continue;
             if (!mobs.isEnabled() && living instanceof MobEntity) continue;
             if (mc.player.distanceTo(living) <= r) {

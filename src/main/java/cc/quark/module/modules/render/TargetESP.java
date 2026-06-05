@@ -35,7 +35,7 @@ public class TargetESP extends Module {
         if (ka == null || !ka.isEnabled()) return;
 
         Entity target = ka.getTarget();
-        if (target == null || target.isDead()) return;
+        if (target == null || target.isRemoved()) return;
 
         float tickDelta = event.getTickDelta();
         double ex = target.prevX + (target.getX() - target.prevX) * tickDelta;
