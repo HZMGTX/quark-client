@@ -245,6 +245,12 @@ public class ModuleManager {
         register(new VelocityPlus());
         register(new AntiAfk());
         register(new CritTap());
+        register(new cc.quark.module.modules.combat.AntiDebuff());
+        register(new CombatInfo2());
+        register(new GappleCounter());
+        register(new ExplosionParticles());
+        register(new TotemInfo());
+        register(new PvPStat());
 
         // -------- MOVEMENT --------
         register(new Acceleration());
