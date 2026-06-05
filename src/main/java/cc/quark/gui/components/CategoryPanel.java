@@ -16,9 +16,9 @@ public class CategoryPanel {
     private final List<Module> modules;
     private int x, y;
     private final int width;
-    private static final int HEADER_H  = 18;
-    private static final int MODULE_H  = 14;
-    private static final int SETTING_H = 14;
+    private static final int HEADER_H  = 16;
+    private static final int MODULE_H  = 12;
+    private static final int SETTING_H = 12;
 
     private boolean dragging = false;
     private int dragOffX, dragOffY;
@@ -114,7 +114,7 @@ public class CategoryPanel {
             return;
         }
 
-        int maxPanelHeight = MinecraftClient.getInstance().getWindow().getScaledHeight() - y - 10;
+        int maxPanelHeight = MinecraftClient.getInstance().getWindow().getScaledHeight() - y - 8;
         int displayH       = Math.min(animatedH, maxPanelHeight);
         boolean needsScissor = animatedH > maxPanelHeight || animatedH < fullTotalH;
 
@@ -521,7 +521,7 @@ public class CategoryPanel {
     }
 
     public boolean mouseScrolled(int mx, int my, double amount) {
-        int maxPanelHeight = MinecraftClient.getInstance().getWindow().getScaledHeight() - y - 10;
+        int maxPanelHeight = MinecraftClient.getInstance().getWindow().getScaledHeight() - y - 8;
         int totalH = HEADER_H + (cachedVisibleModules != null ? cachedVisibleModules.size() : modules.size()) * MODULE_H;
         if (expandedModule != null && (cachedVisibleModules != null && cachedVisibleModules.contains(expandedModule))) {
             totalH += expandedModule.getSettings().size() * SETTING_H + 4;

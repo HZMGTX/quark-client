@@ -18,13 +18,12 @@ public class ClickGUI extends Screen {
     private static final List<CategoryPanel> panels = new ArrayList<>();
     private String searchQuery = "";
     private float alpha = 0f;
-    private static final int PANEL_WIDTH = 130;
     private float currentScale = 1.0f;
     private static cc.quark.module.modules.render.ClickGuiModule cachedClickGuiModule;
 
     // Tab bar
-    private static final int TAB_H = 24;
-    private Category activeTab = null; // null = show all
+    private static final int TAB_H = 22;
+    private Category activeTab = Category.COMBAT; // default to first tab
 
     // Category display metadata
     private static final String[] CAT_ICONS = { "⚔", "🏃", "☻", "✦", "⛏", "⚡", "⚙", "🛡" };
@@ -59,15 +58,15 @@ public class ClickGUI extends Screen {
 
     @Override
     protected void init() {
-        if (!panels.isEmpty()) return;
-
+        panels.clear();
         ModuleManager mm = Quark.getInstance().getModuleManager();
-        int totalWidth = Category.values().length * (PANEL_WIDTH + 10) - 10;
-        int startX = Math.max(10, (this.width - totalWidth) / 2);
-        int x = startX;
+        // Single-panel layout: all panels at same position, only active one shown
+        // Panel width = 40% of screen, capped 160–260px
+        int panelW = Math.max(160, Math.min(260, (int)(this.width * 0.25f)));
+        int panelX = 10;
+        int panelY = TAB_H + 4;
         for (Category cat : Category.values()) {
-            panels.add(new CategoryPanel(cat, mm.getModulesForCategory(cat), x, TAB_H + 10, PANEL_WIDTH));
-            x += PANEL_WIDTH + 10;
+            panels.add(new CategoryPanel(cat, mm.getModulesForCategory(cat), panelX, panelY, panelW));
         }
     }
 
@@ -81,24 +80,16 @@ public class ClickGUI extends Screen {
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
         super.render(context, mouseX, mouseY, delta);
-        alpha = Math.min(1f, alpha + delta * 0.15f);
+        alpha = Math.min(1f, alpha + delta * 0.2f);
 
         int screenW = context.getScaledWindowWidth();
         int screenH = context.getScaledWindowHeight();
 
-        // ── Dark dim backdrop ────────────────────────────────────────────────
-        context.fill(0, 0, screenW, screenH, ColorUtil.withAlpha(0x050505, (int)(180 * alpha)));
+        // ── Subtle dark backdrop ──────────────────────────────────────────────
+        context.fill(0, 0, screenW, screenH, ColorUtil.withAlpha(0x080808, (int)(160 * alpha)));
 
-        // ── Scale-in animation ───────────────────────────────────────────────
-        float ease = alpha >= 1f ? 1f : 1f - (float)Math.pow(2, -10 * alpha);
-        currentScale = 0.6f + 0.15f * ease;
-
+        currentScale = 1.0f; // no zoom — 1:1 with screen
         context.getMatrices().push();
-        int centerX = screenW / 2;
-        int centerY = screenH / 2;
-        context.getMatrices().translate(centerX, centerY, 0);
-        context.getMatrices().scale(currentScale, currentScale, 1f);
-        context.getMatrices().translate(-centerX, -centerY, 0);
 
         // ── Tab bar ──────────────────────────────────────────────────────────
         // Background strip
@@ -183,15 +174,8 @@ public class ClickGUI extends Screen {
         return total - 4;
     }
 
-    private double unscaleX(double mx) {
-        if (currentScale == 1f) return mx;
-        return (mx - width / 2.0) / currentScale + width / 2.0;
-    }
-
-    private double unscaleY(double my) {
-        if (currentScale == 1f) return my;
-        return (my - height / 2.0) / currentScale + height / 2.0;
-    }
+    private double unscaleX(double mx) { return mx; }
+    private double unscaleY(double my) { return my; }
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
@@ -206,7 +190,7 @@ public class ClickGUI extends Screen {
                 String label = cats[i].name().charAt(0) + cats[i].name().substring(1).toLowerCase();
                 int tabW = MinecraftClient.getInstance().textRenderer.getWidth(label) + 16;
                 if (ux >= tabX && ux <= tabX + tabW) {
-                    activeTab = (cats[i] == activeTab) ? null : cats[i];
+                    activeTab = cats[i]; // always select, never deselect to null
                     return true;
                 }
                 tabX += tabW + 4;
