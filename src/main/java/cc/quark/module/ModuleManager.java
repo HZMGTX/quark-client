@@ -866,6 +866,13 @@ public class ModuleManager {
         register(new TunnelVision());
         register(new NametagsPlus());
         register(new BlockHighlight3());
+        register(new HealthBar());
+        register(new ArmorHUD2());
+        register(new FPSCounter());
+        register(new TimeDisplay());
+        register(new PlayerList());
+        register(new HotbarViewer());
+        register(new TabOverlay());
 
         // -------- WORLD --------
         register(new AutoBed());
@@ -1097,6 +1104,10 @@ public class ModuleManager {
         register(new AntiBook());
         register(new CoordsESP());
         register(new NoGhostBlock());
+        register(new AntiKnockback2());
+        register(new Freecam());
+        register(new Strafe());
+        register(new TeleportExploit2());
 
         // -------- MISC --------
         register(new AntiDetect());
