@@ -1013,6 +1013,12 @@ public class ModuleManager {
         register(new WDL());
         register(new AntiSlow());
         register(new ClickTP());
+        register(new GrimBypass());
+        register(new NoCheatBypass());
+        register(new TwoBTwoTBypass());
+        register(new PacketManipulator());
+        register(new AntiCheatAnalyzer());
+        register(new Scaffold2());
 
         // -------- MISC --------
         register(new AntiDetect());
@@ -1067,6 +1073,11 @@ public class ModuleManager {
         register(new AutoScreenshot());
         register(new PingAlert());
         register(new AntiAFKfish());
+        register(new FriendTracker());
+        register(new ChatMacros());
+        register(new ChatEmotes());
+        register(new TabComplete());
+        register(new PlayerLogger());
 
         // -------- STAFF --------
         register(new cc.quark.module.modules.staff.StaffChat());
