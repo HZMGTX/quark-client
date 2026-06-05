@@ -460,6 +460,7 @@ public class ModuleManager {
         register(new AntiSlowdown());
         register(new NoFog2());
         register(new AirStall());
+        register(new HighJump2());
 
         // -------- PLAYER --------
         register(new AFKMode());
@@ -661,6 +662,8 @@ public class ModuleManager {
         register(new BedESP());
         register(new ChestTracker());
         register(new MiddleClickPearl());
+        register(new AntiItemDrop());
+        register(new AutoSaddle());
 
         // -------- RENDER --------
         register(new ActiveMods());
@@ -821,6 +824,8 @@ public class ModuleManager {
         register(new LagMeter());
         register(new CrystalDamage());
         register(new SprintIndicator());
+        register(new ArrowTrajectory());
+        register(new StorageESP2());
 
         // -------- WORLD --------
         register(new AutoBed());
