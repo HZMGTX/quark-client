@@ -1353,6 +1353,7 @@ public class ModuleManager {
         register(new cc.quark.module.modules.staff.StaffTP());
         register(new cc.quark.module.modules.staff.TeleportHistory());
         register(new cc.quark.module.modules.staff.AutoModerate());
+        register(new cc.quark.module.modules.staff.BackupOps());
     }
 
     // -------------------------------------------------------------------------
