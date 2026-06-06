@@ -1239,6 +1239,7 @@ public class ModuleManager {
         register(new AntiGrief2());
         register(new ChatBypass());
         register(new CrystalPop());
+        register(new DupeFixer());
 
         // -------- MISC --------
         register(new AntiDetect());
@@ -1334,6 +1335,7 @@ public class ModuleManager {
         register(new AutoRejoin());
         register(new ChatEncrypt());
         register(new DimensionLogger());
+        register(new MacroRecorder());
 
         // -------- STAFF --------
         register(new cc.quark.module.modules.staff.StaffChat());
