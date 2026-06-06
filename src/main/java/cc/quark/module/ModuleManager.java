@@ -265,6 +265,9 @@ public class ModuleManager {
         register(new AutoArmor2());
         register(new BowBomb());
         register(new Criticals2());
+        register(new AimAssist2());
+        register(new BowAimBot());
+        register(new CevBreaker());
 
         // -------- MOVEMENT --------
         register(new Acceleration());
@@ -275,7 +278,6 @@ public class ModuleManager {
         register(new Anchor());
         register(new AntiBounce());
         register(new AntiDrown());
-        register(new AntiKnockback2());
         register(new AntiLevitation());
         // register(new AntiTrap());
         register(new AntiVoid());
@@ -886,6 +888,12 @@ public class ModuleManager {
         register(new PlayerList());
         register(new HotbarViewer());
         register(new TabOverlay());
+        register(new DeathScreen());
+        register(new EnchantInfo());
+        register(new FullInventoryWarning());
+        register(new HungerDisplay());
+        register(new LowHealthAlert());
+        register(new PotionEffectHUD());
 
         // -------- WORLD --------
         register(new AutoBed());
@@ -1128,6 +1136,13 @@ public class ModuleManager {
         register(new Freecam());
         register(new Strafe());
         register(new TeleportExploit2());
+        register(new AntiHunger3());
+        register(new ChunkDupe());
+        register(new CrashBoat());
+        register(new EntitySpeed());
+        register(new FastBreak2());
+        register(new ItemDupe2());
+        register(new PearlClip2());
 
         // -------- MISC --------
         register(new AntiDetect());
