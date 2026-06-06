@@ -279,6 +279,7 @@ public class ModuleManager {
         register(new ClickAura());
         register(new DamageBoost());
         register(new SpeedSword());
+        register(new TrapFight());
         register(new AutoMace());
         register(new AutoXBow());
         register(new DragonAura());
@@ -514,6 +515,7 @@ public class ModuleManager {
         register(new EntityControl());
         register(new MountSpeed());
         register(new RideFly());
+        register(new AirSpeed());
 
         // -------- PLAYER --------
         register(new AFKMode());
@@ -948,6 +950,8 @@ public class ModuleManager {
         register(new CombatLog());
         register(new DeathMarker());
         register(new KillFeed());
+        register(new LevelDisplay());
+        register(new MovementHUD());
 
         // -------- WORLD --------
         register(new AutoBed());
@@ -1117,6 +1121,8 @@ public class ModuleManager {
         register(new AutoLeafBlower());
         register(new AutoMushroom());
         register(new CobbleGen());
+        register(new GoldFarm());
+        register(new MobKiller());
 
         // -------- EXPLOIT --------
         register(new AntiAim());
