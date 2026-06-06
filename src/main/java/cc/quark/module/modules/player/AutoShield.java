@@ -1,87 +1,46 @@
 package cc.quark.module.modules.player;
 
+import cc.quark.Quark;
 import cc.quark.event.EventHandler;
 import cc.quark.event.events.EventTick;
 import cc.quark.module.Category;
 import cc.quark.module.Module;
-import cc.quark.setting.IntSetting;
-import cc.quark.util.TimerUtil;
-import net.minecraft.item.ItemStack;
+import cc.quark.module.setting.BoolSetting;
+import cc.quark.module.setting.IntSetting;
 import net.minecraft.item.Items;
-import net.minecraft.screen.slot.SlotActionType;
+import net.minecraft.item.ShieldItem;
 import net.minecraft.util.Hand;
 
 public class AutoShield extends Module {
 
-    private final IntSetting reactionMs = register(new IntSetting(
-            "ReactionMs", "Delay in milliseconds before blocking with shield", 50, 0, 500));
-
-    private final TimerUtil damageTimer = new TimerUtil();
-    private boolean wasDamaged = false;
-    private float lastHealth = 20f;
+    private final BoolSetting onDamage = new BoolSetting("OnDamage", true);
+    private final IntSetting health = new IntSetting("HealthThreshold", 14, 2, 18);
 
     public AutoShield() {
-        super("AutoShield", "Auto-blocks with shield when taking damage", Category.PLAYER);
+        super("AutoShield", "Automatically blocks with a shield when attacked or low health", Category.PLAYER);
+        addSettings(onDamage, health);
     }
 
-    @Override
-    public void onDisable() {
-        if (mc.player != null) {
-            mc.options.useKey.setPressed(false);
-        }
-    }
+    @Override public void onEnable()  { Quark.mc.getEventBus().subscribe(this); }
+    @Override public void onDisable() { Quark.mc.getEventBus().unsubscribe(this); }
 
     @EventHandler
     public void onTick(EventTick event) {
-        if (mc.player == null || mc.world == null || mc.interactionManager == null) return;
+        var mc = Quark.mc;
+        if (mc == null || mc.player == null || mc.interactionManager == null) return;
 
-        float currentHealth = mc.player.getHealth();
+        boolean hasShield = mc.player.getOffHandStack().getItem() instanceof ShieldItem
+                         || mc.player.getMainHandStack().getItem() instanceof ShieldItem;
+        if (!hasShield) return;
 
-        // Detect damage
-        if (currentHealth < lastHealth) {
-            wasDamaged = true;
-            damageTimer.reset();
-        }
-        lastHealth = currentHealth;
+        boolean shouldBlock = mc.player.getHealth() <= health.get();
 
-        // Ensure shield is in offhand
-        ensureShieldInOffhand();
-
-        if (!hasShieldInOffhand()) {
-            mc.options.useKey.setPressed(false);
-            return;
-        }
-
-        if (wasDamaged && damageTimer.hasReached(reactionMs.get())) {
+        if (shouldBlock) {
+            Hand hand = mc.player.getOffHandStack().getItem() instanceof ShieldItem
+                ? Hand.OFF_HAND : Hand.MAIN_HAND;
             mc.options.useKey.setPressed(true);
-            // Keep blocking for a short time after damage
-            if (damageTimer.hasReached(reactionMs.get() + 600L)) {
-                mc.options.useKey.setPressed(false);
-                wasDamaged = false;
-            }
-        } else if (!wasDamaged) {
+        } else {
             mc.options.useKey.setPressed(false);
-        }
-    }
-
-    private boolean hasShieldInOffhand() {
-        if (mc.player == null) return false;
-        return mc.player.getOffHandStack().getItem() == Items.SHIELD;
-    }
-
-    private void ensureShieldInOffhand() {
-        if (hasShieldInOffhand()) return;
-
-        var inv = mc.player.getInventory();
-        for (int i = 0; i < 36; i++) {
-            ItemStack s = inv.getStack(i);
-            if (s.getItem() == Items.SHIELD) {
-                int screenSlot = i < 9 ? 36 + i : i;
-                mc.interactionManager.clickSlot(
-                        mc.player.currentScreenHandler.syncId,
-                        screenSlot, 40, SlotActionType.SWAP, mc.player);
-                return;
-            }
         }
     }
 }
