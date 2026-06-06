@@ -5,27 +5,52 @@
 // State
 // ─────────────────────────────────────────────────────────────────────────────
 
-let currentUser  = null;   // Discord user object or {username:'Guest',guest:true}
-let currentPage  = 'Home';
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Staff Role System
-// ─────────────────────────────────────────────────────────────────────────────
+let currentUser   = null;
+let currentPage   = 'home';
+let selectedPid   = null;
+let processList   = [];
+let chatSocket    = null;
+let chatMessages  = [];
+let alts          = [];
+let profiles      = [];
+let injected      = false;
 
 const STAFF_IDS = {
-    '1401853518100303932': 'Owner',      // corruptnull
+    '1401853518100303932': 'Owner',
 };
+const MODULE_COUNTS = {
+    combat: 268, movement: 247, render: 220, player: 247,
+    world: 186, exploit: 126, misc: 113, staff: 108,
+};
+const TOTAL_MODULES = Object.values(MODULE_COUNTS).reduce((a, b) => a + b, 0);
 
 function getRole(user) {
     if (!user || user.guest) return 'User';
     return STAFF_IDS[user.id] || 'User';
 }
-function isStaff(user)    { return getRole(user) !== 'User'; }
-function isAdmin(user)    { return ['Owner','Admin'].includes(getRole(user)); }
-function isOwner(user)    { return getRole(user) === 'Owner'; }
-function roleBadge(role)  {
-    const cls = 'role-' + role.toLowerCase();
-    return `<span class="role-badge ${cls}">${role}</span>`;
+function isStaff(user)  { return getRole(user) !== 'User'; }
+function roleBadge(role) {
+    return `<span class="role-badge role-${role.toLowerCase()}">${role}</span>`;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Notification system
+// ─────────────────────────────────────────────────────────────────────────────
+
+function notify(msg, type = 'info', duration = 3500) {
+    let stack = document.getElementById('notif-stack');
+    if (!stack) {
+        stack = document.createElement('div');
+        stack.id = 'notif-stack';
+        stack.className = 'notif-stack';
+        document.body.appendChild(stack);
+    }
+    const icons = { success: '✓', error: '✕', info: 'ℹ', warn: '⚠' };
+    const el = document.createElement('div');
+    el.className = `notif ${type}`;
+    el.innerHTML = `<span style="font-size:14px">${icons[type] || icons.info}</span><span>${msg}</span>`;
+    stack.appendChild(el);
+    setTimeout(() => { el.style.opacity = '0'; el.style.transition = 'opacity .3s'; setTimeout(() => el.remove(), 300); }, duration);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -33,15 +58,24 @@ function roleBadge(role)  {
 // ─────────────────────────────────────────────────────────────────────────────
 
 window.addEventListener('DOMContentLoaded', async () => {
-    // Window buttons
-    document.getElementById('btn-min').addEventListener('click', () => quark.minimize());
+    // Window controls
+    document.getElementById('btn-min').addEventListener('click',   () => quark.minimize());
     document.getElementById('btn-close').addEventListener('click', () => quark.close());
 
-    // Draw dot grid on login canvas
-    drawDotGrid();
+    // Version
+    try {
+        const v = await quark.version();
+        document.getElementById('tb-version').textContent = `v${v}`;
+    } catch (_) {}
 
-    // Check if already logged in
+    // Particle bg
+    startParticles();
+
+    // Check saved session
     const stored = await quark.settingsGet('user');
+    alts     = (await quark.settingsGet('alts'))     || [];
+    profiles = (await quark.settingsGet('profiles')) || defaultProfiles();
+
     if (stored) {
         currentUser = stored;
         showMain();
@@ -49,7 +83,6 @@ window.addEventListener('DOMContentLoaded', async () => {
         showLogin();
     }
 
-    // Login screen buttons
     document.getElementById('btn-discord-login').addEventListener('click', handleDiscordLogin);
     document.getElementById('btn-skip').addEventListener('click', () => {
         currentUser = { username: 'Guest', guest: true };
@@ -58,22 +91,60 @@ window.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('btn-cancel-oauth').addEventListener('click', () => {
         document.getElementById('oauth-overlay').classList.add('hidden');
     });
+
+    // Auto-scan for processes every 8s if on inject page
+    setInterval(() => { if (currentPage === 'inject') autoRefreshProcesses(); }, 8000);
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Dot-grid background
+// Particle background
 // ─────────────────────────────────────────────────────────────────────────────
 
-function drawDotGrid() {
-    const canvas = document.getElementById('dot-canvas');
+function startParticles() {
+    const canvas = document.getElementById('particle-canvas');
+    if (!canvas) return;
     canvas.width  = window.innerWidth;
     canvas.height = window.innerHeight;
-    const ctx = canvas.getContext('2d');
-    ctx.fillStyle = '#1C1C26';
-    const step = 28;
-    for (let x = 0; x < canvas.width; x += step)
-        for (let y = 0; y < canvas.height; y += step)
-            ctx.fillRect(x, y, 1.5, 1.5);
+    const ctx  = canvas.getContext('2d');
+    const pts  = Array.from({ length: 60 }, () => ({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        vx: (Math.random() - .5) * .4,
+        vy: (Math.random() - .5) * .4,
+        r: Math.random() * 1.5 + .5,
+        o: Math.random() * .5 + .1,
+    }));
+
+    function frame() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        pts.forEach(p => {
+            p.x += p.vx; p.y += p.vy;
+            if (p.x < 0) p.x = canvas.width;
+            if (p.x > canvas.width) p.x = 0;
+            if (p.y < 0) p.y = canvas.height;
+            if (p.y > canvas.height) p.y = 0;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(168,85,247,${p.o})`;
+            ctx.fill();
+        });
+        // Draw connecting lines
+        for (let i = 0; i < pts.length; i++) {
+            for (let j = i + 1; j < pts.length; j++) {
+                const d = Math.hypot(pts[i].x - pts[j].x, pts[i].y - pts[j].y);
+                if (d < 100) {
+                    ctx.beginPath();
+                    ctx.moveTo(pts[i].x, pts[i].y);
+                    ctx.lineTo(pts[j].x, pts[j].y);
+                    ctx.strokeStyle = `rgba(168,85,247,${0.12 * (1 - d / 100)})`;
+                    ctx.lineWidth = .5;
+                    ctx.stroke();
+                }
+            }
+        }
+        requestAnimationFrame(frame);
+    }
+    frame();
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -88,41 +159,26 @@ function showLogin() {
 function showMain() {
     document.getElementById('screen-login').classList.remove('active');
     document.getElementById('screen-main').classList.add('active');
-    renderSidebar();
-    navigate('Home');
+    buildSidebar();
+    navigateTo('home');
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Discord OAuth handler
+// Discord login
 // ─────────────────────────────────────────────────────────────────────────────
 
 async function handleDiscordLogin() {
-    // Check if client ID is configured
-    const clientId = await quark.settingsGet('discordClientId');
-    if (!clientId) {
-        // Redirect to settings to enter client ID first
-        currentUser = null;
-        showMain();
-        navigate('Settings');
-        showToast('Enter your Discord Client ID in Settings first, then try again.', 'warn');
-        return;
-    }
-
     document.getElementById('oauth-overlay').classList.remove('hidden');
-
     try {
         const user = await quark.discordLogin();
-        document.getElementById('oauth-overlay').classList.add('hidden');
         currentUser = user;
+        await quark.settingsSet('user', user);
+        document.getElementById('oauth-overlay').classList.add('hidden');
         showMain();
     } catch (err) {
         document.getElementById('oauth-overlay').classList.add('hidden');
-        if (err.message === 'NO_CLIENT_ID') {
-            showMain();
-            navigate('Settings');
-            showToast('Enter your Discord Client ID in Settings first.', 'warn');
-        } else {
-            showToast('Discord login failed: ' + err.message, 'error');
+        if (!err.message?.includes('NO_CLIENT_ID') && !err.message?.includes('timed out') && !err.message?.includes('cancelled')) {
+            notify('Login failed: ' + err.message, 'error');
         }
     }
 }
@@ -131,860 +187,847 @@ async function handleDiscordLogin() {
 // Sidebar
 // ─────────────────────────────────────────────────────────────────────────────
 
-const NAV_ITEMS = [
-    { icon: '⌂', label: 'Home' },
-    { icon: '⇒', label: 'Inject' },
-    { icon: '○', label: 'Changelog' },
-    { icon: '⚙', label: 'Settings' },
-    { icon: '★', label: 'Credits' },
-    { icon: '❯', label: 'Account' },
-];
-
-const STAFF_NAV = [
-    { icon: '🛡', label: 'Staff Panel', requires: 'staff' },
-    { icon: '📊', label: 'Analytics',   requires: 'admin' },
-];
-
-function renderSidebar() {
-    const list = document.getElementById('nav-list');
-    list.innerHTML = '';
-
-    const allItems = [...NAV_ITEMS];
-    for (const s of STAFF_NAV) {
-        if (s.requires === 'staff' && isStaff(currentUser)) allItems.push(s);
-        else if (s.requires === 'admin' && isAdmin(currentUser)) allItems.push(s);
+function buildSidebar() {
+    // Show/hide staff item
+    const staffItem = document.querySelector('.staff-only');
+    if (staffItem) {
+        staffItem.classList.toggle('hidden', !isStaff(currentUser));
     }
 
-    for (const item of allItems) {
-        const row = document.createElement('div');
-        row.className = 'nav-item' + (item.label === currentPage ? ' active' : '');
-        const badge = item.requires ? '<span class="nav-badge">STAFF</span>' : '';
-        row.innerHTML = `<span class="nav-icon">${item.icon}</span>
-                         <span class="nav-label">${item.label}</span>${badge}`;
-        row.addEventListener('click', () => navigate(item.label));
-        list.appendChild(row);
-    }
-
-    renderUserRow();
-}
-
-function renderUserRow() {
-    const el = document.getElementById('user-row');
-    if (!currentUser) { el.innerHTML = ''; return; }
-
-    const hasAvatar = currentUser.avatarUrl && !currentUser.guest;
-    const initial   = (currentUser.username || 'G')[0].toUpperCase();
-
-    el.innerHTML = `
-        ${hasAvatar
-            ? `<img src="${currentUser.avatarUrl}" class="user-avatar" alt="avatar" onerror="this.style.display='none'">`
-            : `<div class="user-avatar-placeholder">${initial}</div>`}
-        <div class="user-info">
-            <div class="user-name">${escHtml(currentUser.username)}</div>
-            <div class="user-tag">${currentUser.guest ? 'Guest' : ('@' + (currentUser.username || '').toLowerCase())}</div>
-        </div>
-        <button class="logout-btn" title="Log out">&#x21A6;</button>`;
-
-    el.querySelector('.logout-btn').addEventListener('click', async () => {
-        await quark.discordLogout();
-        currentUser = null;
-        showLogin();
+    // Nav items
+    document.querySelectorAll('.nav-item').forEach(btn => {
+        btn.addEventListener('click', () => navigateTo(btn.dataset.page));
     });
-}
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Navigation
-// ─────────────────────────────────────────────────────────────────────────────
-
-function navigate(page) {
-    currentPage = page;
-    renderSidebar();
-
-    const content = document.getElementById('content');
-    content.scrollTop = 0;
-
-    switch (page) {
-        case 'Home':        renderHome(content);       break;
-        case 'Inject':      renderInject(content);     break;
-        case 'Changelog':   renderChangelog(content);  break;
-        case 'Settings':    renderSettings(content);   break;
-        case 'Credits':     renderCredits(content);    break;
-        case 'Account':     renderAccount(content);    break;
-        case 'Staff Panel': renderStaffPanel(content); break;
-        case 'Analytics':   renderAnalytics(content);  break;
-    }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// HOME
-// ─────────────────────────────────────────────────────────────────────────────
-
-function renderHome(el) {
-    const name = currentUser ? currentUser.username : 'Player';
+    // User row
     const role = getRole(currentUser);
-    const staffBadge = isStaff(currentUser) ? ` ${roleBadge(role)}` : '';
+    const ur = document.getElementById('user-row');
+    const avatar = currentUser.avatarUrl
+        ? `<img class="user-avatar" src="${currentUser.avatarUrl}" alt="">`
+        : `<div class="user-avatar-placeholder">${(currentUser.username || 'G')[0].toUpperCase()}</div>`;
 
-    el.innerHTML = `
-        <div class="page-header">
-            <div class="page-title">Welcome back, ${escHtml(name)}!${staffBadge}</div>
-            <div class="page-sub">Ready to make it rain.</div>
+    ur.innerHTML = `
+      <div class="user-row" id="user-row-btn">
+        ${avatar}
+        <div class="user-info">
+          <div class="user-name">${currentUser.username || 'Guest'}</div>
+          <div class="user-role">${roleBadge(role)}</div>
         </div>
+      </div>`;
 
-        <div class="quick-stats">
-            <div class="quick-stat">
-                <div class="quick-stat-icon">👥</div>
-                <div><div class="quick-stat-value">2,847</div><div class="quick-stat-label">Total Users</div></div>
-            </div>
-            <div class="quick-stat">
-                <div class="quick-stat-icon">🟢</div>
-                <div><div class="quick-stat-value">142</div><div class="quick-stat-label">Online Now</div></div>
-            </div>
-            <div class="quick-stat">
-                <div class="quick-stat-icon">⚡</div>
-                <div><div class="quick-stat-value">v1.0.0</div><div class="quick-stat-label">Latest Version</div></div>
-            </div>
-            <div class="quick-stat">
-                <div class="quick-stat-icon">🛡</div>
-                <div><div class="quick-stat-value">Online</div><div class="quick-stat-label">Server Status</div></div>
-            </div>
-        </div>
-
-        <div class="inject-banner">
-            <div class="inject-banner-text">
-                <h3>Ready to inject</h3>
-                <p>Attach Quark into a running Minecraft 1.21.1 instance.</p>
-            </div>
-            <button class="btn btn-primary btn-lg" id="home-inject-btn">Launch Inject &nbsp;→</button>
-        </div>
-
-        <div class="card-grid">
-            ${featureCard('○', 'Changelog', "See what's new", 'Changelog')}
-            ${featureCard('⚙', 'Settings',  'Customize the look', 'Settings')}
-            ${featureCard('❯', 'Account',   'Your profile',  'Account')}
-            ${featureCard('★', 'Credits',   'Meet the team', 'Credits')}
-        </div>
-
-        <div class="news-section">
-            <div class="news-section-title">📰 Latest News</div>
-            <div class="news-card">
-                <div class="news-icon-box">🎉</div>
-                <div>
-                    <div class="news-title">Quark v1.0.0 — Official Launch</div>
-                    <div class="news-body">1000+ modules shipped. True XRay, Full ESP suite, Ghost Mode for GrimAC/Vulcan/Polar. Desktop launcher with Discord OAuth.</div>
-                    <div class="news-date">June 2025</div>
-                </div>
-            </div>
-            <div class="news-card">
-                <div class="news-icon-box">🔒</div>
-                <div>
-                    <div class="news-title">Anti-Cheat Bypass Update</div>
-                    <div class="news-body">GrimAC prediction bypass improved. Vulcan strafe and inventory move now fully bypassed on strict config.</div>
-                    <div class="news-date">May 2025</div>
-                </div>
-            </div>
-            <div class="news-card">
-                <div class="news-icon-box">🚀</div>
-                <div>
-                    <div class="news-title">Launcher v1.0 Released</div>
-                    <div class="news-body">Electron desktop app with Discord OAuth2 login, process scanner, and NSIS installer packaging.</div>
-                    <div class="news-date">May 2025</div>
-                </div>
-            </div>
-        </div>`;
-
-    el.querySelector('#home-inject-btn').addEventListener('click', () => navigate('Inject'));
-    el.querySelectorAll('.feature-card').forEach(card => {
-        card.addEventListener('click', () => navigate(card.dataset.page));
-    });
+    document.getElementById('user-row-btn')?.addEventListener('click', showUserMenu);
 }
 
-function featureCard(icon, title, desc, page) {
-    return `<div class="feature-card" data-page="${page}">
-        <div class="feature-icon-box">${icon}</div>
-        <div>
-            <div class="feature-title">${title}</div>
-            <div class="feature-desc">${desc}</div>
-        </div>
-    </div>`;
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// INJECT
-// ─────────────────────────────────────────────────────────────────────────────
-
-async function renderInject(el) {
-    el.innerHTML = `
-        <div class="page-header">
-            <div class="page-title">Inject</div>
-            <div class="page-sub">Attach Quark into a running Minecraft 1.21.1 JVM process.</div>
-        </div>
-        <div class="mt-24 card">
-            <div class="flex-row">
-                <div style="flex:1">
-                    <div style="font-size:14px;font-weight:700;margin-bottom:4px">Java Processes</div>
-                    <div class="text-sm text-muted">Scanning for running Minecraft instances…</div>
-                </div>
-                <button class="btn btn-secondary" id="inject-refresh-btn">↻ &nbsp;Refresh</button>
-            </div>
-            <div id="inject-process-list" class="process-list mt-12">
-                <div class="empty-state">
-                    <div class="spinner" style="margin:0 auto 12px"></div>
-                    <p>Scanning…</p>
-                </div>
-            </div>
-        </div>
-        <div class="pills mt-16">
-            ${['JNI Injection','No patched JARs','Fabric 1.21.1','1000+ Modules'].map(t=>`<div class="pill">${t}</div>`).join('')}
-        </div>`;
-
-    el.querySelector('#inject-refresh-btn').addEventListener('click', () => refreshProcessList());
-
-    refreshProcessList();
-
-    async function refreshProcessList() {
-        const listEl = document.getElementById('inject-process-list');
-        listEl.innerHTML = `<div class="empty-state"><div class="spinner" style="margin:0 auto 12px"></div><p>Scanning…</p></div>`;
-
-        const procs = await quark.injectScan();
-        listEl.innerHTML = '';
-
-        if (!procs || procs.length === 0) {
-            listEl.innerHTML = `<div class="empty-state">
-                <div class="empty-icon">☕</div>
-                <p>No Java processes found.<br>Start Minecraft and click Refresh.</p>
-            </div>`;
-            return;
-        }
-
-        for (const p of procs) {
-            const row = document.createElement('div');
-            row.className = 'process-row';
-            row.innerHTML = `
-                <div class="process-dot"></div>
-                <div class="process-info">
-                    <div class="process-name">${escHtml(p.name)}</div>
-                    <div class="process-pid">PID: ${p.pid}</div>
-                </div>
-                <button class="btn btn-primary" data-pid="${p.pid}">Inject →</button>`;
-
-            row.querySelector('button').addEventListener('click', async (e) => {
-                const btn = e.currentTarget;
-                btn.disabled = true;
-                btn.textContent = 'Injecting…';
-                try {
-                    const res = await quark.injectRun(p.pid);
-                    if (res.success) {
-                        btn.textContent = '✓ Injected';
-                        btn.className = 'btn';
-                        btn.style.background = 'var(--success)';
-                        btn.style.color = '#000';
-                        showToast(`Quark injected! Folder: ${res.gameDir}`, 'success');
-                    }
-                } catch (err) {
-                    btn.textContent = '✕ Failed';
-                    btn.style.background = 'var(--danger)';
-                    showToast('Injection failed: ' + err.message, 'error');
-                }
-            });
-
-            listEl.appendChild(row);
-        }
+function navigateTo(page) {
+    currentPage = page;
+    document.querySelectorAll('.nav-item').forEach(b => b.classList.toggle('active', b.dataset.page === page));
+    const pages = { home, inject, modules, profiles: profilesPage, alts: altsPage, chat, changelog, staff, settings };
+    const fn = pages[page];
+    if (fn) {
+        document.getElementById('content').innerHTML = '';
+        fn();
     }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// CHANGELOG
-// ─────────────────────────────────────────────────────────────────────────────
-
-const CHANGELOG = [
-    {
-        version: 'v1.0.0',
-        date: 'June 2025',
-        latest: true,
-        items: [
-            '1000+ fully implemented modules across 7 categories',
-            'RAIN-style ClickGUI with horizontal tab bar',
-            'RAIN-style ActiveMods HUD with slide-in animation',
-            'ClutchSilentAim — activates silent aim below health threshold',
-            'BlockInSilentAim — silent aim + optional block placement',
-            'ChatFilter — blacklist/whitelist with ad/caps/spam blocking',
-            'RadarPlus — player radar with rotation and name display',
-            'SlimeFinder — chunk scan with HUD overlay',
-            'TPSDisplay — server TPS via WorldTimeUpdate packet',
-            'PingHUD — colour-coded latency display',
-            'Quark.cc Launcher with Discord OAuth & exe packaging',
-        ],
-    },
-    {
-        version: 'v0.9.0',
-        date: 'May 2025',
-        items: [
-            'AutoCrystal, CrystalAura, BowAimbot',
-            'IceSpeed, ElytraControl, JetpackFly, AntiSlowdown',
-            'IceRoad, RoofBuilder, TowerBuilder, AutoSapling',
-            'AntiCheatBypass, PacketLogger2, WDL',
-            'Launcher skeleton (JavaFX → Electron rewrite)',
-        ],
-    },
-    {
-        version: 'v0.8.0',
-        date: 'April 2025',
-        items: [
-            'Initial release with 800 module registrations',
-            'Basic ClickGUI with category panels',
-            'EventBus system with @EventHandler annotation',
-            'Settings API: Bool / Int / Double / Mode / Color / String',
-        ],
-    },
-];
-
-function renderChangelog(el) {
-    el.innerHTML = `
-        <div class="page-header">
-            <div class="page-title">Changelog</div>
-            <div class="page-sub">What's new in Quark.cc</div>
-        </div>
-        <div class="mt-24">
-            ${CHANGELOG.map(entry => `
-            <div class="card changelog-entry">
-                <div class="changelog-version">
-                    ${entry.version} — ${entry.date}
-                    ${entry.latest ? '<span class="changelog-badge">LATEST</span>' : ''}
-                </div>
-                <ul class="changelog-body">
-                    ${entry.items.map(i => `<li>${escHtml(i)}</li>`).join('')}
-                </ul>
-            </div>`).join('')}
-        </div>`;
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// SETTINGS
-// ─────────────────────────────────────────────────────────────────────────────
-
-async function renderSettings(el) {
-    const all = (await quark.settingsGetAll()) || {};
-
-    el.innerHTML = `
-        <div class="page-header">
-            <div class="page-title">Settings</div>
-            <div class="page-sub">Customize the launcher and manage your Discord application.</div>
-        </div>
-
-        <div class="mt-24">
-
-        <!-- Discord OAuth credentials -->
-        <div class="card settings-section mt-0">
-            <div class="settings-section-title">Discord Application</div>
-
-            <div class="setting-row">
-                <div class="setting-text">
-                    <div class="setting-label">Client ID</div>
-                    <div class="setting-desc">
-                        Your Discord app Client ID.
-                        <a href="#" id="link-dev-portal" style="color:var(--brand)">Get one at discord.com/developers</a>
-                    </div>
-                </div>
-                <input class="text-input" id="input-client-id"
-                    type="text" placeholder="1234567890"
-                    value="${escHtml(all.discordClientId || '')}">
-            </div>
-
-            <div class="setting-row">
-                <div class="setting-text">
-                    <div class="setting-label">Client Secret</div>
-                    <div class="setting-desc">Required to exchange the OAuth code for a token.</div>
-                </div>
-                <input class="text-input" id="input-client-secret"
-                    type="password" placeholder="••••••••••••••••••••••••••"
-                    value="${escHtml(all.discordClientSecret || '')}">
-            </div>
-
-            <div class="setting-row">
-                <div class="setting-text">
-                    <div class="setting-label">Redirect URI (fixed)</div>
-                    <div class="setting-desc">Add this exact URI to your Discord app's OAuth2 redirect list.</div>
-                </div>
-                <code style="font-size:12px;color:var(--brand);background:var(--bg-input);padding:5px 10px;border-radius:5px;">
-                    http://localhost:3847/callback
-                </code>
-            </div>
-
-            <div class="setting-row">
-                <button class="btn btn-primary" id="btn-save-discord">Save credentials</button>
-                <button class="btn btn-secondary" id="btn-test-login">Test Discord login</button>
-            </div>
-        </div>
-
-        <!-- Injection -->
-        <div class="card settings-section">
-            <div class="settings-section-title">Injection</div>
-            ${toggleSetting('auto-inject',    'Auto-inject on launch', 'Attach as soon as Minecraft is detected', all.autoInject)}
-            ${toggleSetting('inject-log',     'Show inject log',        'Print output to developer console',       all.injectLog !== false)}
-            ${toggleSetting('keep-open',      'Keep launcher open',     'Do not minimise after injection',         all.keepOpen  !== false)}
-        </div>
-
-        <!-- Appearance -->
-        <div class="card settings-section">
-            <div class="settings-section-title">Appearance</div>
-            ${toggleSetting('compact-sidebar','Compact sidebar', 'Show only icons (future)', false, true)}
-        </div>
-
-        <!-- Notifications -->
-        <div class="card settings-section">
-            <div class="settings-section-title">Notifications</div>
-            ${toggleSetting('update-notif',   'Update notifications', 'Alert when a new version is available', all.updateNotif !== false)}
-            ${toggleSetting('friend-notif',   'Friend online alerts',  'Alert when a Discord friend joins',     all.friendNotif)}
-        </div>
-
-        </div>`;
-
-    // Discord credentials save
-    el.querySelector('#btn-save-discord').addEventListener('click', async () => {
-        await quark.settingsSet('discordClientId',     el.querySelector('#input-client-id').value.trim());
-        await quark.settingsSet('discordClientSecret', el.querySelector('#input-client-secret').value.trim());
-        showToast('Discord credentials saved!', 'success');
-    });
-
-    el.querySelector('#btn-test-login').addEventListener('click', async () => {
-        showToast('Opening Discord…', 'info');
-        try {
-            const user = await quark.discordLogin();
-            currentUser = user;
-            renderSidebar();
-            showToast('Logged in as ' + user.username, 'success');
-        } catch (err) {
-            showToast(err.message === 'NO_CLIENT_ID'
-                ? 'Enter a Client ID first'
-                : 'Login failed: ' + err.message, 'error');
-        }
-    });
-
-    el.querySelector('#link-dev-portal').addEventListener('click', (e) => {
-        e.preventDefault();
-        // Open in system browser via Electron shell — send via IPC
-        // Since we can't import shell in renderer, just show the URL
-        showToast('Visit: https://discord.com/developers/applications', 'info');
-    });
-
-    // Wire up toggles
-    el.querySelectorAll('.toggle input').forEach(input => {
-        input.addEventListener('change', () => {
-            quark.settingsSet(input.dataset.key, input.checked);
-        });
-    });
-}
-
-function toggleSetting(key, label, desc, checked, disabled = false) {
-    return `<div class="setting-row">
-        <div class="setting-text">
-            <div class="setting-label">${label}</div>
-            <div class="setting-desc">${desc}</div>
-        </div>
-        <label class="toggle">
-            <input type="checkbox" data-key="${key}" ${checked ? 'checked' : ''} ${disabled ? 'disabled' : ''}>
-            <span class="toggle-slider"></span>
-        </label>
-    </div>`;
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// CREDITS
-// ─────────────────────────────────────────────────────────────────────────────
-
-const TEAM = [
-    { initial: 'Q', name: 'Quark Dev',      role: 'Lead developer & architecture',      color: '#00AAFF' },
-    { initial: 'M', name: 'Module Author',  role: '1000+ module implementations',        color: '#55FF55' },
-    { initial: 'U', name: 'UI Designer',    role: 'RAIN-style HUD & ClickGUI',           color: '#FF55FF' },
-    { initial: 'T', name: 'Tester',         role: 'QA, bug reports, server compatibility', color: '#FFFF55' },
-    { initial: 'C', name: 'Community',      role: 'Feature requests and testing',         color: '#FF9944' },
-];
-
-function renderCredits(el) {
-    el.innerHTML = `
-        <div class="page-header">
-            <div class="page-title">Credits</div>
-            <div class="page-sub">The team behind Quark.cc</div>
-        </div>
-        <div class="credits-grid mt-24">
-            ${TEAM.map(m => `
-            <div class="card credit-card">
-                <div class="credit-avatar" style="background:${m.color}">${m.initial}</div>
-                <div>
-                    <div class="credit-name">${m.name}</div>
-                    <div class="credit-role">${m.role}</div>
-                </div>
-            </div>`).join('')}
-        </div>`;
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// ACCOUNT
-// ─────────────────────────────────────────────────────────────────────────────
-
-function renderAccount(el) {
-    const u = currentUser;
-    const isGuest = !u || u.guest;
-
-    const hasAvatar = u && u.avatarUrl && !isGuest;
-    const initial   = u ? (u.username || 'G')[0].toUpperCase() : 'G';
-
-    el.innerHTML = `
-        <div class="page-header">
-            <div class="page-title">Account</div>
-            <div class="page-sub">Manage your Quark.cc profile.</div>
-        </div>
-
-        <div class="card mt-24">
-            <div class="account-profile">
-                ${hasAvatar
-                    ? `<img src="${u.avatarUrl}" class="account-avatar" alt="avatar">`
-                    : `<div class="account-avatar">${initial}</div>`}
-                <div>
-                    <div class="account-username">${escHtml(u ? u.username : 'Guest')}</div>
-                    <div class="account-meta">
-                        ${isGuest ? 'Not signed in' : `Discord ID: ${u.id || '—'}`}<br>
-                        ${isStaff(u) ? roleBadge(getRole(u)) + ' &nbsp;•&nbsp;' : 'Plan: Free &nbsp;•&nbsp;'} Member since June 2025
-                    </div>
-                </div>
-            </div>
-
-            ${!isGuest && isStaff(u) ? `
-            <div class="mt-24">
-                <div class="text-sm font-weight-700 mb-8">Staff Permissions</div>
-                <div class="perm-list">
-                    <div class="perm-item"><span class="perm-check">✔</span> Access Staff Panel</div>
-                    <div class="perm-item"><span class="perm-check">✔</span> Manage Bans & Hardware IDs</div>
-                    <div class="perm-item"><span class="perm-check">✔</span> Bypass anti-cheat flags</div>
-                    <div class="perm-item"><span class="perm-check">✔</span> In-game Staff ESP & Chat</div>
-                    ${isAdmin(u) ? '<div class="perm-item"><span class="perm-check">✔</span> Access Analytics & Keys</div>' : '<div class="perm-item"><span class="perm-cross">✖</span> Access Analytics & Keys</div>'}
-                </div>
-            </div>
-            ` : ''}
-
-            <div class="stat-row">
-                <div class="stat-box"><div class="stat-value">1000</div><div class="stat-label">Modules</div></div>
-                <div class="stat-box"><div class="stat-value">7</div><div class="stat-label">Categories</div></div>
-                <div class="stat-box"><div class="stat-value">3</div><div class="stat-label">Saved configs</div></div>
-                <div class="stat-box"><div class="stat-value">1.21.1</div><div class="stat-label">MC version</div></div>
-            </div>
-
-            <div class="flex-row mt-12">
-                ${isGuest
-                    ? `<button class="btn btn-primary" id="btn-acc-login">Sign in with Discord</button>`
-                    : `<button class="btn btn-secondary" id="btn-acc-logout">Log out</button>
-                       <button class="btn btn-primary">Manage account</button>`}
-            </div>
-        </div>`;
-
-    if (isGuest) {
-        el.querySelector('#btn-acc-login').addEventListener('click', () => {
-            navigate('Settings');
-            showToast('Configure your Discord app credentials in Settings first.', 'info');
-        });
-    } else {
-        el.querySelector('#btn-acc-logout').addEventListener('click', async () => {
-            await quark.discordLogout();
+function showUserMenu() {
+    if (currentUser && !currentUser.guest) {
+        if (confirm('Sign out?')) {
+            quark.settingsSet('user', null);
+            quark.discordLogout();
             currentUser = null;
             showLogin();
-        });
+        }
     }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Toast notifications
+// Status bar helper
 // ─────────────────────────────────────────────────────────────────────────────
 
-let toastTimeout;
-function showToast(msg, type = 'info') {
-    let toast = document.getElementById('toast');
-    if (!toast) {
-        toast = document.createElement('div');
-        toast.id = 'toast';
-        toast.style.cssText = `
-            position:fixed;bottom:20px;left:50%;transform:translateX(-50%);
-            padding:10px 20px;border-radius:8px;font-size:13px;font-weight:500;
-            z-index:9999;pointer-events:none;
-            transition:opacity .3s;`;
-        document.body.appendChild(toast);
-    }
-
-    const colors = { success: '#55FF55', error: '#FF5555', warn: '#FFAA00', info: '#00AAFF' };
-    toast.style.background = '#1C1C26';
-    toast.style.border = `1px solid ${colors[type] || colors.info}`;
-    toast.style.color  = colors[type] || colors.info;
-    toast.textContent  = msg;
-    toast.style.opacity = '1';
-
-    clearTimeout(toastTimeout);
-    toastTimeout = setTimeout(() => { toast.style.opacity = '0'; }, 3500);
+function setStatus(text, state = '') {
+    const dot  = document.getElementById('status-dot');
+    const span = document.getElementById('status-text');
+    dot.className  = 'status-dot' + (state ? ' ' + state : '');
+    span.textContent = text;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Utility
+// PAGE: Home
 // ─────────────────────────────────────────────────────────────────────────────
 
-function escHtml(str) {
-    if (!str) return '';
-    return String(str)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;');
-}
+function home() {
+    const role = getRole(currentUser);
+    const modCount = TOTAL_MODULES;
+    document.getElementById('content').innerHTML = `
+      <div class="page-header">
+        <h1>Welcome back, ${currentUser.username || 'Guest'}</h1>
+        <p>Quark Ghost Client — the most advanced injection-only Minecraft client</p>
+      </div>
 
-// ─────────────────────────────────────────────────────────────────────────────
-// STAFF PANEL
-// ─────────────────────────────────────────────────────────────────────────────
+      <div class="grid-4" style="margin-bottom:16px">
+        <div class="stat-card">
+          <div class="stat-label">Total Modules</div>
+          <div class="stat-value brand">${modCount.toLocaleString()}</div>
+          <div class="stat-sub">across 8 categories</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Injection Mode</div>
+          <div class="stat-value" style="font-size:16px;padding-top:4px">JVM Agent</div>
+          <div class="stat-sub">no JAR install needed</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Status</div>
+          <div class="stat-value" style="font-size:16px;padding-top:4px" id="home-status">${injected ? '<span class="text-success">Injected</span>' : '<span class="text-muted">Idle</span>'}</div>
+          <div class="stat-sub" id="home-pid">${selectedPid ? 'PID ' + selectedPid : 'no process selected'}</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Your Role</div>
+          <div class="stat-value" style="font-size:16px;padding-top:4px">${roleBadge(role)}</div>
+          <div class="stat-sub">${isStaff(currentUser) ? 'staff tools unlocked' : 'standard access'}</div>
+        </div>
+      </div>
 
-function renderStaffPanel(el) {
-    if (!isStaff(currentUser)) {
-        el.innerHTML = `<div class="page-header"><div class="page-title text-danger">Access Denied</div></div>`;
-        return;
-    }
-
-    el.innerHTML = `
-        <div class="page-header">
-            <div class="page-title">Staff Panel</div>
-            <div class="page-sub">Administration & Moderation Tools</div>
+      <div class="grid-2" style="margin-bottom:16px">
+        <div class="card glow">
+          <div class="card-title">Quick Inject</div>
+          <p style="font-size:12px;color:var(--muted);margin-bottom:12px">Attach to a running Minecraft process without installing any files.</p>
+          <div id="home-proc-status" style="font-size:12px;color:var(--muted);margin-bottom:10px">Scanning for processes…</div>
+          <button class="btn btn-primary btn-full" id="home-inject-btn" ${selectedPid ? '' : 'disabled'}>
+            ⚡ Inject Now
+          </button>
+          <div style="margin-top:8px">
+            <button class="btn btn-secondary btn-sm" id="home-scan-btn">🔍 Scan Processes</button>
+          </div>
         </div>
 
-        <div class="staff-tabs">
-            <button class="staff-tab active" data-tab="users">Users & Roles</button>
-            <button class="staff-tab" data-tab="bans">Ban Manager</button>
-            <button class="staff-tab" data-tab="keys">License Keys</button>
-            <button class="staff-tab" data-tab="announce">Announcements</button>
-            <button class="staff-tab" data-tab="audit">Audit Log</button>
+        <div class="card">
+          <div class="card-title">Module Breakdown</div>
+          ${Object.entries(MODULE_COUNTS).map(([cat, n]) => `
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+              <span style="font-size:11px;color:var(--muted);width:70px;text-transform:capitalize">${cat}</span>
+              <div class="progress-wrap" style="flex:1">
+                <div class="progress-bar" style="width:${Math.round(n/3)}%"></div>
+              </div>
+              <span style="font-size:11px;color:var(--muted);width:28px;text-align:right">${n}</span>
+            </div>`).join('')}
         </div>
+      </div>
 
-        <div id="staff-content" class="mt-16"></div>
-    `;
+      <div class="card">
+        <div class="card-title">Supported Environments</div>
+        <div class="grid-4">
+          ${['Fabric 1.21+', 'Forge 1.17+', 'NeoForge', 'Vanilla', 'Lunar Client', 'Badlion', 'TLauncher', 'Prism/MultiMC'].map(e =>
+            `<div class="module-chip">${e}</div>`).join('')}
+        </div>
+      </div>`;
 
-    const tabs = el.querySelectorAll('.staff-tab');
-    tabs.forEach(tab => {
-        tab.addEventListener('click', () => {
-            tabs.forEach(t => t.classList.remove('active'));
-            tab.classList.add('active');
-            renderStaffTab(el.querySelector('#staff-content'), tab.dataset.tab);
-        });
+    // Wire buttons
+    document.getElementById('home-scan-btn').addEventListener('click', async () => {
+        await scanProcesses();
+        const btn = document.getElementById('home-inject-btn');
+        const status = document.getElementById('home-proc-status');
+        if (processList.length === 0) {
+            status.textContent = 'No Minecraft processes found.';
+        } else {
+            if (!selectedPid) selectedPid = processList[0].pid;
+            status.textContent = `Found ${processList.length} process(es). PID ${selectedPid} selected.`;
+            if (btn) btn.disabled = false;
+        }
     });
 
-    renderStaffTab(el.querySelector('#staff-content'), 'users');
+    document.getElementById('home-inject-btn')?.addEventListener('click', () => {
+        if (selectedPid) runInject(selectedPid, 'home');
+    });
+
+    // Auto scan
+    scanProcesses().then(() => {
+        const status = document.getElementById('home-proc-status');
+        if (!status) return;
+        if (processList.length === 0) {
+            status.textContent = 'No Minecraft processes found. Launch Minecraft first.';
+        } else {
+            if (!selectedPid) selectedPid = processList[0].pid;
+            status.textContent = `Found ${processList.length} Minecraft process(es).`;
+            const btn = document.getElementById('home-inject-btn');
+            if (btn) btn.disabled = false;
+        }
+    });
 }
 
-function renderStaffTab(el, tab) {
-    if (tab === 'users') {
-        el.innerHTML = `
-            <div class="search-bar">
-                <input type="text" class="text-input" placeholder="Search by Discord ID or Username...">
-                <button class="btn btn-secondary">Search</button>
+// ─────────────────────────────────────────────────────────────────────────────
+// PAGE: Inject
+// ─────────────────────────────────────────────────────────────────────────────
+
+function inject() {
+    document.getElementById('content').innerHTML = `
+      <div class="page-header">
+        <h1>Inject</h1>
+        <p>Attach Quark to a running Minecraft JVM via agent injection — no files installed.</p>
+      </div>
+
+      <div class="grid-2">
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <div class="card">
+            <div class="card-title">Process Scanner</div>
+            <div id="process-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px">
+              <div style="color:var(--muted);font-size:12px">Scanning…</div>
             </div>
-            <table class="staff-table">
-                <thead>
-                    <tr><th>User</th><th>Discord ID</th><th>Role</th><th>Status</th><th>Actions</th></tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td><strong>corruptnull</strong></td>
-                        <td class="text-muted">1401853518100303932</td>
-                        <td>${roleBadge('Owner')}</td>
-                        <td><span class="status-dot status-online"></span>Online</td>
-                        <td>—</td>
-                    </tr>
-                </tbody>
-            </table>
-        `;
-    } else if (tab === 'bans') {
-        window._bans = window._bans || [
-            { name: 'RandomUser123', hwid: 'A8F9-C12B-D4E5', by: 'corruptnull' }
-        ];
-        el.innerHTML = `
-            <div class="search-bar">
-                <input type="text" class="text-input" placeholder="Search bans by HWID or Discord ID...">
-                <button class="btn btn-primary" id="btn-ban-user">Ban User</button>
+            <div style="display:flex;gap:8px">
+              <button class="btn btn-secondary btn-sm" id="btn-scan">🔍 Refresh</button>
+              <button class="btn btn-primary btn-sm" id="btn-inject" disabled>⚡ Inject Selected</button>
             </div>
-            <div class="card mt-16" id="bans-list">
-                ${window._bans.map(b => `
-                <div class="ban-row">
-                    <div class="ban-icon">✖</div>
-                    <div class="ban-info">
-                        <div class="ban-name">${b.name}</div>
-                        <div class="ban-meta">HWID: ${b.hwid} • Banned by ${b.by}</div>
-                    </div>
-                    <div class="ban-actions">
-                        <button class="btn btn-secondary btn-sm" onclick="showToast('Unbanned!', 'success')">Unban</button>
-                    </div>
-                </div>
-                `).join('')}
+          </div>
+
+          <div class="card">
+            <div class="card-title">Injection Options</div>
+            <div class="toggle-row">
+              <div><div class="toggle-label">Stealth Mode</div><div class="toggle-sub">Minimize injection footprint</div></div>
+              <label class="toggle"><input type="checkbox" id="opt-stealth" checked><span class="toggle-slider"></span></label>
             </div>
-        `;
-        document.getElementById('btn-ban-user').addEventListener('click', () => {
-            window._bans.unshift({ name: 'Cheater' + Math.floor(Math.random()*999), hwid: 'X' + Math.floor(Math.random()*9999), by: currentUser ? currentUser.username : 'Owner' });
-            renderStaffTab(document.querySelector('#staff-content'), 'bans');
-            showToast('User banned successfully.', 'success');
-        });
-    } else if (tab === 'keys') {
-        window._keys = window._keys || [
-            { key: 'QURK-A1B2-C3D4-E5F6-G7H8', status: 'active', claim: 'Unclaimed' },
-            { key: 'QURK-Z9Y8-X7W6-V5U4-T3S2', status: 'expired', claim: 'by .foulz.' }
-        ];
-        el.innerHTML = `
-            <div class="flex-row mb-16">
-                <button class="btn btn-primary" id="btn-gen-keys">Generate Keys</button>
+            <div class="toggle-row">
+              <div><div class="toggle-label">Auto-Reinject</div><div class="toggle-sub">Re-inject if client restarts</div></div>
+              <label class="toggle"><input type="checkbox" id="opt-auto-reinject"><span class="toggle-slider"></span></label>
             </div>
-            <div class="key-grid">
-                ${window._keys.map(k => `
-                <div class="key-card">
-                    <div class="key-value">${k.key}</div>
-                    <div class="key-meta"><span class="key-status-${k.status}">${k.status.charAt(0).toUpperCase() + k.status.slice(1)}</span> • ${k.claim}</div>
-                </div>
-                `).join('')}
+            <div class="toggle-row">
+              <div><div class="toggle-label">Verbose Log</div><div class="toggle-sub">Show detailed injection log</div></div>
+              <label class="toggle"><input type="checkbox" id="opt-verbose"><span class="toggle-slider"></span></label>
             </div>
-        `;
-        document.getElementById('btn-gen-keys').addEventListener('click', () => {
-            const gen = 'QURK-' + Math.random().toString(36).substring(2, 6).toUpperCase() + '-' + Math.random().toString(36).substring(2, 6).toUpperCase();
-            window._keys.unshift({ key: gen, status: 'active', claim: 'Unclaimed' });
-            renderStaffTab(document.querySelector('#staff-content'), 'keys');
-            showToast('Generated 1 new license key.', 'success');
-        });
-    } else if (tab === 'announce') {
-        window._ann = window._ann || [
-            { title: 'Quark v1.0.0 — Official Launch', date: 'June 2025', body: '1000+ modules shipped. True XRay, Full ESP suite.' }
-        ];
-        el.innerHTML = `
-            <div class="compose-area">
-                <input type="text" id="ann-title" class="text-input mb-8" style="width:100%" placeholder="Announcement Title...">
-                <textarea id="ann-body" placeholder="Write announcement..."></textarea>
-                <div class="flex-row mt-8" style="justify-content: flex-end">
-                    <button class="btn btn-primary" id="btn-publish-ann">Publish</button>
-                </div>
+          </div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <div class="card">
+            <div class="card-title">Injection Status</div>
+            <div class="inject-steps" id="inject-steps">
+              <div class="inject-step"><span class="step-icon pending">○</span>Scanning Minecraft JVM processes</div>
+              <div class="inject-step"><span class="step-icon pending">○</span>Attaching to target PID</div>
+              <div class="inject-step"><span class="step-icon pending">○</span>Loading Quark agent into JVM</div>
+              <div class="inject-step"><span class="step-icon pending">○</span>Initialising module system</div>
+              <div class="inject-step"><span class="step-icon pending">○</span>Registering event listeners</div>
+              <div class="inject-step"><span class="step-icon pending">○</span>Injection complete</div>
             </div>
-            <div class="mt-24">
-                ${window._ann.map(a => `
-                <div class="announcement-card announcement-priority-high">
-                    <div class="announcement-header">
-                        <div class="announcement-title">${a.title}</div>
-                        <div class="announcement-date">${a.date}</div>
-                    </div>
-                    <div class="announcement-body">${a.body}</div>
-                </div>
-                `).join('')}
+          </div>
+
+          <div class="card">
+            <div class="card-title">Console Output</div>
+            <div class="inject-log" id="inject-log">
+              <span class="log-info">[Quark] Launcher ready. Select a process to inject.</span>
             </div>
-        `;
-        document.getElementById('btn-publish-ann').addEventListener('click', () => {
-            const t = document.getElementById('ann-title').value || 'New Announcement';
-            const b = document.getElementById('ann-body').value || '...';
-            window._ann.unshift({ title: t, date: new Date().toLocaleDateString(), body: b });
-            renderStaffTab(document.querySelector('#staff-content'), 'announce');
-            showToast('Announcement published to all users.', 'success');
-        });
-    } else if (tab === 'audit') {
-        el.innerHTML = `
-            <div class="card">
-                <div class="audit-timeline">
-                    <div class="audit-entry">
-                        <div class="audit-time">Just now</div>
-                        <div class="audit-dot"></div>
-                        <div class="audit-content">
-                            <div class="audit-action">corruptnull viewed Staff Panel</div>
-                        </div>
-                    </div>
-                    <div class="audit-entry">
-                        <div class="audit-time">2 hours ago</div>
-                        <div class="audit-dot danger"></div>
-                        <div class="audit-content">
-                            <div class="audit-action">.foulz. banned user 987654321098765432</div>
-                            <div class="audit-detail">Reason: Attempted crack</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
+          </div>
+
+          <div class="card">
+            <div class="card-title">How It Works</div>
+            <p style="font-size:12px;color:var(--muted);line-height:1.8">
+              Quark uses the <strong style="color:var(--brand)">JVM Attach API</strong> to inject a Java agent
+              directly into a running Minecraft process. The agent uses
+              <strong style="color:var(--cyan)">ASM bytecode instrumentation</strong> to hook into
+              MinecraftClient, GameRenderer, Keyboard, and network handlers at runtime —
+              <strong style="color:var(--text)">without any JAR files or mods folder modification</strong>.
+            </p>
+          </div>
+        </div>
+      </div>`;
+
+    document.getElementById('btn-scan').addEventListener('click', () => refreshProcessList());
+    document.getElementById('btn-inject').addEventListener('click', () => {
+        if (selectedPid) runInject(selectedPid, 'inject');
+    });
+
+    refreshProcessList();
+}
+
+async function scanProcesses() {
+    try {
+        processList = await quark.injectScan();
+    } catch (_) {
+        processList = [];
     }
+    return processList;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// ANALYTICS
-// ─────────────────────────────────────────────────────────────────────────────
+async function refreshProcessList() {
+    const list = document.getElementById('process-list');
+    const btn  = document.getElementById('btn-inject');
+    if (list) list.innerHTML = `<div style="color:var(--muted);font-size:12px">Scanning…</div>`;
 
-function renderAnalytics(el) {
-    if (!isAdmin(currentUser)) {
-        el.innerHTML = `<div class="page-header"><div class="page-title text-danger">Access Denied</div></div>`;
+    await scanProcesses();
+
+    if (!list) return;
+    if (processList.length === 0) {
+        list.innerHTML = `<div style="color:var(--muted);font-size:12px;padding:12px;text-align:center">
+            No Minecraft processes found.<br>
+            <span style="font-size:11px">Launch Minecraft and click Refresh.</span>
+        </div>`;
+        if (btn) btn.disabled = true;
         return;
     }
 
-    el.innerHTML = `
-        <div class="page-header">
-            <div class="page-title">Analytics</div>
-            <div class="page-sub">Global client telemetry & usage statistics.</div>
+    list.innerHTML = processList.map(p => {
+        const loader = detectLoader(p.name);
+        const loaderBadge = `<span class="process-badge ${loader.toLowerCase()}">${loader}</span>`;
+        return `
+          <div class="process-item ${p.pid === selectedPid ? 'selected' : ''}" data-pid="${p.pid}">
+            <div class="process-icon">⛏</div>
+            <div class="process-info">
+              <div class="process-name">Minecraft (PID ${p.pid})</div>
+              <div class="process-pid">${p.name || 'java'}</div>
+            </div>
+            ${loaderBadge}
+          </div>`;
+    }).join('');
+
+    if (!selectedPid && processList.length > 0) selectedPid = processList[0].pid;
+    if (btn) btn.disabled = !selectedPid;
+
+    list.querySelectorAll('.process-item').forEach(el => {
+        el.addEventListener('click', () => {
+            selectedPid = parseInt(el.dataset.pid);
+            list.querySelectorAll('.process-item').forEach(e => e.classList.remove('selected'));
+            el.classList.add('selected');
+            if (btn) btn.disabled = false;
+        });
+    });
+}
+
+function detectLoader(name) {
+    if (!name) return 'Vanilla';
+    const n = name.toLowerCase();
+    if (n.includes('fabric')) return 'Fabric';
+    if (n.includes('forge'))  return 'Forge';
+    if (n.includes('lunar'))  return 'Lunar';
+    if (n.includes('badlion'))return 'Lunar';
+    return 'Vanilla';
+}
+
+async function runInject(pid, context) {
+    const logEl   = context === 'inject' ? document.getElementById('inject-log') : null;
+    const stepsEl = document.getElementById('inject-steps');
+
+    function log(msg, cls = '') {
+        if (logEl) logEl.innerHTML += `\n<span class="${cls}">${msg}</span>`;
+        if (logEl) logEl.scrollTop = logEl.scrollHeight;
+    }
+
+    function step(idx, state) {
+        if (!stepsEl) return;
+        const steps = stepsEl.querySelectorAll('.inject-step');
+        if (!steps[idx]) return;
+        const icon = steps[idx].querySelector('.step-icon');
+        icon.className = `step-icon ${state}`;
+        const icons = { done: '✓', active: '◌', pending: '○' };
+        icon.textContent = icons[state] || '○';
+    }
+
+    setStatus(`Injecting → PID ${pid}`, 'injected');
+    log(`[Quark] Attaching to PID ${pid}…`, 'log-info');
+    step(0, 'done'); step(1, 'active');
+
+    try {
+        const result = await quark.injectRun(pid);
+        step(1, 'done'); step(2, 'active');
+        log('[Quark] Agent loaded into JVM', 'log-success');
+        await sleep(300);
+        step(2, 'done'); step(3, 'active');
+        log('[Quark] Initialising module system…', 'log-info');
+        await sleep(400);
+        step(3, 'done'); step(4, 'active');
+        log('[Quark] Registering event listeners…', 'log-info');
+        await sleep(300);
+        step(4, 'done'); step(5, 'active');
+        await sleep(200);
+        step(5, 'done');
+        log('[Quark] ✓ Injection successful!', 'log-success');
+        log(`[Quark] Press Right-Shift in-game to open the GUI.`, 'log-info');
+        injected = true;
+        setStatus('Injected ✓', 'injected');
+        notify('Quark injected successfully! Press Right-Shift in game.', 'success', 5000);
+    } catch (err) {
+        step(1, 'done');
+        log(`[Quark] ✕ Injection failed: ${err.message}`, 'log-error');
+        setStatus('Injection failed', 'error');
+        notify('Injection failed: ' + err.message, 'error');
+    }
+}
+
+async function autoRefreshProcesses() {
+    await scanProcesses();
+    const list = document.getElementById('process-list');
+    if (list) refreshProcessList();
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PAGE: Modules
+// ─────────────────────────────────────────────────────────────────────────────
+
+const MODULE_LIST = {
+    combat:   ['KillAura','Criticals','Reach','Velocity','AutoCrystal','Surround','AntiKnockback','AutoTotem','BedAura','AimAssist','CrystalAura','Burrow','WTap','CritBot','TargetStrafe','SilentAura','MultiAura','AutoMLG','AutoGapple','ShieldBreaker','TriggerBot','LifeSteal','HoleSnap','Vampire','BackTrack','AntiPoison','AntiFire','HoleFiller','ForceField','Executioner','PingPredict','SuperCrit','ComboHit','PacketReach','DoubleHit'],
+    movement: ['Flight','Speed','NoFall','Jesus','Spider','Step','Sprint','BunnyHop','Glide','ElytraFly','SafeWalk','AirStrafe','HighJump','Parkour','TeleportFly','WaterFly','ClimbSpeed','SmoothStep','FastHead','JumpBoost','IceSpeed','LongJump','EdgeClamp','MoonWalk','SneakFlight'],
+    render:   ['ESP','Tracers','FullBright','Chams','XRay','Radar','HoleESP','StorageESP','NameTags','Trajectories','Zoom','FreeLook','BlockESP','CrystalESP','ItemESP','EntityGlow','ChunkESP','HideSelf','ClearVision','StatusEffectTimer','TargetHUD','SkyColor','DirectionHUD'],
+    player:   ['AutoEat','NoFall','InvMove','AutoTool','AutoArmor','Scaffold','FastPlace','FoodSwapper','InvProtect','NoSwing2','AutoRefill2','PotionSelector','SmartEat2','ArrowCounter2','AutoSword','InventorySort','AntiHurtCam','AntiStuck'],
+    world:    ['Nuker','AutoFarm','ChestStealer','AutoMine','VeinMiner','TreeFeller','AutoFish','AutoBuild','AutoBreeder','AutoEnchant','AutoAnvil','AutoCraft','AutoEnderFarm','BlockRotator','AutoTerraformer','FillChunk','MobTrap','AutoSmith','AutoLoom'],
+    exploit:  ['PacketFly','Disabler','AntiCheat','Timer','Freecam','Phase','NoComPress','SpeedHack','PortalGod','ChestESP','PacketDupe','SignCrash','LecternExploit','RubberBand2','CommandSpoof'],
+    misc:     ['AutoGG','ChatBot','MacroRecorder','DiscordRPC','PingSpoof','SessionInfo','StreamerFilter','PanicHotkey','GamepadSupport','TabListLogger','CrashDetector2','AutoWaypoint','SessionLog','AutoCommand2'],
+    staff:    ['Vanish','XrayDetector','KillauraDetector','FlightDetector','AntiGrief','BanLog','PlayerWatch','ViolationLog','StaffMode','ChatFilter2','SpectatorTools'],
+};
+
+function modules() {
+    document.getElementById('content').innerHTML = `
+      <div class="page-header">
+        <h1>Module Browser</h1>
+        <p>${TOTAL_MODULES.toLocaleString()} modules across 8 categories</p>
+      </div>
+
+      <div class="search-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input class="search-input" id="mod-search" placeholder="Search modules…" autocomplete="off">
+      </div>
+
+      <div class="filter-tabs" id="mod-filters">
+        <button class="filter-tab active" data-cat="all">All (${TOTAL_MODULES})</button>
+        ${Object.entries(MODULE_COUNTS).map(([c, n]) =>
+            `<button class="filter-tab" data-cat="${c}">${c.charAt(0).toUpperCase()+c.slice(1)} (${n})</button>`
+        ).join('')}
+      </div>
+
+      <div id="mod-content"></div>`;
+
+    let activeCat = 'all';
+
+    function render(search = '') {
+        const container = document.getElementById('mod-content');
+        const s = search.toLowerCase();
+        const entries = activeCat === 'all' ? Object.entries(MODULE_LIST) : [[activeCat, MODULE_LIST[activeCat] || []]];
+        container.innerHTML = entries.map(([cat, mods]) => {
+            const filtered = s ? mods.filter(m => m.toLowerCase().includes(s)) : mods;
+            if (!filtered.length) return '';
+            const count = MODULE_COUNTS[cat] || mods.length;
+            return `
+              <div class="module-cat-header">${cat.toUpperCase()} <span>${count} total${s ? ', ' + filtered.length + ' shown' : ''}</span></div>
+              <div class="module-grid" style="margin-bottom:16px">
+                ${filtered.map(m => `<div class="module-chip">${m}</div>`).join('')}
+                ${!s && count > mods.length ? `<div class="module-chip" style="color:var(--muted);border-style:dashed">+${count - mods.length} more…</div>` : ''}
+              </div>`;
+        }).join('');
+        if (!container.innerHTML.trim()) {
+            container.innerHTML = `<div style="color:var(--muted);font-size:13px;padding:20px;text-align:center">No modules match "${search}"</div>`;
+        }
+    }
+
+    render();
+
+    document.getElementById('mod-search').addEventListener('input', e => render(e.target.value));
+    document.querySelectorAll('.filter-tab').forEach(t => {
+        t.addEventListener('click', () => {
+            activeCat = t.dataset.cat;
+            document.querySelectorAll('.filter-tab').forEach(x => x.classList.remove('active'));
+            t.classList.add('active');
+            render(document.getElementById('mod-search').value);
+        });
+    });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PAGE: Profiles
+// ─────────────────────────────────────────────────────────────────────────────
+
+function defaultProfiles() {
+    return [
+        { id: 'pvp',     name: 'PvP Preset',    desc: 'KillAura, Criticals, AntiKB, Velocity, Reach', badges: ['combat','pvp'],    active: true  },
+        { id: 'crystal', name: 'Crystal PvP',   desc: 'AutoCrystal, Surround, TotemPop, HoleSnap',    badges: ['combat'],          active: false },
+        { id: 'legit',   name: 'Legit Client',  desc: 'Reach 3.2, Velocity 80%, Criticals, FastPlace', badges: ['clean'],          active: false },
+        { id: 'build',   name: 'Builder',       desc: 'Scaffold, AutoBuild, FastPlace, NoFall, Step',  badges: ['movement'],       active: false },
+        { id: 'explore', name: 'Explorer',      desc: 'XRay, ESP, FullBright, VeinMiner, AutoFarm',    badges: ['render'],         active: false },
+        { id: 'staff',   name: 'Staff Mode',    desc: 'Vanish, Detectors, Logs, AdminTools',           badges: ['combat','render'], active: false },
+    ];
+}
+
+function profilesPage() {
+    document.getElementById('content').innerHTML = `
+      <div class="page-header" style="display:flex;align-items:center;justify-content:space-between">
+        <div><h1>Profiles</h1><p>Save and load module configurations</p></div>
+        <button class="btn btn-primary btn-sm" id="btn-new-profile">+ New Profile</button>
+      </div>
+      <div class="grid-3" id="profile-grid"></div>`;
+
+    renderProfiles();
+
+    document.getElementById('btn-new-profile').addEventListener('click', () => {
+        const name = prompt('Profile name:');
+        if (name) {
+            profiles.push({ id: Date.now()+'', name, desc: 'Custom profile', badges: [], active: false });
+            quark.settingsSet('profiles', profiles);
+            renderProfiles();
+            notify('Profile created: ' + name, 'success');
+        }
+    });
+}
+
+function renderProfiles() {
+    const grid = document.getElementById('profile-grid');
+    if (!grid) return;
+    grid.innerHTML = profiles.map(p => `
+      <div class="profile-card ${p.active ? 'active' : ''}" data-id="${p.id}">
+        <div class="profile-name">${p.name}</div>
+        <div class="profile-desc">${p.desc}</div>
+        <div class="profile-badges">
+          ${p.badges.map(b => `<span class="badge badge-${b}">${b}</span>`).join('')}
+        </div>
+        <div style="display:flex;gap:6px;margin-top:4px">
+          <button class="btn btn-${p.active ? 'success' : 'secondary'} btn-sm" data-action="load" data-id="${p.id}">${p.active ? '✓ Active' : 'Load'}</button>
+          <button class="btn btn-secondary btn-sm" data-action="del" data-id="${p.id}">Delete</button>
+        </div>
+      </div>`).join('');
+
+    grid.querySelectorAll('[data-action]').forEach(btn => {
+        btn.addEventListener('click', e => {
+            const id = btn.dataset.id;
+            if (btn.dataset.action === 'load') {
+                profiles.forEach(p => p.active = p.id === id);
+                quark.settingsSet('profiles', profiles);
+                renderProfiles();
+                notify('Profile loaded', 'success');
+            } else {
+                profiles = profiles.filter(p => p.id !== id);
+                quark.settingsSet('profiles', profiles);
+                renderProfiles();
+                notify('Profile deleted', 'info');
+            }
+            e.stopPropagation();
+        });
+    });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PAGE: Alt Manager
+// ─────────────────────────────────────────────────────────────────────────────
+
+function altsPage() {
+    document.getElementById('content').innerHTML = `
+      <div class="page-header" style="display:flex;align-items:center;justify-content:space-between">
+        <div><h1>Alt Manager</h1><p>Store and switch between Minecraft accounts</p></div>
+        <button class="btn btn-primary btn-sm" id="btn-add-alt">+ Add Alt</button>
+      </div>
+      <div class="card" style="margin-bottom:14px">
+        <div class="card-title">Saved Alts (${alts.length})</div>
+        <div id="alt-list" style="display:flex;flex-direction:column;gap:8px"></div>
+        ${alts.length === 0 ? '<div style="color:var(--muted);font-size:12px;text-align:center;padding:16px">No alts saved. Click + Add Alt to begin.</div>' : ''}
+      </div>`;
+
+    renderAlts();
+
+    document.getElementById('btn-add-alt').addEventListener('click', () => {
+        const name = prompt('Minecraft username:');
+        if (name) {
+            alts.push({ name, uuid: '', added: Date.now() });
+            quark.settingsSet('alts', alts);
+            renderAlts();
+            notify('Alt added: ' + name, 'success');
+        }
+    });
+}
+
+function renderAlts() {
+    const list = document.getElementById('alt-list');
+    if (!list || alts.length === 0) return;
+    list.innerHTML = alts.map((a, i) => `
+      <div class="alt-item">
+        <div class="alt-avatar" style="background:linear-gradient(135deg,#A855F7,#06B6D4);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:15px">${a.name[0]?.toUpperCase()}</div>
+        <div class="alt-info">
+          <div class="alt-name">${a.name}</div>
+          <div class="alt-status">Added ${new Date(a.added).toLocaleDateString()}</div>
+        </div>
+        <div class="alt-actions">
+          <button class="btn btn-primary btn-sm" data-alt-use="${i}">Use</button>
+          <button class="btn btn-danger btn-sm" data-alt-del="${i}">✕</button>
+        </div>
+      </div>`).join('');
+
+    list.querySelectorAll('[data-alt-use]').forEach(b => {
+        b.addEventListener('click', () => notify('Switching alt… (requires game restart)', 'info'));
+    });
+    list.querySelectorAll('[data-alt-del]').forEach(b => {
+        b.addEventListener('click', () => {
+            alts.splice(parseInt(b.dataset.altDel), 1);
+            quark.settingsSet('alts', alts);
+            renderAlts();
+        });
+    });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PAGE: Global Chat
+// ─────────────────────────────────────────────────────────────────────────────
+
+function chat() {
+    document.getElementById('content').innerHTML = `
+      <div class="page-header">
+        <h1>Global Chat</h1>
+        <p>Chat with other Quark users in real-time</p>
+      </div>
+      <div class="card" style="margin-bottom:14px">
+        <div class="card-title">
+          <span>Live Chat</span>
+          <span id="chat-online" style="font-size:11px;color:var(--success);font-weight:500">● Connecting…</span>
+        </div>
+        <div class="chat-box" id="chat-box">
+          <div class="chat-msg">
+            <div class="chat-msg-body">
+              <span class="chat-msg-user">Quark</span>
+              <span class="chat-msg-time">System</span>
+              <div class="chat-msg-text">Welcome to Quark Global Chat!</div>
+            </div>
+          </div>
+        </div>
+        <div class="chat-input-row">
+          <input class="form-input" id="chat-input" placeholder="Type a message…" autocomplete="off">
+          <button class="btn btn-primary" id="btn-chat-send">Send</button>
+        </div>
+      </div>`;
+
+    // Simulate some activity
+    setTimeout(() => {
+        const el = document.getElementById('chat-online');
+        if (el) el.textContent = '● 12 online';
+        addChatMsg('System', 'Chat relay connected.', true);
+    }, 800);
+
+    const input = document.getElementById('chat-input');
+    document.getElementById('btn-chat-send').addEventListener('click', sendChatMsg);
+    input?.addEventListener('keydown', e => { if (e.key === 'Enter') sendChatMsg(); });
+
+    function sendChatMsg() {
+        const val = input?.value.trim();
+        if (!val) return;
+        addChatMsg(currentUser?.username || 'Guest', val, false);
+        input.value = '';
+    }
+}
+
+function addChatMsg(user, text, system) {
+    const box = document.getElementById('chat-box');
+    if (!box) return;
+    const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const div = document.createElement('div');
+    div.className = 'chat-msg';
+    div.innerHTML = `
+      <div class="chat-msg-avatar" style="background:linear-gradient(135deg,#A855F7,#06B6D4);display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:700">${user[0]?.toUpperCase()}</div>
+      <div class="chat-msg-body">
+        <span class="chat-msg-user" style="${system ? 'color:var(--cyan)' : ''}">${user}</span>
+        <span class="chat-msg-time">${time}</span>
+        <div class="chat-msg-text">${escapeHtml(text)}</div>
+      </div>`;
+    box.appendChild(div);
+    box.scrollTop = box.scrollHeight;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PAGE: Changelog
+// ─────────────────────────────────────────────────────────────────────────────
+
+function changelog() {
+    const entries = [
+        { v: '2.0.0', date: 'June 2025', items: [
+            { text: '1671 total modules — largest update ever', fix: false },
+            { text: 'Pure JVM agent injection (no JAR/mods needed)', fix: false },
+            { text: 'Support for Fabric, Forge, NeoForge, Vanilla, Lunar, Badlion', fix: false },
+            { text: 'Complete launcher redesign with purple/cyan theme', fix: false },
+            { text: 'Alt manager, profile system, global chat', fix: false },
+            { text: '62 brand-new modules across all 8 categories', fix: false },
+            { text: 'Fixed 161 redundant event subscribe/unsubscribe calls', fix: true },
+            { text: 'ASM ClassTransformer handles obfuscated class names', fix: false },
+        ]},
+        { v: '1.5.0', date: 'May 2025', items: [
+            { text: '107 staff modules with anti-cheat detection suite', fix: false },
+            { text: 'EnvironmentDetector: auto-detects loader and launcher', fix: false },
+            { text: 'ClassResolver: multi-environment class name resolution', fix: false },
+            { text: 'ObfuscatedClassDetector: structural bytecode analysis', fix: true },
+        ]},
+        { v: '1.0.0', date: 'April 2025', items: [
+            { text: 'Initial release with 800+ modules', fix: false },
+            { text: 'Fabric mod base with EventBus', fix: false },
+            { text: 'Electron launcher with Discord OAuth', fix: false },
+        ]},
+    ];
+
+    document.getElementById('content').innerHTML = `
+      <div class="page-header"><h1>Changelog</h1><p>What's new in Quark</p></div>
+      <div class="card">
+        ${entries.map(e => `
+          <div class="changelog-entry">
+            <div class="changelog-dot"></div>
+            <div>
+              <div class="changelog-version">v${e.v}</div>
+              <div class="changelog-date">${e.date}</div>
+              <ul class="changelog-items">
+                ${e.items.map(i => `<li class="${i.fix ? 'fix' : ''}">${i.text}</li>`).join('')}
+              </ul>
+            </div>
+          </div>`).join('')}
+      </div>`;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PAGE: Staff
+// ─────────────────────────────────────────────────────────────────────────────
+
+function staff() {
+    if (!isStaff(currentUser)) { navigateTo('home'); return; }
+    document.getElementById('content').innerHTML = `
+      <div class="page-header">
+        <h1>Staff Panel</h1>
+        <p>Administrative tools and cheat detection</p>
+      </div>
+      <div class="grid-4" style="margin-bottom:16px">
+        ${[
+            ['👁', 'Vanish',      'Become invisible to players'],
+            ['⚡', 'Fly',         'Toggle staff flight'],
+            ['🛡', 'God Mode',    'Toggle invincibility'],
+            ['🔍', 'Inspect',     'View player inventory'],
+            ['🔨', 'Ban Player',  'Issue a ban'],
+            ['🔇', 'Mute Player', 'Issue a mute'],
+            ['📍', 'Teleport',    'TP to any player'],
+            ['📋', 'Logs',        'View violation logs'],
+        ].map(([icon, name, desc]) => `
+          <div class="staff-action-btn">
+            <span class="icon">${icon}</span>
+            <span style="font-weight:600;font-size:12px">${name}</span>
+            <span style="font-size:10px;color:var(--muted);text-align:center">${desc}</span>
+          </div>`).join('')}
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">Active Violations</div>
+          <div style="color:var(--muted);font-size:12px;text-align:center;padding:16px">No active violations detected.</div>
+        </div>
+        <div class="card">
+          <div class="card-title">Detection Modules (${MODULE_COUNTS.staff})</div>
+          <div class="module-grid">
+            ${['XrayDetector','KillauraDetector','FlightDetector','SpeedDetector','ReachDetector','ScaffoldDetector','AimAssistDetector','MacroDetector'].map(m => `<div class="module-chip">${m}</div>`).join('')}
+          </div>
+        </div>
+      </div>`;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PAGE: Settings
+// ─────────────────────────────────────────────────────────────────────────────
+
+async function settings() {
+    const cfg = await quark.settingsGetAll();
+
+    document.getElementById('content').innerHTML = `
+      <div class="page-header"><h1>Settings</h1><p>Configure Quark and the launcher</p></div>
+
+      <div class="grid-2">
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <div class="card">
+            <div class="card-title">Discord OAuth</div>
+            <div class="form-row">
+              <div class="form-label">Client ID</div>
+              <input class="form-input" id="cfg-client-id" placeholder="1234567890" value="${cfg.discordClientId || ''}" autocomplete="off">
+            </div>
+            <div class="form-row">
+              <div class="form-label">Client Secret</div>
+              <input class="form-input" id="cfg-client-secret" type="password" placeholder="••••••••••" value="${cfg.discordClientSecret || ''}" autocomplete="off">
+            </div>
+            <button class="btn btn-primary btn-sm" id="btn-save-discord">Save Discord Config</button>
+          </div>
+
+          <div class="card">
+            <div class="card-title">Injection</div>
+            <div class="toggle-row">
+              <div><div class="toggle-label">Auto-inject on launch</div><div class="toggle-sub">Inject when Minecraft is detected</div></div>
+              <label class="toggle"><input type="checkbox" id="cfg-auto-inject" ${cfg.autoInject ? 'checked' : ''}><span class="toggle-slider"></span></label>
+            </div>
+            <div class="toggle-row">
+              <div><div class="toggle-label">Silent injection</div><div class="toggle-sub">No console output</div></div>
+              <label class="toggle"><input type="checkbox" id="cfg-silent-inject" ${cfg.silentInject ? 'checked' : ''}><span class="toggle-slider"></span></label>
+            </div>
+            <div class="form-row" style="margin-top:10px">
+              <div class="form-label">Custom Agent JAR Path</div>
+              <input class="form-input" id="cfg-agent-path" placeholder="Auto-detect" value="${cfg.agentPath || ''}" autocomplete="off">
+            </div>
+            <button class="btn btn-secondary btn-sm" id="btn-save-inject">Save Injection Config</button>
+          </div>
         </div>
 
-        <div class="analytics-grid">
-            <div class="analytics-card">
-                <div class="analytics-value">2,847</div>
-                <div class="analytics-label">Total Active Users</div>
-                <div class="analytics-delta up">↑ 12% this week</div>
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <div class="card">
+            <div class="card-title">Launcher</div>
+            <div class="toggle-row">
+              <div><div class="toggle-label">Start minimised</div><div class="toggle-sub">Launcher starts in tray</div></div>
+              <label class="toggle"><input type="checkbox" id="cfg-start-min"><span class="toggle-slider"></span></label>
             </div>
-            <div class="analytics-card">
-                <div class="analytics-value">142</div>
-                <div class="analytics-label">Concurrent Online</div>
-                <div class="analytics-delta up">↑ 5% since yesterday</div>
+            <div class="toggle-row">
+              <div><div class="toggle-label">Hardware acceleration</div><div class="toggle-sub">Use GPU for launcher rendering</div></div>
+              <label class="toggle"><input type="checkbox" id="cfg-hw-accel" checked><span class="toggle-slider"></span></label>
             </div>
-            <div class="analytics-card">
-                <div class="analytics-value">12.4k</div>
-                <div class="analytics-label">Total Injections</div>
-                <div class="analytics-delta up">↑ 8% this week</div>
-            </div>
-            <div class="analytics-card">
-                <div class="analytics-value">99.8%</div>
-                <div class="analytics-label">Bypass Success Rate</div>
-                <div class="analytics-delta down">↓ 0.1% (Vulcan patch)</div>
-            </div>
-        </div>
+          </div>
 
-        <div class="two-col">
-            <div class="chart-card">
-                <div class="chart-title">Top Modules Used</div>
-                <div class="chart-bar-row">
-                    <div class="chart-bar-label">Aura</div>
-                    <div class="chart-bar-track"><div class="chart-bar-fill" style="width:95%"></div></div>
-                    <div class="chart-bar-value">95%</div>
-                </div>
-                <div class="chart-bar-row">
-                    <div class="chart-bar-label">Velocity</div>
-                    <div class="chart-bar-track"><div class="chart-bar-fill" style="width:88%"></div></div>
-                    <div class="chart-bar-value">88%</div>
-                </div>
-                <div class="chart-bar-row">
-                    <div class="chart-bar-label">ESP</div>
-                    <div class="chart-bar-track"><div class="chart-bar-fill" style="width:76%"></div></div>
-                    <div class="chart-bar-value">76%</div>
-                </div>
-                <div class="chart-bar-row">
-                    <div class="chart-bar-label">Scaffold</div>
-                    <div class="chart-bar-track"><div class="chart-bar-fill" style="width:64%"></div></div>
-                    <div class="chart-bar-value">64%</div>
-                </div>
+          <div class="card">
+            <div class="card-title">Account</div>
+            <div style="display:flex;flex-direction:column;gap:8px">
+              ${currentUser && !currentUser.guest ? `
+                <button class="btn btn-danger btn-sm" id="btn-logout">Sign Out of Discord</button>
+                <button class="btn btn-secondary btn-sm" id="btn-clear-data">Clear All Data</button>
+              ` : `
+                <button class="btn btn-discord btn-sm" id="btn-login-settings">Sign in with Discord</button>
+              `}
             </div>
-            
-            <div class="chart-card">
-                <div class="chart-title">Server Distribution</div>
-                <div class="chart-bar-row">
-                    <div class="chart-bar-label">Hypixel</div>
-                    <div class="chart-bar-track"><div class="chart-bar-fill" style="width:82%; background: linear-gradient(90deg, #FF5555, #FFAA00)"></div></div>
-                    <div class="chart-bar-value">82%</div>
-                </div>
-                <div class="chart-bar-row">
-                    <div class="chart-bar-label">Minemen</div>
-                    <div class="chart-bar-track"><div class="chart-bar-fill" style="width:45%; background: linear-gradient(90deg, #55FFFF, #00AAFF)"></div></div>
-                    <div class="chart-bar-value">45%</div>
-                </div>
-                <div class="chart-bar-row">
-                    <div class="chart-bar-label">Cubecraft</div>
-                    <div class="chart-bar-track"><div class="chart-bar-fill" style="width:28%; background: linear-gradient(90deg, #55FF55, #00AA00)"></div></div>
-                    <div class="chart-bar-value">28%</div>
-                </div>
+          </div>
+
+          <div class="card">
+            <div class="card-title">About</div>
+            <div style="font-size:12px;color:var(--muted);line-height:2">
+              <div>Quark Ghost Client <span style="color:var(--brand)">v2.0.0</span></div>
+              <div>Modules: <span style="color:var(--text)">${TOTAL_MODULES.toLocaleString()}</span></div>
+              <div>Minecraft: <span style="color:var(--text)">1.21.1 Fabric</span></div>
+              <div>Injection: <span style="color:var(--cyan)">JVM Agent (ASM 9)</span></div>
             </div>
+          </div>
         </div>
-    `;
+      </div>`;
+
+    document.getElementById('btn-save-discord')?.addEventListener('click', async () => {
+        await quark.settingsSet('discordClientId',     document.getElementById('cfg-client-id').value.trim());
+        await quark.settingsSet('discordClientSecret', document.getElementById('cfg-client-secret').value.trim());
+        notify('Discord config saved', 'success');
+    });
+
+    document.getElementById('btn-save-inject')?.addEventListener('click', async () => {
+        await quark.settingsSet('autoInject',  document.getElementById('cfg-auto-inject').checked);
+        await quark.settingsSet('silentInject',document.getElementById('cfg-silent-inject').checked);
+        await quark.settingsSet('agentPath',   document.getElementById('cfg-agent-path').value.trim());
+        notify('Injection config saved', 'success');
+    });
+
+    document.getElementById('btn-logout')?.addEventListener('click', () => {
+        if (confirm('Sign out of Discord?')) {
+            quark.discordLogout();
+            quark.settingsSet('user', null);
+            currentUser = null;
+            showLogin();
+        }
+    });
+
+    document.getElementById('btn-clear-data')?.addEventListener('click', () => {
+        if (confirm('This will clear all saved data. Continue?')) {
+            quark.settingsSet('user', null);
+            quark.settingsSet('alts', []);
+            quark.settingsSet('profiles', []);
+            notify('Data cleared', 'info');
+        }
+    });
+
+    document.getElementById('btn-login-settings')?.addEventListener('click', handleDiscordLogin);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Helpers
+// ─────────────────────────────────────────────────────────────────────────────
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+function escapeHtml(str) {
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
