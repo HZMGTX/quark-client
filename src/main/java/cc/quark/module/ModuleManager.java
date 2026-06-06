@@ -277,6 +277,7 @@ public class ModuleManager {
         register(new AutoXBow());
         register(new DragonAura());
         register(new GhastAura());
+        register(new MaceAura());
 
         // -------- MOVEMENT --------
         register(new Acceleration());
@@ -505,6 +506,7 @@ public class ModuleManager {
         register(new SneakWalk());
         register(new EntityControl());
         register(new MountSpeed());
+        register(new RideFly());
 
         // -------- PLAYER --------
         register(new AFKMode());
@@ -733,6 +735,7 @@ public class ModuleManager {
         register(new AntiBlind2());
         register(new AutoNameTag());
         register(new ChestStealer2());
+        register(new EatDelay());
 
         // -------- RENDER --------
         register(new ActiveMods());
