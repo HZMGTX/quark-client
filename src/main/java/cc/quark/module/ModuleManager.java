@@ -275,6 +275,7 @@ public class ModuleManager {
         register(new SurroundPlus());
         register(new AutoMace());
         register(new AutoXBow());
+        register(new DragonAura());
 
         // -------- MOVEMENT --------
         register(new Acceleration());
@@ -727,6 +728,7 @@ public class ModuleManager {
         register(new InvCleaner());
         register(new ShulkerPeek());
         register(new AntiBlind2());
+        register(new AutoNameTag());
 
         // -------- RENDER --------
         register(new ActiveMods());
