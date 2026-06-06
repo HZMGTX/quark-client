@@ -721,6 +721,9 @@ public class ModuleManager {
         register(new NoInteract2());
         register(new AntiPoison3());
         register(new AutoRespawn2());
+        register(new Compass2());
+        register(new InvCleaner());
+        register(new ShulkerPeek());
 
         // -------- RENDER --------
         register(new ActiveMods());
@@ -1247,6 +1250,9 @@ public class ModuleManager {
         register(new AntiChatFilter());
         register(new AutoPrivateMsg());
         register(new ChatPing());
+        register(new CommandAlias());
+        register(new HudEditor());
+        register(new ServerAlert());
 
         // -------- STAFF --------
         register(new cc.quark.module.modules.staff.StaffChat());
