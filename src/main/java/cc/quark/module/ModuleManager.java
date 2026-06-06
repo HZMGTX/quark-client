@@ -504,6 +504,7 @@ public class ModuleManager {
         register(new NoBobbing());
         register(new SneakWalk());
         register(new EntityControl());
+        register(new MountSpeed());
 
         // -------- PLAYER --------
         register(new AFKMode());
@@ -731,6 +732,7 @@ public class ModuleManager {
         register(new ShulkerPeek());
         register(new AntiBlind2());
         register(new AutoNameTag());
+        register(new ChestStealer2());
 
         // -------- RENDER --------
         register(new ActiveMods());
