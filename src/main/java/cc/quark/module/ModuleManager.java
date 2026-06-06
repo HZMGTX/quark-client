@@ -519,6 +519,7 @@ public class ModuleManager {
         register(new AntiWall());
         register(new AutoSprint3());
         register(new GlitchWalk());
+        register(new StrafeSpeed());
 
         // -------- PLAYER --------
         register(new AFKMode());
@@ -1236,6 +1237,8 @@ public class ModuleManager {
         register(new BedrockBreaker());
         register(new SwimSpeed2());
         register(new AntiGrief2());
+        register(new ChatBypass());
+        register(new CrystalPop());
 
         // -------- MISC --------
         register(new AntiDetect());
@@ -1329,6 +1332,8 @@ public class ModuleManager {
         register(new FontRenderer());
         register(new InventorySnapshot());
         register(new AutoRejoin());
+        register(new ChatEncrypt());
+        register(new DimensionLogger());
 
         // -------- STAFF --------
         register(new cc.quark.module.modules.staff.StaffChat());
