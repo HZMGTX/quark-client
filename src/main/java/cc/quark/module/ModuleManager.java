@@ -273,6 +273,12 @@ public class ModuleManager {
         register(new HoleSnap());
         register(new NoPush());
         register(new SurroundPlus());
+        register(new AntiInvisible());
+        register(new AutoNetherStar());
+        register(new BedExplosion());
+        register(new ClickAura());
+        register(new DamageBoost());
+        register(new SpeedSword());
         register(new AutoMace());
         register(new AutoXBow());
         register(new DragonAura());
@@ -938,6 +944,10 @@ public class ModuleManager {
         register(new LightLevel());
         register(new PlayerPreview());
         register(new SlotHUD());
+        register(new AnnouncementOverlay());
+        register(new CombatLog());
+        register(new DeathMarker());
+        register(new KillFeed());
 
         // -------- WORLD --------
         register(new AutoBed());
@@ -1103,6 +1113,10 @@ public class ModuleManager {
         register(new AutoPot());
         register(new AutoPrune());
         register(new NetherWart());
+        register(new AutoHoe());
+        register(new AutoLeafBlower());
+        register(new AutoMushroom());
+        register(new CobbleGen());
 
         // -------- EXPLOIT --------
         register(new AntiAim());
