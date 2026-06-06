@@ -1293,6 +1293,7 @@ public class ModuleManager {
         register(new ChatLogger2());
         register(new CoordsExport());
         register(new CustomTabTitle());
+        register(new DiscordWebhook());
 
         // -------- STAFF --------
         register(new cc.quark.module.modules.staff.StaffChat());
