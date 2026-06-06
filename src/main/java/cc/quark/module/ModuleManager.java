@@ -276,6 +276,7 @@ public class ModuleManager {
         register(new AutoMace());
         register(new AutoXBow());
         register(new DragonAura());
+        register(new GhastAura());
 
         // -------- MOVEMENT --------
         register(new Acceleration());
@@ -502,6 +503,7 @@ public class ModuleManager {
         register(new CrawlMove());
         register(new NoBobbing());
         register(new SneakWalk());
+        register(new EntityControl());
 
         // -------- PLAYER --------
         register(new AFKMode());
