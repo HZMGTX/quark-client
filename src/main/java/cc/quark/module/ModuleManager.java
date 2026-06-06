@@ -1299,6 +1299,7 @@ public class ModuleManager {
         register(new CustomTabTitle());
         register(new DiscordWebhook());
         register(new FontRenderer());
+        register(new InventorySnapshot());
 
         // -------- STAFF --------
         register(new cc.quark.module.modules.staff.StaffChat());
