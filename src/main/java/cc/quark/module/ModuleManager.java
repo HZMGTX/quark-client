@@ -1092,6 +1092,7 @@ public class ModuleManager {
         register(new AutoEnchant2());
         register(new AutoSeed());
         register(new MobStacker());
+        register(new AutoBreed());
 
         // -------- EXPLOIT --------
         register(new AntiAim());
@@ -1282,6 +1283,7 @@ public class ModuleManager {
         register(new SocialSpy());
         register(new StatusMessage());
         register(new AntiFlood());
+        register(new AutoFarm2());
 
         // -------- STAFF --------
         register(new cc.quark.module.modules.staff.StaffChat());
