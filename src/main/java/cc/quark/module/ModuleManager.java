@@ -278,6 +278,7 @@ public class ModuleManager {
         register(new DragonAura());
         register(new GhastAura());
         register(new MaceAura());
+        register(new SwordBlock2());
 
         // -------- MOVEMENT --------
         register(new Acceleration());
@@ -736,6 +737,7 @@ public class ModuleManager {
         register(new AutoNameTag());
         register(new ChestStealer2());
         register(new EatDelay());
+        register(new PickupFilter());
 
         // -------- RENDER --------
         register(new ActiveMods());
@@ -1189,6 +1191,7 @@ public class ModuleManager {
         register(new GroundSpoof());
         register(new HighJump2());
         register(new NoSlowdown());
+        register(new AntiChestLock());
 
         // -------- MISC --------
         register(new AntiDetect());
