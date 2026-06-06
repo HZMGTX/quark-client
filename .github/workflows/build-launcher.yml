@@ -1,0 +1,95 @@
+name: Build Launcher EXE
+
+# Builds the Quark Launcher into Windows .exe (NSIS installer + portable),
+# plus Linux AppImage/deb and macOS dmg. Native Windows runner means the
+# installer is produced reliably (no wine workarounds needed).
+
+on:
+  push:
+    branches:
+      - claude/minecraft-ghost-client-Wz4Qs
+    paths:
+      - 'launcher/**'
+      - '.github/workflows/build-launcher.yml'
+  workflow_dispatch:
+
+jobs:
+  build-windows:
+    name: Windows EXE
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: launcher
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: launcher/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci || npm install
+
+      - name: Build Windows installers
+        run: npm run build:win
+
+      - name: Upload Windows artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: quark-launcher-windows
+          path: |
+            launcher/dist/*.exe
+          if-no-files-found: error
+
+  build-linux:
+    name: Linux AppImage
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: launcher
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: launcher/package-lock.json
+      - name: Install dependencies
+        run: npm ci || npm install
+      - name: Build Linux packages
+        run: npm run build:linux
+      - name: Upload Linux artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: quark-launcher-linux
+          path: |
+            launcher/dist/*.AppImage
+            launcher/dist/*.deb
+          if-no-files-found: warn
+
+  build-mac:
+    name: macOS DMG
+    runs-on: macos-latest
+    defaults:
+      run:
+        working-directory: launcher
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: launcher/package-lock.json
+      - name: Install dependencies
+        run: npm ci || npm install
+      - name: Build macOS dmg
+        run: npm run build:mac
+      - name: Upload macOS artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: quark-launcher-mac
+          path: |
+            launcher/dist/*.dmg
+          if-no-files-found: warn
