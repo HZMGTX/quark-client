@@ -516,6 +516,8 @@ public class ModuleManager {
         register(new MountSpeed());
         register(new RideFly());
         register(new AirSpeed());
+        register(new AntiWall());
+        register(new AutoSprint3());
 
         // -------- PLAYER --------
         register(new AFKMode());
@@ -952,6 +954,8 @@ public class ModuleManager {
         register(new KillFeed());
         register(new LevelDisplay());
         register(new MovementHUD());
+        register(new ReachDisplay());
+        register(new ScoreHUD());
 
         // -------- WORLD --------
         register(new AutoBed());
@@ -1123,6 +1127,8 @@ public class ModuleManager {
         register(new CobbleGen());
         register(new GoldFarm());
         register(new MobKiller());
+        register(new TreeFarm());
+        register(new VillagerTrader());
 
         // -------- EXPLOIT --------
         register(new AntiAim());
