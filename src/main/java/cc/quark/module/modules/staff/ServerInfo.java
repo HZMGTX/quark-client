@@ -6,8 +6,8 @@ import cc.quark.event.events.EventRender2D;
 import cc.quark.event.events.EventTick;
 import cc.quark.module.Category;
 import cc.quark.module.Module;
-import cc.quark.module.setting.BoolSetting;
-import cc.quark.module.setting.IntSetting;
+import cc.quark.setting.BoolSetting;
+import cc.quark.setting.IntSetting;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.network.packet.s2c.play.WorldTimeUpdateS2CPacket;
 
@@ -16,12 +16,12 @@ import java.time.format.DateTimeFormatter;
 
 public class ServerInfo extends Module {
 
-    private final BoolSetting showTime    = new BoolSetting("ShowTime", true);
-    private final BoolSetting showPlayers = new BoolSetting("ShowPlayers", true);
-    private final BoolSetting showTPS     = new BoolSetting("ShowTPS", true);
-    private final BoolSetting showPing    = new BoolSetting("ShowPing", true);
-    private final IntSetting posX = new IntSetting("X", 4, 0, 800);
-    private final IntSetting posY = new IntSetting("Y", 4, 0, 600);
+    private final BoolSetting showTime    = register(new BoolSetting("ShowTime", "ShowTime", true));
+    private final BoolSetting showPlayers = register(new BoolSetting("ShowPlayers", "ShowPlayers", true));
+    private final BoolSetting showTPS     = register(new BoolSetting("ShowTPS", "ShowTPS", true));
+    private final BoolSetting showPing    = register(new BoolSetting("ShowPing", "ShowPing", true));
+    private final IntSetting posX = register(new IntSetting("X", "X", 4, 0, 800));
+    private final IntSetting posY = register(new IntSetting("Y", "Y", 4, 0, 600));
 
     private double tps = 20.0;
     private long lastTimeUpdate = 0;
@@ -29,15 +29,12 @@ public class ServerInfo extends Module {
 
     public ServerInfo() {
         super("ServerInfo", "Displays server info overlay: TPS, players, time, ping", Category.STAFF);
-        addSettings(showTime, showPlayers, showTPS, showPing, posX, posY);
     }
 
-    @Override public void onEnable()  { Quark.mc.getEventBus().subscribe(this); }
-    @Override public void onDisable() { Quark.mc.getEventBus().unsubscribe(this); }
 
     @EventHandler
     public void onTick(EventTick event) {
-        var mc = Quark.mc;
+        
         if (mc == null || mc.world == null) return;
         long worldTime = mc.world.getTime();
         if (worldTime != lastWorldTime) {
@@ -53,7 +50,7 @@ public class ServerInfo extends Module {
 
     @EventHandler
     public void onRender2D(EventRender2D event) {
-        var mc = Quark.mc;
+        
         if (mc == null || mc.player == null) return;
         DrawContext ctx = event.getDrawContext();
         int x = posX.get(), y = posY.get();

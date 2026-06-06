@@ -5,8 +5,8 @@ import cc.quark.event.EventHandler;
 import cc.quark.event.events.EventTick;
 import cc.quark.module.Category;
 import cc.quark.module.Module;
-import cc.quark.module.setting.BoolSetting;
-import cc.quark.module.setting.DoubleSetting;
+import cc.quark.setting.BoolSetting;
+import cc.quark.setting.DoubleSetting;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.text.Text;
 
@@ -16,23 +16,20 @@ import java.util.UUID;
 
 public class CombatLogger extends Module {
 
-    private final DoubleSetting range   = new DoubleSetting("Range", 32, 8, 128);
-    private final BoolSetting logDeaths = new BoolSetting("LogDeaths", true);
-    private final BoolSetting logLowHP  = new BoolSetting("LogLowHP", true);
+    private final DoubleSetting range   = register(new DoubleSetting("Range", "Range", 32, 8, 128));
+    private final BoolSetting logDeaths = register(new BoolSetting("LogDeaths", "LogDeaths", true));
+    private final BoolSetting logLowHP  = register(new BoolSetting("LogLowHP", "LogLowHP", true));
 
     private final Map<UUID, Float> prevHealth = new HashMap<>();
 
     public CombatLogger() {
         super("CombatLogger", "Logs combat events: deaths, low HP, damage spikes for nearby players", Category.STAFF);
-        addSettings(range, logDeaths, logLowHP);
     }
 
-    @Override public void onEnable()  { Quark.mc.getEventBus().subscribe(this); prevHealth.clear(); }
-    @Override public void onDisable() { Quark.mc.getEventBus().unsubscribe(this); }
 
     @EventHandler
     public void onTick(EventTick event) {
-        var mc = Quark.mc;
+        
         if (mc == null || mc.player == null || mc.world == null) return;
 
         mc.world.getPlayers().forEach(p -> {
@@ -52,7 +49,7 @@ public class CombatLogger extends Module {
     }
 
     private void log(String msg) {
-        var mc = Quark.mc;
+        
         if (mc == null || mc.player == null) return;
         mc.player.sendMessage(Text.literal("§6[CombatLog] " + msg), false);
     }

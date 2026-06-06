@@ -6,8 +6,8 @@ import cc.quark.event.events.EventPacketReceive;
 import cc.quark.event.events.EventRender2D;
 import cc.quark.module.Category;
 import cc.quark.module.Module;
-import cc.quark.module.setting.BoolSetting;
-import cc.quark.module.setting.IntSetting;
+import cc.quark.setting.BoolSetting;
+import cc.quark.setting.IntSetting;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.network.packet.Packet;
 
@@ -15,21 +15,18 @@ import java.util.*;
 
 public class NetworkAnalyzer extends Module {
 
-    private final IntSetting maxEntries = new IntSetting("MaxEntries", 10, 5, 30);
-    private final BoolSetting showSize  = new BoolSetting("ShowSize", false);
-    private final IntSetting posX       = new IntSetting("X", 4, 0, 800);
-    private final IntSetting posY       = new IntSetting("Y", 200, 0, 800);
+    private final IntSetting maxEntries = register(new IntSetting("MaxEntries", "MaxEntries", 10, 5, 30));
+    private final BoolSetting showSize  = register(new BoolSetting("ShowSize", "ShowSize", false));
+    private final IntSetting posX       = register(new IntSetting("X", "X", 4, 0, 800));
+    private final IntSetting posY       = register(new IntSetting("Y", "Y", 200, 0, 800));
 
     private final Map<String, Integer> packetCounts = new LinkedHashMap<>();
     private int totalPackets = 0;
 
     public NetworkAnalyzer() {
         super("NetworkAnalyzer", "Displays incoming packet types and frequency in a HUD overlay", Category.STAFF);
-        addSettings(maxEntries, showSize, posX, posY);
     }
 
-    @Override public void onEnable()  { Quark.mc.getEventBus().subscribe(this); packetCounts.clear(); totalPackets = 0; }
-    @Override public void onDisable() { Quark.mc.getEventBus().unsubscribe(this); }
 
     @EventHandler
     public void onPacket(EventPacketReceive event) {
@@ -40,7 +37,7 @@ public class NetworkAnalyzer extends Module {
 
     @EventHandler
     public void onRender2D(EventRender2D event) {
-        var mc = Quark.mc;
+        
         if (mc == null || mc.player == null) return;
         DrawContext ctx = event.getDrawContext();
         int x = posX.get(), y = posY.get();

@@ -5,34 +5,31 @@ import cc.quark.event.EventHandler;
 import cc.quark.event.events.EventTick;
 import cc.quark.module.Category;
 import cc.quark.module.Module;
-import cc.quark.module.setting.BoolSetting;
-import cc.quark.module.setting.StringSetting;
+import cc.quark.setting.BoolSetting;
+import cc.quark.setting.StringSetting;
 import net.minecraft.text.Text;
 
 import java.util.*;
 
 public class PermissionManager extends Module {
 
-    private final StringSetting adminPlayers   = new StringSetting("Admins", "");
-    private final StringSetting modPlayers     = new StringSetting("Mods", "");
-    private final StringSetting helperPlayers  = new StringSetting("Helpers", "");
-    private final BoolSetting showInName       = new BoolSetting("ShowInName", true);
-    private final BoolSetting chatPrefix       = new BoolSetting("ChatPrefix", true);
+    private final StringSetting adminPlayers   = register(new StringSetting("Admins", "Admins", ""));
+    private final StringSetting modPlayers     = register(new StringSetting("Mods", "Mods", ""));
+    private final StringSetting helperPlayers  = register(new StringSetting("Helpers", "Helpers", ""));
+    private final BoolSetting showInName       = register(new BoolSetting("ShowInName", "ShowInName", true));
+    private final BoolSetting chatPrefix       = register(new BoolSetting("ChatPrefix", "ChatPrefix", true));
 
     private final Map<String, String> permCache = new HashMap<>();
 
     public PermissionManager() {
         super("PermissionManager", "Assigns custom permission roles to players (admin/mod/helper)", Category.STAFF);
-        addSettings(adminPlayers, modPlayers, helperPlayers, showInName, chatPrefix);
     }
 
     @Override
     public void onEnable() {
-        Quark.mc.getEventBus().subscribe(this);
         rebuildCache();
     }
 
-    @Override public void onDisable() { Quark.mc.getEventBus().unsubscribe(this); }
 
     private void rebuildCache() {
         permCache.clear();
@@ -51,7 +48,7 @@ public class PermissionManager extends Module {
     @EventHandler
     public void onTick(EventTick event) {
         // Rebuild cache every 200 ticks in case settings changed
-        if (Quark.mc != null && Quark.mc.player != null && Quark.mc.player.age % 200 == 0) {
+        if (mc != null && mc.player != null && mc.player.age % 200 == 0) {
             rebuildCache();
         }
     }

@@ -13,12 +13,10 @@ public class AntiHurtCam extends Module {
         super("AntiHurtCam", "Prevents the screen from tilting when taking damage", Category.PLAYER);
     }
 
-    @Override public void onEnable()  { Quark.mc.getEventBus().subscribe(this); }
-    @Override public void onDisable() { Quark.mc.getEventBus().unsubscribe(this); }
 
     @EventHandler
     public void onPacket(EventPacketReceive event) {
-        var mc = Quark.mc;
+        
         if (mc == null || mc.player == null) return;
         if (event.getPacket() instanceof EntityDamageS2CPacket pkt) {
             if (pkt.entityId() == mc.player.getId()) {

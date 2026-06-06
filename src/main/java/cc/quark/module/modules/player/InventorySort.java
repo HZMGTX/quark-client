@@ -5,30 +5,27 @@ import cc.quark.event.EventHandler;
 import cc.quark.event.events.EventTick;
 import cc.quark.module.Category;
 import cc.quark.module.Module;
-import cc.quark.module.setting.BoolSetting;
-import cc.quark.module.setting.IntSetting;
+import cc.quark.setting.BoolSetting;
+import cc.quark.setting.IntSetting;
 import net.minecraft.item.ItemStack;
 import net.minecraft.screen.slot.SlotActionType;
 
 public class InventorySort extends Module {
 
-    private final BoolSetting autoSort = new BoolSetting("AutoSort", false);
-    private final IntSetting interval = new IntSetting("Interval", 20, 5, 100);
+    private final BoolSetting autoSort = register(new BoolSetting("AutoSort", "AutoSort", false));
+    private final IntSetting interval = register(new IntSetting("Interval", "Interval", 20, 5, 100));
 
     private int timer = 0;
 
     public InventorySort() {
         super("InventorySort", "Keeps inventory sorted by item category and stackability", Category.PLAYER);
-        addSettings(autoSort, interval);
     }
 
-    @Override public void onEnable()  { Quark.mc.getEventBus().subscribe(this); }
-    @Override public void onDisable() { Quark.mc.getEventBus().unsubscribe(this); }
 
     @EventHandler
     public void onTick(EventTick event) {
         if (!autoSort.isEnabled()) return;
-        var mc = Quark.mc;
+        
         if (mc == null || mc.player == null) return;
         if (mc.currentScreen != null) return;
 

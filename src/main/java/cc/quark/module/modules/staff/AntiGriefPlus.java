@@ -6,8 +6,8 @@ import cc.quark.event.events.EventTick;
 import cc.quark.event.events.EventChat;
 import cc.quark.module.Category;
 import cc.quark.module.Module;
-import cc.quark.module.setting.BoolSetting;
-import cc.quark.module.setting.IntSetting;
+import cc.quark.setting.BoolSetting;
+import cc.quark.setting.IntSetting;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.text.Text;
 
@@ -17,25 +17,22 @@ import java.util.UUID;
 
 public class AntiGriefPlus extends Module {
 
-    private final BoolSetting alertOnFlying   = new BoolSetting("AlertFlying", true);
-    private final BoolSetting alertOnSpeed    = new BoolSetting("AlertSpeed", true);
-    private final BoolSetting alertOnExplode  = new BoolSetting("AlertExplosion", true);
-    private final IntSetting alertCooldown    = new IntSetting("Cooldown", 100, 20, 400);
+    private final BoolSetting alertOnFlying   = register(new BoolSetting("AlertFlying", "AlertFlying", true));
+    private final BoolSetting alertOnSpeed    = register(new BoolSetting("AlertSpeed", "AlertSpeed", true));
+    private final BoolSetting alertOnExplode  = register(new BoolSetting("AlertExplosion", "AlertExplosion", true));
+    private final IntSetting alertCooldown    = register(new IntSetting("Cooldown", "Cooldown", 100, 20, 400));
 
     private final Map<UUID, Long> lastAlert = new HashMap<>();
     private final Map<UUID, Float> lastY    = new HashMap<>();
 
     public AntiGriefPlus() {
         super("AntiGriefPlus", "Enhanced anti-grief: flags flying, speed, and explosion abuse", Category.STAFF);
-        addSettings(alertOnFlying, alertOnSpeed, alertOnExplode, alertCooldown);
     }
 
-    @Override public void onEnable()  { Quark.mc.getEventBus().subscribe(this); }
-    @Override public void onDisable() { Quark.mc.getEventBus().unsubscribe(this); }
 
     @EventHandler
     public void onTick(EventTick event) {
-        var mc = Quark.mc;
+        
         if (mc == null || mc.player == null || mc.world == null) return;
 
         long now = System.currentTimeMillis();
@@ -72,7 +69,7 @@ public class AntiGriefPlus extends Module {
     }
 
     private void alert(String msg) {
-        var mc = Quark.mc;
+        
         if (mc == null || mc.player == null) return;
         mc.player.sendMessage(Text.literal("§6[AntiGrief+] §f" + msg), false);
     }

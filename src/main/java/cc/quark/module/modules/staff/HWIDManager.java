@@ -6,8 +6,8 @@ import cc.quark.event.events.EventChat;
 import cc.quark.event.events.EventTick;
 import cc.quark.module.Category;
 import cc.quark.module.Module;
-import cc.quark.module.setting.BoolSetting;
-import cc.quark.module.setting.StringSetting;
+import cc.quark.setting.BoolSetting;
+import cc.quark.setting.StringSetting;
 import net.minecraft.text.Text;
 
 import java.util.HashSet;
@@ -15,20 +15,18 @@ import java.util.Set;
 
 public class HWIDManager extends Module {
 
-    private final BoolSetting autoAlert  = new BoolSetting("AutoAlert", true);
-    private final BoolSetting logJoins   = new BoolSetting("LogJoins", true);
-    private final StringSetting blocklist = new StringSetting("Blocklist", "");
+    private final BoolSetting autoAlert  = register(new BoolSetting("AutoAlert", "AutoAlert", true));
+    private final BoolSetting logJoins   = register(new BoolSetting("LogJoins", "LogJoins", true));
+    private final StringSetting blocklist = register(new StringSetting("Blocklist", "Blocklist", ""));
 
     private final Set<String> bannedHWIDs = new HashSet<>();
 
     public HWIDManager() {
         super("HWIDManager", "Manages HWID bans - blocks players by hardware fingerprint", Category.STAFF);
-        addSettings(autoAlert, logJoins, blocklist);
     }
 
     @Override
     public void onEnable() {
-        Quark.mc.getEventBus().subscribe(this);
         // Parse blocklist from setting (comma-separated)
         bannedHWIDs.clear();
         for (String h : blocklist.get().split(",")) {
@@ -37,12 +35,11 @@ public class HWIDManager extends Module {
         }
     }
 
-    @Override public void onDisable() { Quark.mc.getEventBus().unsubscribe(this); }
 
     @EventHandler
     public void onChat(EventChat event) {
         if (!event.isIncoming() || !logJoins.isEnabled()) return;
-        var mc = Quark.mc;
+        
         if (mc == null || mc.player == null) return;
         String msg = event.getMessage();
         if (msg == null) return;

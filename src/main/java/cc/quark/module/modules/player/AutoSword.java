@@ -5,26 +5,23 @@ import cc.quark.event.EventHandler;
 import cc.quark.event.events.EventTick;
 import cc.quark.module.Category;
 import cc.quark.module.Module;
-import cc.quark.module.setting.BoolSetting;
+import cc.quark.setting.BoolSetting;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.item.SwordItem;
 import net.minecraft.item.AxeItem;
 
 public class AutoSword extends Module {
 
-    private final BoolSetting allowAxe = new BoolSetting("AllowAxe", true);
+    private final BoolSetting allowAxe = register(new BoolSetting("AllowAxe", "AllowAxe", true));
 
     public AutoSword() {
         super("AutoSword", "Automatically switches to sword/axe when a mob is nearby", Category.PLAYER);
-        addSettings(allowAxe);
     }
 
-    @Override public void onEnable()  { Quark.mc.getEventBus().subscribe(this); }
-    @Override public void onDisable() { Quark.mc.getEventBus().unsubscribe(this); }
 
     @EventHandler
     public void onTick(EventTick event) {
-        var mc = Quark.mc;
+        
         if (mc == null || mc.player == null || mc.world == null) return;
 
         boolean enemyNear = !mc.world.getEntitiesByClass(

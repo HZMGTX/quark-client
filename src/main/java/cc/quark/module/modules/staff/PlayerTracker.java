@@ -6,9 +6,9 @@ import cc.quark.event.events.EventTick;
 import cc.quark.event.events.EventRender2D;
 import cc.quark.module.Category;
 import cc.quark.module.Module;
-import cc.quark.module.setting.BoolSetting;
-import cc.quark.module.setting.DoubleSetting;
-import cc.quark.module.setting.IntSetting;
+import cc.quark.setting.BoolSetting;
+import cc.quark.setting.DoubleSetting;
+import cc.quark.setting.IntSetting;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.math.Vec3d;
@@ -17,25 +17,22 @@ import java.util.*;
 
 public class PlayerTracker extends Module {
 
-    private final DoubleSetting range = new DoubleSetting("Range", 64, 16, 256);
-    private final BoolSetting showCoords = new BoolSetting("ShowCoords", true);
-    private final BoolSetting showHealth = new BoolSetting("ShowHealth", true);
-    private final IntSetting maxDisplay  = new IntSetting("MaxDisplay", 10, 5, 30);
+    private final DoubleSetting range = register(new DoubleSetting("Range", "Range", 64, 16, 256));
+    private final BoolSetting showCoords = register(new BoolSetting("ShowCoords", "ShowCoords", true));
+    private final BoolSetting showHealth = register(new BoolSetting("ShowHealth", "ShowHealth", true));
+    private final IntSetting maxDisplay  = register(new IntSetting("MaxDisplay", "MaxDisplay", 10, 5, 30));
 
     private final Map<UUID, Vec3d> lastPositions = new HashMap<>();
     private final Map<UUID, Float> lastHealths   = new HashMap<>();
 
     public PlayerTracker() {
         super("PlayerTracker", "Tracks all nearby players' positions and health in a HUD list", Category.STAFF);
-        addSettings(range, showCoords, showHealth, maxDisplay);
     }
 
-    @Override public void onEnable()  { Quark.mc.getEventBus().subscribe(this); }
-    @Override public void onDisable() { Quark.mc.getEventBus().unsubscribe(this); }
 
     @EventHandler
     public void onTick(EventTick event) {
-        var mc = Quark.mc;
+        
         if (mc == null || mc.player == null || mc.world == null) return;
         mc.world.getPlayers().forEach(p -> {
             if (p == mc.player) return;
@@ -46,7 +43,7 @@ public class PlayerTracker extends Module {
 
     @EventHandler
     public void onRender2D(EventRender2D event) {
-        var mc = Quark.mc;
+        
         if (mc == null || mc.player == null || mc.world == null) return;
         DrawContext ctx = event.getDrawContext();
         int x = 4, y = 40, count = 0;

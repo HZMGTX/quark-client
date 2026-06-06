@@ -6,8 +6,8 @@ import cc.quark.event.events.EventTick;
 import cc.quark.event.events.EventChat;
 import cc.quark.module.Category;
 import cc.quark.module.Module;
-import cc.quark.module.setting.BoolSetting;
-import cc.quark.module.setting.StringSetting;
+import cc.quark.setting.BoolSetting;
+import cc.quark.setting.StringSetting;
 import net.minecraft.text.Text;
 
 import java.util.HashMap;
@@ -15,26 +15,23 @@ import java.util.Map;
 
 public class StaffAlert extends Module {
 
-    private final BoolSetting playerJoin     = new BoolSetting("PlayerJoin", true);
-    private final BoolSetting playerLeave    = new BoolSetting("PlayerLeave", true);
-    private final BoolSetting commandUse     = new BoolSetting("CommandUse", true);
-    private final BoolSetting lowHealthAlert = new BoolSetting("LowHealth", false);
-    private final StringSetting alertPrefix  = new StringSetting("Prefix", "[ALERT]");
+    private final BoolSetting playerJoin     = register(new BoolSetting("PlayerJoin", "PlayerJoin", true));
+    private final BoolSetting playerLeave    = register(new BoolSetting("PlayerLeave", "PlayerLeave", true));
+    private final BoolSetting commandUse     = register(new BoolSetting("CommandUse", "CommandUse", true));
+    private final BoolSetting lowHealthAlert = register(new BoolSetting("LowHealth", "LowHealth", false));
+    private final StringSetting alertPrefix  = register(new StringSetting("Prefix", "Prefix", "[ALERT]"));
 
     private final Map<String, Boolean> seenPlayers = new HashMap<>();
 
     public StaffAlert() {
         super("StaffAlert", "Alerts staff to notable server events in chat", Category.STAFF);
-        addSettings(playerJoin, playerLeave, commandUse, lowHealthAlert, alertPrefix);
     }
 
-    @Override public void onEnable()  { Quark.mc.getEventBus().subscribe(this); seenPlayers.clear(); }
-    @Override public void onDisable() { Quark.mc.getEventBus().unsubscribe(this); }
 
     @EventHandler
     public void onChat(EventChat event) {
         if (!event.isIncoming()) return;
-        var mc = Quark.mc;
+        
         if (mc == null || mc.player == null) return;
         String msg = event.getMessage();
         if (msg == null) return;
@@ -51,7 +48,7 @@ public class StaffAlert extends Module {
     }
 
     private void alert(String msg) {
-        var mc = Quark.mc;
+        
         if (mc == null || mc.player == null) return;
         mc.player.sendMessage(Text.literal("§c" + alertPrefix.get() + " §f" + msg), false);
     }

@@ -5,8 +5,8 @@ import cc.quark.event.EventHandler;
 import cc.quark.event.events.EventTick;
 import cc.quark.module.Category;
 import cc.quark.module.Module;
-import cc.quark.module.setting.BoolSetting;
-import cc.quark.module.setting.IntSetting;
+import cc.quark.setting.BoolSetting;
+import cc.quark.setting.IntSetting;
 import net.minecraft.client.gui.screen.ingame.SmithingScreen;
 import net.minecraft.item.ItemStack;
 import net.minecraft.screen.SmithingScreenHandler;
@@ -14,22 +14,19 @@ import net.minecraft.screen.slot.SlotActionType;
 
 public class AutoSmith extends Module {
 
-    private final BoolSetting autoClose = new BoolSetting("AutoClose", true);
-    private final IntSetting delay = new IntSetting("Delay", 2, 1, 10);
+    private final BoolSetting autoClose = register(new BoolSetting("AutoClose", "AutoClose", true));
+    private final IntSetting delay = register(new IntSetting("Delay", "Delay", 2, 1, 10));
 
     private int timer = 0;
 
     public AutoSmith() {
         super("AutoSmith", "Automatically upgrades gear in a smithing table", Category.WORLD);
-        addSettings(autoClose, delay);
     }
 
-    @Override public void onEnable()  { Quark.mc.getEventBus().subscribe(this); }
-    @Override public void onDisable() { Quark.mc.getEventBus().unsubscribe(this); }
 
     @EventHandler
     public void onTick(EventTick event) {
-        var mc = Quark.mc;
+        
         if (mc == null || mc.player == null) return;
         if (!(mc.currentScreen instanceof SmithingScreen)) return;
         if (!(mc.player.currentScreenHandler instanceof SmithingScreenHandler handler)) return;
