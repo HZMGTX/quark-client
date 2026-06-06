@@ -110,9 +110,7 @@ window.addEventListener('DOMContentLoaded', async () => {
         currentUser = { username: 'Guest', guest: true };
         showMain();
     });
-    document.getElementById('btn-cancel-oauth').addEventListener('click', () => {
-        document.getElementById('oauth-overlay').classList.add('hidden');
-    });
+    document.getElementById('btn-cancel-oauth')?.addEventListener('click', () => setOauthOverlay(false));
 
     // Listen for live inject logs from main process
     quark.onInjectLog(d => {
@@ -232,23 +230,30 @@ function showMain() {
 // Discord login
 // ─────────────────────────────────────────────────────────────────────────────
 
+function setOauthOverlay(visible) {
+    const el = document.getElementById('oauth-overlay');
+    if (!el) return;
+    el.classList.toggle('hidden', !visible);
+}
+
 async function handleDiscordLogin() {
-    document.getElementById('oauth-overlay').classList.remove('hidden');
+    setOauthOverlay(true);
     try {
         const user = await quark.discordLogin();
         currentUser = user;
         await quark.settingsSet('user', user);
-        document.getElementById('oauth-overlay').classList.add('hidden');
+        setOauthOverlay(false);
         showMain();
     } catch (err) {
-        document.getElementById('oauth-overlay').classList.add('hidden');
-        if (!err.message?.includes('NO_CLIENT_ID') && !err.message?.includes('timed out') && !err.message?.includes('cancel')) {
-            notify('Login failed: ' + err.message, 'error');
-        } else if (err.message?.includes('NO_CLIENT_ID')) {
+        setOauthOverlay(false);
+        const msg = err.message || '';
+        if (msg.includes('NO_CLIENT_ID')) {
             notify('Set your Discord Client ID in Settings first.', 'warn');
             currentUser = { username: 'Guest', guest: true };
             showMain();
             navigateTo('settings');
+        } else if (!msg.includes('timed out') && !msg.includes('cancel')) {
+            notify('Login failed: ' + msg, 'error');
         }
     }
 }
@@ -373,18 +378,21 @@ function home() {
           <button class="btn btn-primary btn-full" id="home-inject-btn" disabled>⚡ Inject Now</button>
           <div style="margin-top:8px;display:flex;gap:8px">
             <button class="btn btn-secondary btn-sm" id="home-scan-btn">🔍 Scan</button>
-            <button class="btn btn-secondary btn-sm" onclick="navigateTo('inject')">Open Inject Page →</button>
+            <button class="btn btn-secondary btn-sm" id="home-open-inject">Open Inject Page →</button>
           </div>
         </div>
 
         <div class="card">
           <div class="card-title">Module Breakdown</div>
-          ${Object.entries(MODULE_COUNTS).map(([cat, n]) => `
+          ${(() => {
+            const maxN = Math.max(...Object.values(MODULE_COUNTS));
+            return Object.entries(MODULE_COUNTS).map(([cat, n]) => `
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
               <span style="font-size:11px;color:var(--muted);width:68px;text-transform:capitalize">${cat}</span>
-              <div class="progress-wrap" style="flex:1"><div class="progress-bar" style="width:${Math.round(n / 3)}%"></div></div>
+              <div class="progress-wrap" style="flex:1"><div class="progress-bar" style="width:${Math.round(n / maxN * 100)}%"></div></div>
               <span style="font-size:11px;color:var(--muted);width:28px;text-align:right">${n}</span>
-            </div>`).join('')}
+            </div>`).join('');
+          })()}
         </div>
       </div>
 
@@ -414,6 +422,7 @@ function home() {
     document.querySelectorAll('[data-nav]').forEach(btn => {
         btn.addEventListener('click', () => navigateTo(btn.dataset.nav));
     });
+    document.getElementById('home-open-inject').addEventListener('click', () => navigateTo('inject'));
 
     document.getElementById('home-scan-btn').addEventListener('click', async () => {
         const status = document.getElementById('home-proc-status');
@@ -932,9 +941,11 @@ function renderServers() {
     list.querySelectorAll('[data-del]').forEach(btn => {
         btn.addEventListener('click', () => {
             const i = parseInt(btn.dataset.del, 10);
-            servers.splice(i, 1);
-            quark.settingsSet('servers', servers);
-            renderServers();
+            if (!isNaN(i) && i >= 0 && i < servers.length) {
+                servers.splice(i, 1);
+                quark.settingsSet('servers', servers);
+                renderServers();
+            }
         });
     });
 
@@ -1114,6 +1125,9 @@ function statsPage() {
               <span style="color:var(--muted)">${k}</span>
               <span style="color:var(--text);font-weight:600">${escapeHtml(String(v))}</span>
             </div>`).join('')}`;
+    }).catch(() => {
+        const card = document.getElementById('sysinfo-card');
+        if (card) card.innerHTML = '<div class="card-title">System Info</div><div style="color:var(--muted);font-size:12px;padding:8px">Failed to load system info.</div>';
     });
 
     // Load Java list
@@ -1132,6 +1146,9 @@ function statsPage() {
               <div style="font-size:10px;color:var(--muted);font-family:monospace">${escapeHtml(j.path)}</div>
             </div>
           </div>`).join('');
+    }).catch(() => {
+        const el = document.getElementById('java-list');
+        if (el) el.textContent = 'Error scanning Java installations.';
     });
 
     // Load game dirs
@@ -1155,6 +1172,9 @@ function statsPage() {
         el.querySelectorAll('[data-open-folder]').forEach(btn => {
             btn.addEventListener('click', () => quark.openFolder(btn.dataset.openFolder));
         });
+    }).catch(() => {
+        const el = document.getElementById('gamedir-list');
+        if (el) el.textContent = 'Error scanning game directories.';
     });
 }
 
@@ -1239,6 +1259,17 @@ function renderProfiles() {
             e.stopPropagation();
         });
     });
+
+    // Clicking the card itself (outside buttons) loads that profile
+    grid.querySelectorAll('.profile-card').forEach(card => {
+        card.addEventListener('click', () => {
+            const id = card.dataset.id;
+            profiles.forEach(p => p.active = p.id === id);
+            quark.settingsSet('profiles', profiles);
+            renderProfiles();
+            notify('Profile loaded', 'success');
+        });
+    });
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1273,14 +1304,21 @@ function altsPage() {
         const type = name.includes('@') ? 'Microsoft' : 'Offline';
         alts.push({ name, type, added: Date.now() });
         quark.settingsSet('alts', alts);
-        altsPage();
+        // Update in-place — no full page reload
+        const titleEl = document.querySelector('.card-title');
+        if (titleEl) titleEl.textContent = `Saved Alts (${alts.length})`;
+        renderAlts();
         notify('Alt added: ' + name, 'success');
     });
 }
 
 function renderAlts() {
     const list = document.getElementById('alt-list');
-    if (!list || alts.length === 0) return;
+    if (!list) return;
+    if (alts.length === 0) {
+        list.innerHTML = '<div style="color:var(--muted);font-size:12px;text-align:center;padding:16px">No alts saved. Click + Add Alt.</div>';
+        return;
+    }
     list.innerHTML = alts.map((a, i) => `
       <div class="alt-item">
         <div class="alt-avatar" style="background:linear-gradient(135deg,#A855F7,#06B6D4);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:15px">
@@ -1304,9 +1342,14 @@ function renderAlts() {
     });
     list.querySelectorAll('[data-alt-del]').forEach(b => {
         b.addEventListener('click', () => {
-            alts.splice(parseInt(b.dataset.altDel, 10), 1);
-            quark.settingsSet('alts', alts);
-            altsPage();
+            const idx = parseInt(b.dataset.altDel, 10);
+            if (!isNaN(idx) && idx >= 0 && idx < alts.length) {
+                alts.splice(idx, 1);
+                quark.settingsSet('alts', alts);
+                renderAlts();
+                const titleEl = document.querySelector('.card-title');
+                if (titleEl) titleEl.textContent = `Saved Alts (${alts.length})`;
+            }
         });
     });
 }

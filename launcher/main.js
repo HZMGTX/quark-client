@@ -387,7 +387,15 @@ ipcMain.handle('inject:run', async (_e, pid) => {
         sendLog(`[Quark] Agent: ${path.basename(agentJar)}`);
         sendLog(`[Quark] Attaching to PID ${pid}…`);
 
-        const proc = spawn(java, args, { timeout: 30000 });
+        let proc;
+        try {
+            proc = spawn(java, args, { timeout: 30000 });
+        } catch (spawnErr) {
+            sendLog(`[Quark] spawn failed: ${spawnErr.message}`, 'warn');
+            tryJattach(pid, agentJar, resolve, reject, spawnErr.message);
+            return;
+        }
+
         let stdout = '', stderr = '';
 
         proc.stdout.on('data', d => {
@@ -408,7 +416,7 @@ ipcMain.handle('inject:run', async (_e, pid) => {
                 tryJattach(pid, agentJar, resolve, reject, stderr);
             }
         });
-        proc.on('error', () => tryJattach(pid, agentJar, resolve, reject, ''));
+        proc.on('error', err => tryJattach(pid, agentJar, resolve, reject, err.message || ''));
     });
 });
 
@@ -426,7 +434,7 @@ function tryJattach(pid, agentJar, resolve, reject, prevErr) {
     const tryNext = i => {
         if (i >= candidates.length) { fallbackModsInstall(agentJar, resolve, reject, prevErr); return; }
         const jattach = candidates[i];
-        exec(`"${jattach}" ${pid} load instrument false "${agentJar}=quark"`, (err) => {
+        exec(`"${jattach}" ${Number(pid)} load instrument false "${agentJar.replace(/"/g,'')}"`, (err) => {
             if (!err) {
                 autoInjectedPids.add(pid);
                 sendLog('[jattach] Attach successful');
