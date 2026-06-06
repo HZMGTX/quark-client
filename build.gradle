@@ -84,6 +84,95 @@ jar {
     }
 }
 
+// ─── Quark Agent / Injector build ────────────────────────────────────────────
+// Produces two artifacts alongside the Fabric mod:
+//   build/libs/quark-agent.jar    – Java agent (loaded by C++ DLL or inject.sh)
+//   build/libs/quark-injector.jar – Standalone injector (run after Minecraft starts)
+//
+// Usage:  ./gradlew buildAgent
+//         ./launcher/agent/inject.sh
+// ─────────────────────────────────────────────────────────────────────────────
+
+configurations {
+    agentDeps
+}
+
+dependencies {
+    agentDeps("org.ow2.asm:asm:9.6")
+    agentDeps("org.ow2.asm:asm-commons:9.6")
+}
+
+sourceSets {
+    agent {
+        java { srcDirs = ["launcher/agent"] }
+        compileClasspath += configurations.agentDeps
+    }
+}
+
+tasks.register("buildAgent", Jar) {
+    group = "quark"
+    description = "Builds quark-agent.jar (injectable Java agent + ASM hooks)"
+    dependsOn compileAgentJava
+
+    archiveBaseName = "quark-agent"
+    archiveVersion  = ""
+    archiveClassifier = ""
+    archiveAppendix   = ""
+    destinationDirectory = layout.buildDirectory.dir("libs")
+
+    from sourceSets.agent.output
+    from { configurations.agentDeps.collect { it.isDirectory() ? it : zipTree(it) } }
+
+    manifest {
+        attributes(
+            "Manifest-Version":             "1.0",
+            "Agent-Class":                  "cc.quark.agent.QuarkAgent",
+            "Premain-Class":                "cc.quark.agent.QuarkAgent",
+            "Main-Class":                   "cc.quark.agent.Injector",
+            "Can-Redefine-Classes":         "true",
+            "Can-Retransform-Classes":      "true",
+            "Can-Set-Native-Method-Prefix": "true"
+        )
+    }
+
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+
+    doLast {
+        def agentJar = layout.buildDirectory.file("libs/quark-agent.jar").get().asFile
+        println ""
+        println "  ╔══════════════════════════════════════════════╗"
+        println "  ║  Quark Agent built: ${agentJar.name}         ║"
+        println "  ║  Copy to launcher/agent/ and run inject.sh   ║"
+        println "  ╚══════════════════════════════════════════════╝"
+        println ""
+    }
+}
+
+tasks.register("buildInjector", Jar) {
+    group = "quark"
+    description = "Builds quark-injector.jar (standalone PID injector)"
+    dependsOn compileAgentJava
+
+    archiveBaseName = "quark-injector"
+    archiveVersion  = ""
+    archiveClassifier = ""
+    archiveAppendix   = ""
+    destinationDirectory = layout.buildDirectory.dir("libs")
+
+    from(sourceSets.agent.output) {
+        include "cc/quark/agent/Injector.class"
+    }
+
+    manifest {
+        attributes(
+            "Manifest-Version": "1.0",
+            "Main-Class":       "cc.quark.agent.Injector"
+        )
+    }
+}
+
+tasks.named("buildAgent") { finalizedBy "buildInjector" }
+
 publishing {
     publications {
         mavenJava(MavenPublication) {

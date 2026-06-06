@@ -1,4 +1,8 @@
+Manifest-Version: 1.0
 Agent-Class: cc.quark.agent.QuarkAgent
+Premain-Class: cc.quark.agent.QuarkAgent
 Can-Redefine-Classes: true
 Can-Retransform-Classes: true
+Can-Set-Native-Method-Prefix: true
+Main-Class: cc.quark.agent.Injector
 
