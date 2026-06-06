@@ -1173,6 +1173,10 @@ public class ModuleManager {
         register(new PearlClip2());
         register(new AntiVoid2());
         register(new BunnyHop2());
+        register(new FlyHack2());
+        register(new GroundSpoof());
+        register(new HighJump2());
+        register(new NoSlowdown());
 
         // -------- MISC --------
         register(new AntiDetect());
