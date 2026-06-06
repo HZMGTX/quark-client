@@ -1444,6 +1444,36 @@ public class ModuleManager {
         register(new cc.quark.module.modules.staff.TeleportAll());
         register(new cc.quark.module.modules.staff.AdminTP());
         register(new cc.quark.module.modules.staff.ChatFilter2());
+        // ── Anti-Cheat Detection ──────────────────────────────────────────────
+        register(new cc.quark.module.modules.staff.XrayDetector());
+        register(new cc.quark.module.modules.staff.KillauraDetector());
+        register(new cc.quark.module.modules.staff.FlightDetector());
+        register(new cc.quark.module.modules.staff.SpeedDetector());
+        register(new cc.quark.module.modules.staff.ReachDetector());
+        register(new cc.quark.module.modules.staff.AutoBanSystem());
+        // ── Surveillance & Monitoring ─────────────────────────────────────────
+        register(new cc.quark.module.modules.staff.StaffAlert());
+        register(new cc.quark.module.modules.staff.PlayerTracker());
+        register(new cc.quark.module.modules.staff.CombatLogger());
+        register(new cc.quark.module.modules.staff.LiveMonitor());
+        register(new cc.quark.module.modules.staff.NetworkAnalyzer());
+        register(new cc.quark.module.modules.staff.AntiGriefPlus());
+        register(new cc.quark.module.modules.staff.PacketAnalyzer());
+        register(new cc.quark.module.modules.staff.ConnectionMonitor());
+        register(new cc.quark.module.modules.staff.InventoryLog());
+        // ── Administration ────────────────────────────────────────────────────
+        register(new cc.quark.module.modules.staff.TempBan());
+        register(new cc.quark.module.modules.staff.MassMute());
+        register(new cc.quark.module.modules.staff.PlayerJail());
+        register(new cc.quark.module.modules.staff.HealthManager());
+        register(new cc.quark.module.modules.staff.ClearInventoryStaff());
+        register(new cc.quark.module.modules.staff.ItemRemoverStaff());
+        register(new cc.quark.module.modules.staff.HWIDManager());
+        register(new cc.quark.module.modules.staff.PermissionManager());
+        register(new cc.quark.module.modules.staff.StaffPrivateMsg());
+        register(new cc.quark.module.modules.staff.AnnouncementScheduler());
+        register(new cc.quark.module.modules.staff.StaffBroadcast());
+        register(new cc.quark.module.modules.staff.StaffVanish());
     }
 
     // -------------------------------------------------------------------------
