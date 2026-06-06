@@ -1,8 +1,9 @@
 'use strict';
-const { app, BrowserWindow, ipcMain, shell, dialog } = require('electron');
+const { app, BrowserWindow, ipcMain, shell, dialog, Tray, Menu, nativeImage } = require('electron');
 const path    = require('path');
 const http    = require('http');
 const https   = require('https');
+const net     = require('net');
 const fs      = require('fs');
 const os      = require('os');
 const { exec, execFile, spawn } = require('child_process');
@@ -13,10 +14,14 @@ const Store   = require('./store');
 // ─────────────────────────────────────────────────────────────────────────────
 
 let win;
+let tray;
+let autoInjectInterval = null;
+let autoInjectedPids   = new Set();
 const store = new Store('config');
 
 const REDIRECT_URI   = 'http://localhost:3847/callback';
 const DISCORD_SCOPES = 'identify';
+const APP_VERSION    = app.getVersion();
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Window
@@ -24,10 +29,10 @@ const DISCORD_SCOPES = 'identify';
 
 function createWindow() {
     win = new BrowserWindow({
-        width          : 920,
-        height         : 600,
-        minWidth       : 750,
-        minHeight      : 520,
+        width          : 1060,
+        height         : 680,
+        minWidth       : 820,
+        minHeight      : 560,
         resizable      : true,
         frame          : false,
         transparent    : false,
@@ -45,15 +50,65 @@ function createWindow() {
         win.webContents.openDevTools({ mode: 'detach' });
     }
 
-    // Prevent external navigation
     win.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
+
+    win.on('close', e => {
+        if (store.get('minimiseToTray', false) && tray) {
+            e.preventDefault();
+            win.hide();
+        }
+    });
+}
+
+function createTray() {
+    const iconPath = path.join(__dirname, 'assets', 'icon.png');
+    let icon;
+    try {
+        if (fs.existsSync(iconPath)) {
+            icon = nativeImage.createFromPath(iconPath);
+        } else {
+            icon = nativeImage.createEmpty();
+        }
+    } catch (_) {
+        icon = nativeImage.createEmpty();
+    }
+
+    tray = new Tray(icon);
+    tray.setToolTip('Quark Ghost Client');
+    const menu = Menu.buildFromTemplate([
+        { label: 'Open Quark',  click: () => { win.show(); win.focus(); } },
+        { label: 'Inject Now',  click: () => { win.show(); win.focus(); win.webContents.send('navigate', 'inject'); } },
+        { type: 'separator' },
+        { label: 'Scan Processes', click: async () => {
+            const list = await scanJavaProcesses();
+            const mc   = list.filter(p => p.isMinecraft);
+            if (mc.length > 0) {
+                tray.setToolTip(`Quark — ${mc.length} MC process(es) found`);
+            }
+        }},
+        { type: 'separator' },
+        { label: `v${APP_VERSION}`, enabled: false },
+        { label: 'Quit', click: () => { app.exit(0); } },
+    ]);
+    tray.setContextMenu(menu);
+    tray.on('double-click', () => { win.show(); win.focus(); });
 }
 
 app.whenReady().then(() => {
     createWindow();
-    app.on('activate', () => { if (BrowserWindow.getAllWindows().length === 0) createWindow(); });
+    try { createTray(); } catch (_) {}
+    app.on('activate', () => {
+        if (BrowserWindow.getAllWindows().length === 0) createWindow();
+    });
 });
-app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(); });
+
+app.on('window-all-closed', () => {
+    if (process.platform !== 'darwin') app.quit();
+});
+
+app.on('before-quit', () => {
+    autoInjectInterval && clearInterval(autoInjectInterval);
+});
 
 // ─────────────────────────────────────────────────────────────────────────────
 // IPC – Window controls
@@ -62,7 +117,7 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
 ipcMain.handle('window:minimize', () => win.minimize());
 ipcMain.handle('window:close',    () => { win.close(); app.quit(); });
 ipcMain.handle('window:maximize', () => { if (win.isMaximized()) win.unmaximize(); else win.maximize(); });
-ipcMain.handle('app:version',     () => app.getVersion());
+ipcMain.handle('app:version',     () => APP_VERSION);
 
 // ─────────────────────────────────────────────────────────────────────────────
 // IPC – Settings
@@ -71,6 +126,35 @@ ipcMain.handle('app:version',     () => app.getVersion());
 ipcMain.handle('settings:get',    (_e, key)      => store.get(key));
 ipcMain.handle('settings:set',    (_e, key, val) => { store.set(key, val); return true; });
 ipcMain.handle('settings:getAll', ()             => store.store);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// IPC – Config backup / restore
+// ─────────────────────────────────────────────────────────────────────────────
+
+ipcMain.handle('config:export', async () => {
+    const { filePath } = await dialog.showSaveDialog(win, {
+        title  : 'Export Quark Config',
+        defaultPath: `quark-backup-${Date.now()}.json`,
+        filters: [{ name: 'JSON', extensions: ['json'] }],
+    });
+    if (!filePath) return false;
+    fs.writeFileSync(filePath, JSON.stringify(store.store, null, 2), 'utf8');
+    return true;
+});
+
+ipcMain.handle('config:import', async () => {
+    const { filePaths, canceled } = await dialog.showOpenDialog(win, {
+        title  : 'Import Quark Config',
+        filters: [{ name: 'JSON', extensions: ['json'] }],
+        properties: ['openFile'],
+    });
+    if (canceled || !filePaths[0]) return false;
+    try {
+        const data = JSON.parse(fs.readFileSync(filePaths[0], 'utf8'));
+        for (const [k, v] of Object.entries(data)) store.set(k, v);
+        return true;
+    } catch (_) { return false; }
+});
 
 // ─────────────────────────────────────────────────────────────────────────────
 // IPC – Discord OAuth
@@ -109,9 +193,9 @@ ipcMain.handle('discord:login', async () => {
                 }
 
                 const tokenRes = await fetch('https://discord.com/api/oauth2/token', {
-                    method: 'POST',
+                    method : 'POST',
                     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: new URLSearchParams({ client_id: clientId, client_secret: clientSecret,
+                    body   : new URLSearchParams({ client_id: clientId, client_secret: clientSecret,
                         grant_type: 'authorization_code', code, redirect_uri: REDIRECT_URI }),
                 });
                 if (!tokenRes.ok) {
@@ -131,7 +215,8 @@ ipcMain.handle('discord:login', async () => {
 
                 store.set('user',        user);
                 store.set('accessToken', tokenData.access_token);
-                res.writeHead(200); res.end(callbackHtml('Logged in!', `Welcome, <strong>${user.username}</strong>. You can close this tab.`, '#A855F7'));
+                res.writeHead(200);
+                res.end(callbackHtml('Logged in!', `Welcome, <strong>${user.username}</strong>. You can close this tab.`, '#A855F7'));
                 clearTimeout(timeout); server.close();
                 resolve(user);
             } catch (err) {
@@ -149,109 +234,177 @@ ipcMain.handle('discord:logout', () => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// IPC – Process Scanner
+// Process scanning – core helper
 // ─────────────────────────────────────────────────────────────────────────────
 
-ipcMain.handle('inject:scan', () => {
+async function scanJavaProcesses() {
+    // Try jps first — gives us real Java process data
+    const jpsResult = await tryJps();
+    if (jpsResult && jpsResult.length > 0) return jpsResult;
+
+    // Fall back to os-specific command
+    return await tryNativeScan();
+}
+
+function tryJps() {
+    return new Promise(resolve => {
+        exec('jps -lm', { timeout: 5000 }, (err, stdout) => {
+            if (err || !stdout) { resolve(null); return; }
+            const results = [];
+            for (const line of stdout.split('\n')) {
+                const m = line.match(/^(\d+)\s+(\S+)(.*)$/);
+                if (!m) continue;
+                const pid     = parseInt(m[1], 10);
+                const main    = m[2].trim();
+                const rest    = m[3].trim();
+                if (/Jps$/i.test(main)) continue; // skip jps itself
+                const args     = main + ' ' + rest;
+                const isMC     = isMinecraftProcess(args);
+                const loader   = detectLoaderFromArgs(args);
+                const launcher = detectLauncherFromArgs(args);
+                const version  = extractMcVersion(rest);
+                const memory   = extractMemory(rest);
+                results.push({ pid, name: main, args: rest, loader, launcher, version, memory, isMinecraft: isMC });
+            }
+            resolve(results.length > 0 ? results : null);
+        });
+    });
+}
+
+function tryNativeScan() {
     return new Promise(resolve => {
         const isWin = process.platform === 'win32';
-        const isMac = process.platform === 'darwin';
+        const cmd   = isWin
+            ? 'wmic process where "name like \'%java%\'" get processid,commandline /format:csv'
+            : 'ps -eo pid,comm,args | grep -i java | grep -v grep';
 
-        let cmd;
-        if (isWin) {
-            cmd = 'wmic process where "name like \'%java%\'" get processid,name,commandline /format:csv';
-        } else if (isMac) {
-            cmd = 'ps -eo pid,comm,args | grep -i java | grep -v grep';
-        } else {
-            cmd = 'ps -eo pid,comm,args | grep -i java | grep -v grep';
-        }
-
-        exec(cmd, { maxBuffer: 4 * 1024 * 1024 }, (err, stdout) => {
+        exec(cmd, { maxBuffer: 8 * 1024 * 1024, timeout: 8000 }, (err, stdout) => {
             if (err && !stdout) { resolve([]); return; }
             const results = [];
 
             if (isWin) {
                 for (const line of stdout.split('\n')) {
                     const parts = line.split(',');
-                    if (parts.length < 3) continue;
+                    if (parts.length < 2) continue;
                     const pid  = parseInt(parts[parts.length - 1], 10);
-                    const name = parts[1]?.replace(/"/g, '').trim() || '';
-                    const args = parts.slice(2, -1).join(',') || '';
-                    if (/javaw?\.exe/i.test(name) && isMinecraftProcess(args)) {
-                        results.push({ pid, name, loader: detectLoaderFromArgs(args) });
-                    }
+                    const args = parts.slice(1, -1).join(',');
+                    if (isNaN(pid)) continue;
+                    const isMC = isMinecraftProcess(args);
+                    if (!isMC && results.length > 10) continue;
+                    results.push({
+                        pid,
+                        name   : extractMainClass(args) || 'java',
+                        args,
+                        loader  : detectLoaderFromArgs(args),
+                        launcher: detectLauncherFromArgs(args),
+                        version : extractMcVersion(args),
+                        memory  : extractMemory(args),
+                        isMinecraft: isMC,
+                    });
                 }
             } else {
                 for (const line of stdout.split('\n')) {
                     const parts = line.trim().split(/\s+/);
                     if (parts.length < 2) continue;
                     const pid  = parseInt(parts[0], 10);
-                    const name = parts[1] || '';
+                    if (isNaN(pid)) continue;
                     const args = parts.slice(2).join(' ');
-                    if (/^java$/i.test(name) && (isMinecraftProcess(args) || results.length === 0)) {
-                        results.push({ pid, name: args || 'java', loader: detectLoaderFromArgs(args) });
-                    }
+                    const isMC = isMinecraftProcess(args);
+                    if (!isMC && results.length > 10) continue;
+                    results.push({
+                        pid,
+                        name   : extractMainClass(args) || 'java',
+                        args,
+                        loader  : detectLoaderFromArgs(args),
+                        launcher: detectLauncherFromArgs(args),
+                        version : extractMcVersion(args),
+                        memory  : extractMemory(args),
+                        isMinecraft: isMC,
+                    });
                 }
             }
 
-            // De-duplicate by PID
+            // De-duplicate
             const seen = new Set();
-            resolve(results.filter(r => { if (seen.has(r.pid) || isNaN(r.pid)) return false; seen.add(r.pid); return true; }));
+            resolve(results.filter(r => {
+                if (seen.has(r.pid) || isNaN(r.pid)) return false;
+                seen.add(r.pid); return true;
+            }));
         });
     });
-});
-
-function isMinecraftProcess(args) {
-    if (!args) return false;
-    return /minecraft|net\.minecraft|com\.mojang|fabric|forge|neoforge|lunar|badlion/i.test(args);
-}
-
-function detectLoaderFromArgs(args) {
-    if (!args) return 'Vanilla';
-    if (/lunar/i.test(args))   return 'Lunar';
-    if (/badlion/i.test(args)) return 'Badlion';
-    if (/neoforge/i.test(args)) return 'NeoForge';
-    if (/forge/i.test(args))   return 'Forge';
-    if (/fabric/i.test(args))  return 'Fabric';
-    return 'Vanilla';
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// IPC – Pure JVM Agent Injection (no JAR in mods folder)
+// IPC – Process Scanner
+// ─────────────────────────────────────────────────────────────────────────────
+
+ipcMain.handle('inject:scan', async () => {
+    const all = await scanJavaProcesses();
+    // Prioritize Minecraft processes but include all Java processes for manual selection
+    const mc  = all.filter(p => p.isMinecraft);
+    return mc.length > 0 ? mc : all;
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// IPC – Auto-inject
+// ─────────────────────────────────────────────────────────────────────────────
+
+ipcMain.handle('inject:autoStart', () => {
+    if (autoInjectInterval) return true;
+    autoInjectInterval = setInterval(async () => {
+        const all = await scanJavaProcesses();
+        for (const proc of all.filter(p => p.isMinecraft)) {
+            if (!autoInjectedPids.has(proc.pid)) {
+                autoInjectedPids.add(proc.pid);
+                win.webContents.send('inject:autoDetected', proc);
+            }
+        }
+        // Clean dead PIDs (rough heuristic: if count drops, reset)
+        if (all.length === 0) autoInjectedPids.clear();
+    }, 4000);
+    return true;
+});
+
+ipcMain.handle('inject:autoStop', () => {
+    if (autoInjectInterval) { clearInterval(autoInjectInterval); autoInjectInterval = null; }
+    return true;
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// IPC – Pure JVM Agent Injection
 // ─────────────────────────────────────────────────────────────────────────────
 
 ipcMain.handle('inject:run', async (_e, pid) => {
-    console.log(`[Quark Inject] Attaching to PID ${pid}`);
-
-    // 1. Locate the agent JAR
     const agentJar = resolveAgentJar();
-    if (!agentJar) throw new Error('Agent JAR not found. Build the project first (gradle shadowJar).');
+    if (!agentJar) throw new Error('Agent JAR not found. Run the build first.');
 
-    // 2. Locate a Java executable capable of running the attach shim
     const java = await findJava();
 
-    // 3. Run the JVM Attach shim — this attaches to the PID and loads our agent
-    // The shim class is bundled inside the agent JAR itself
     return new Promise((resolve, reject) => {
-        const attachShimClass = 'cc.quark.agent.AttachShim';
-        const args = [
-            '-cp', agentJar,
-            attachShimClass,
-            String(pid),
-            agentJar,
-        ];
+        const args = ['-cp', agentJar, 'cc.quark.agent.AttachShim', String(pid), agentJar];
 
-        console.log(`[Quark Inject] Running: ${java} ${args.join(' ')}`);
+        sendLog(`[Quark] Java: ${java}`);
+        sendLog(`[Quark] Agent: ${path.basename(agentJar)}`);
+        sendLog(`[Quark] Attaching to PID ${pid}…`);
 
         const proc = spawn(java, args, { timeout: 30000 });
         let stdout = '', stderr = '';
-        proc.stdout.on('data', d => { stdout += d; console.log('[Attach]', d.toString().trim()); });
-        proc.stderr.on('data', d => { stderr += d; console.error('[Attach]', d.toString().trim()); });
+
+        proc.stdout.on('data', d => {
+            const msg = d.toString().trim();
+            stdout += msg;
+            sendLog(`[Attach] ${msg}`);
+        });
+        proc.stderr.on('data', d => {
+            const msg = d.toString().trim();
+            stderr += msg;
+            sendLog(`[Attach/err] ${msg}`, 'warn');
+        });
         proc.on('close', code => {
             if (code === 0 || stdout.includes('[SUCCESS]')) {
+                autoInjectedPids.add(pid);
                 resolve({ success: true, pid, method: 'jvm-attach' });
             } else {
-                // Fallback: try jattach if available
                 tryJattach(pid, agentJar, resolve, reject, stderr);
             }
         });
@@ -259,19 +412,24 @@ ipcMain.handle('inject:run', async (_e, pid) => {
     });
 });
 
+function sendLog(msg, level = 'info') {
+    if (win && !win.isDestroyed()) {
+        win.webContents.send('inject:log', { msg, level });
+    }
+}
+
 function tryJattach(pid, agentJar, resolve, reject, prevErr) {
-    // jattach is a lightweight C tool for JVM attach on all platforms
-    // Try common install locations
-    const candidates = ['jattach', '/usr/local/bin/jattach', '/usr/bin/jattach'];
-    const tryNext = (i) => {
-        if (i >= candidates.length) {
-            // Final fallback: copy to mods folder (legacy mode)
-            fallbackModsInstall(agentJar, resolve, reject, prevErr);
-            return;
-        }
+    const candidates = ['jattach', '/usr/local/bin/jattach', '/usr/bin/jattach',
+        path.join(__dirname, 'bin', 'jattach'),
+        path.join(__dirname, 'bin', 'jattach.exe')];
+
+    const tryNext = i => {
+        if (i >= candidates.length) { fallbackModsInstall(agentJar, resolve, reject, prevErr); return; }
         const jattach = candidates[i];
-        exec(`"${jattach}" ${pid} load instrument false "${agentJar}=quark"`, (err, out, errOut) => {
+        exec(`"${jattach}" ${pid} load instrument false "${agentJar}=quark"`, (err) => {
             if (!err) {
+                autoInjectedPids.add(pid);
+                sendLog('[jattach] Attach successful');
                 resolve({ success: true, pid, method: 'jattach' });
             } else {
                 tryNext(i + 1);
@@ -282,66 +440,196 @@ function tryJattach(pid, agentJar, resolve, reject, prevErr) {
 }
 
 function fallbackModsInstall(agentJar, resolve, reject, prevErr) {
-    // If pure injection fails, install as a Fabric mod for next launch
-    console.warn('[Quark Inject] Pure injection unavailable — staging as Fabric mod (requires restart)');
+    sendLog('[Quark] Pure injection unavailable — staging as Fabric mod (requires restart)', 'warn');
     try {
         const modsDir = getModsFolder();
         if (modsDir) {
             if (!fs.existsSync(modsDir)) fs.mkdirSync(modsDir, { recursive: true });
             const dest = path.join(modsDir, path.basename(agentJar));
             fs.copyFileSync(agentJar, dest);
+            sendLog('[Quark] JAR copied to mods folder. Restart Minecraft.', 'warn');
             resolve({ success: true, pid: 0, method: 'mods-install', requiresRestart: true });
             return;
         }
     } catch (e) {
-        console.error('[Quark Inject] Mods install failed:', e);
+        sendLog('[Quark] Mods install failed: ' + e.message, 'error');
     }
-    reject(new Error('Injection failed. No attach method succeeded. Details: ' + prevErr.slice(0, 200)));
+    reject(new Error('All injection methods failed. Details: ' + prevErr.slice(0, 300)));
 }
 
-function resolveAgentJar() {
-    // Check custom path first
-    const custom = store.get('agentPath', '');
-    if (custom && fs.existsSync(custom)) return custom;
+// ─────────────────────────────────────────────────────────────────────────────
+// IPC – Java discovery
+// ─────────────────────────────────────────────────────────────────────────────
 
-    // Standard build output locations
-    const candidates = [
-        path.join(__dirname, '..', 'build', 'libs', 'quark-agent.jar'),
-        path.join(__dirname, '..', 'build', 'libs', 'quark-1.21.1-1.0.0+mc1.21.1.jar'),
-        path.join(__dirname, '..', 'versions', '1.21.1', 'build', 'libs', 'quark-1.21.1-1.0.0+mc1.21.1.jar'),
-        path.join(__dirname, 'agent.jar'),
-    ];
-    // Also glob for any quark*.jar in build
-    const buildDir = path.join(__dirname, '..', 'build', 'libs');
-    if (fs.existsSync(buildDir)) {
-        for (const f of fs.readdirSync(buildDir)) {
-            if (/quark.*\.jar$/i.test(f)) candidates.unshift(path.join(buildDir, f));
+ipcMain.handle('java:list', async () => {
+    const results = [];
+    const checked = new Set();
+
+    const add = async (javaPath) => {
+        if (checked.has(javaPath) || !fs.existsSync(javaPath)) return;
+        checked.add(javaPath);
+        return new Promise(resolve => {
+            exec(`"${javaPath}" -version 2>&1`, { timeout: 3000 }, (err, stdout, stderr) => {
+                const out = (stdout || stderr || '').trim();
+                const m   = out.match(/version "([^"]+)"/);
+                results.push({ path: javaPath, version: m ? m[1] : 'Unknown' });
+                resolve();
+            });
+        });
+    };
+
+    const candidates = [];
+    if (process.env.JAVA_HOME) {
+        const ext = process.platform === 'win32' ? '.exe' : '';
+        candidates.push(path.join(process.env.JAVA_HOME, 'bin', `java${ext}`));
+    }
+
+    // Common JDK install paths per platform
+    if (process.platform === 'win32') {
+        const bases = [
+            'C:\\Program Files\\Java', 'C:\\Program Files\\Eclipse Adoptium',
+            'C:\\Program Files\\Microsoft', 'C:\\Program Files\\BellSoft',
+            'C:\\Program Files (x86)\\Java',
+        ];
+        for (const base of bases) {
+            try {
+                if (fs.existsSync(base)) {
+                    for (const dir of fs.readdirSync(base)) {
+                        candidates.push(path.join(base, dir, 'bin', 'java.exe'));
+                    }
+                }
+            } catch (_) {}
+        }
+        // Minecraft launchers bundle their own JRE
+        const mcRuntime = path.join(process.env.APPDATA || '', '.minecraft', 'runtime');
+        if (fs.existsSync(mcRuntime)) {
+            try {
+                for (const ver of fs.readdirSync(mcRuntime)) {
+                    const javaExe = path.join(mcRuntime, ver, 'windows', ver, 'bin', 'java.exe');
+                    candidates.push(javaExe);
+                }
+            } catch (_) {}
+        }
+    } else if (process.platform === 'darwin') {
+        const bases = [
+            '/Library/Java/JavaVirtualMachines',
+            path.join(os.homedir(), 'Library', 'Java', 'JavaVirtualMachines'),
+        ];
+        for (const base of bases) {
+            try {
+                if (fs.existsSync(base)) {
+                    for (const dir of fs.readdirSync(base)) {
+                        candidates.push(path.join(base, dir, 'Contents', 'Home', 'bin', 'java'));
+                    }
+                }
+            } catch (_) {}
+        }
+    } else {
+        // Linux
+        const bases = ['/usr/lib/jvm', '/usr/local/lib/jvm', '/opt/java', '/opt/jdk'];
+        for (const base of bases) {
+            try {
+                if (fs.existsSync(base)) {
+                    for (const dir of fs.readdirSync(base)) {
+                        candidates.push(path.join(base, dir, 'bin', 'java'));
+                    }
+                }
+            } catch (_) {}
+        }
+        // Minecraft bundled runtime on Linux
+        const mcRuntime = path.join(os.homedir(), '.minecraft', 'runtime');
+        if (fs.existsSync(mcRuntime)) {
+            try {
+                for (const ver of fs.readdirSync(mcRuntime)) {
+                    const javaExe = path.join(mcRuntime, ver, 'linux', ver, 'bin', 'java');
+                    candidates.push(javaExe);
+                }
+            } catch (_) {}
         }
     }
-    return candidates.find(p => fs.existsSync(p)) || null;
-}
 
-async function findJava() {
-    // 1. JAVA_HOME
-    if (process.env.JAVA_HOME) {
-        const j = path.join(process.env.JAVA_HOME, 'bin', process.platform === 'win32' ? 'java.exe' : 'java');
-        if (fs.existsSync(j)) return j;
-    }
-    // 2. Try 'java' on PATH
-    return 'java';
-}
+    // Also check PATH
+    candidates.push('java');
 
-function getModsFolder() {
-    const platform = process.platform;
-    let base;
-    if (platform === 'win32') {
-        base = process.env.APPDATA;
-    } else if (platform === 'darwin') {
-        base = path.join(os.homedir(), 'Library', 'Application Support');
-    } else {
-        base = path.join(os.homedir(), '.local', 'share');
-    }
-    return base ? path.join(base, '.minecraft', 'mods') : null;
+    await Promise.all(candidates.map(c => add(c)));
+    return results;
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// IPC – Server ping (Minecraft status protocol)
+// ─────────────────────────────────────────────────────────────────────────────
+
+ipcMain.handle('server:ping', (_e, host, port = 25565) => {
+    return new Promise(resolve => {
+        const start  = Date.now();
+        const socket = new net.Socket();
+        let   data   = Buffer.alloc(0);
+        let   done   = false;
+
+        const finish = result => {
+            if (!done) { done = true; socket.destroy(); resolve(result); }
+        };
+
+        socket.setTimeout(6000);
+        socket.on('timeout', () => finish({ online: false, latency: null, error: 'Timeout' }));
+        socket.on('error',   e  => finish({ online: false, latency: null, error: e.message }));
+
+        socket.connect(port, host, () => {
+            // Handshake: protocol 767 (1.21.1)
+            const hostBuf    = Buffer.from(host, 'utf8');
+            const handshake  = buildPacket(0x00,
+                writeVarInt(767), writeString(host), writeUShort(port), writeVarInt(1));
+            const statusReq  = buildPacket(0x00);
+            socket.write(Buffer.concat([handshake, statusReq]));
+        });
+
+        socket.on('data', chunk => {
+            data = Buffer.concat([data, chunk]);
+            try {
+                let offset = 0;
+                const [pktLen, lb] = readVarInt(data, offset); offset += lb;
+                if (data.length < lb + pktLen) return;
+                const [pktId,  ib] = readVarInt(data, offset); offset += ib;
+                if (pktId !== 0x00) return;
+                const [sLen,   sl] = readVarInt(data, offset); offset += sl;
+                const json = data.slice(offset, offset + sLen).toString('utf8');
+                const s    = JSON.parse(json);
+                const latency = Date.now() - start;
+                finish({
+                    online     : true,
+                    latency,
+                    players    : { online: s.players?.online ?? 0, max: s.players?.max ?? 0 },
+                    version    : s.version?.name ?? 'Unknown',
+                    description: extractMotd(s.description),
+                    favicon    : s.favicon ?? null,
+                });
+            } catch (_) {}
+        });
+    });
+});
+
+// VarInt / packet helpers
+function writeVarInt(val) {
+    const out = [];
+    do { let b = val & 0x7F; val >>>= 7; if (val) b |= 0x80; out.push(b); } while (val);
+    return Buffer.from(out);
+}
+function readVarInt(buf, off) {
+    let res = 0, shift = 0, n = 0;
+    do { const b = buf[off + n++]; res |= (b & 0x7F) << shift; shift += 7; if (!(b & 0x80)) break; } while (shift < 35);
+    return [res, n];
+}
+function writeString(s) { const b = Buffer.from(s, 'utf8'); return Buffer.concat([writeVarInt(b.length), b]); }
+function writeUShort(n) { const b = Buffer.alloc(2); b.writeUInt16BE(n, 0); return b; }
+function buildPacket(id, ...parts) {
+    const body = Buffer.concat([writeVarInt(id), ...parts.filter(Boolean)]);
+    return Buffer.concat([writeVarInt(body.length), body]);
+}
+function extractMotd(desc) {
+    if (!desc) return '';
+    if (typeof desc === 'string') return desc;
+    if (desc.text) return desc.text + (desc.extra || []).map(e => e.text || '').join('');
+    return JSON.stringify(desc);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -349,13 +637,17 @@ function getModsFolder() {
 // ─────────────────────────────────────────────────────────────────────────────
 
 ipcMain.handle('system:info', () => ({
-    platform: process.platform,
-    arch:     process.arch,
-    memory:   Math.round(os.totalmem() / 1024 / 1024 / 1024),
-    cpus:     os.cpus().length,
-    hostname: os.hostname(),
-    node:     process.version,
-    electron: process.versions.electron,
+    platform : process.platform,
+    arch     : process.arch,
+    memory   : Math.round(os.totalmem()  / 1024 / 1024 / 1024),
+    freemem  : Math.round(os.freemem()   / 1024 / 1024 / 1024),
+    cpus     : os.cpus().length,
+    cpuModel : os.cpus()[0]?.model || 'Unknown',
+    hostname : os.hostname(),
+    uptime   : Math.round(os.uptime() / 3600),
+    node     : process.version,
+    electron : process.versions.electron,
+    appVersion: APP_VERSION,
 }));
 
 ipcMain.handle('system:openFolder', (_e, folderPath) => {
@@ -364,10 +656,54 @@ ipcMain.handle('system:openFolder', (_e, folderPath) => {
 
 ipcMain.handle('system:selectFile', async () => {
     const result = await dialog.showOpenDialog(win, {
-        filters: [{ name: 'JAR Files', extensions: ['jar'] }],
+        filters   : [{ name: 'JAR Files', extensions: ['jar'] }],
         properties: ['openFile'],
     });
     return result.canceled ? null : result.filePaths[0];
+});
+
+ipcMain.handle('system:openExternal', (_e, url) => {
+    // Only allow safe URLs
+    if (url && (url.startsWith('https://') || url.startsWith('http://localhost'))) {
+        shell.openExternal(url);
+    }
+});
+
+ipcMain.handle('system:gameDirs', () => {
+    const dirs = [];
+    const home = os.homedir();
+    const add  = (label, p) => { if (fs.existsSync(p)) dirs.push({ label, path: p }); };
+
+    if (process.platform === 'win32') {
+        const appdata = process.env.APPDATA || '';
+        add('Official Launcher',   path.join(appdata, '.minecraft'));
+        add('Prism Launcher',      path.join(appdata, 'PrismLauncher'));
+        add('MultiMC',             path.join(appdata, 'MultiMC'));
+        add('GDLauncher',          path.join(appdata, 'gdlauncher_next'));
+        add('CurseForge',          path.join(process.env.LOCALAPPDATA || '', 'CurseForge'));
+        add('ATLauncher',          path.join(home,    'Documents', 'ATLauncher'));
+        add('Technic Launcher',    path.join(appdata, '.technic'));
+        add('SKLauncher',          path.join(appdata, 'SKlauncher'));
+        add('TLauncher',           path.join(appdata, '.tlauncher'));
+    } else if (process.platform === 'darwin') {
+        const libapp = path.join(home, 'Library', 'Application Support');
+        add('Official Launcher', path.join(libapp, 'minecraft'));
+        add('Prism Launcher',    path.join(libapp, 'PrismLauncher'));
+        add('MultiMC',           path.join(home,    'Library', 'Application Support', 'MultiMC'));
+        add('GDLauncher',        path.join(libapp, 'gdlauncher_next'));
+        add('ATLauncher',        path.join(libapp, 'ATLauncher'));
+        add('TLauncher',         path.join(libapp, '.tlauncher'));
+    } else {
+        const localShare = path.join(home, '.local', 'share');
+        add('Official Launcher', path.join(home, '.minecraft'));
+        add('Prism Launcher',    path.join(localShare, 'PrismLauncher'));
+        add('MultiMC',           path.join(home, '.local', 'share', 'multimc'));
+        add('GDLauncher',        path.join(localShare, 'gdlauncher_next'));
+        add('ATLauncher',        path.join(home, 'ATLauncher'));
+        add('Technic Launcher',  path.join(home, '.technic'));
+        add('TLauncher',         path.join(home, '.tlauncher'));
+    }
+    return dirs;
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -385,12 +721,114 @@ ipcMain.handle('chat:serverStart', (_e, port) => {
     chatServerProcess.on('exit', () => { chatServerProcess = null; });
     return { running: true, port: p };
 });
-
-ipcMain.handle('chat:serverStop',   () => { if (chatServerProcess) { chatServerProcess.kill(); chatServerProcess = null; } return { running: false }; });
+ipcMain.handle('chat:serverStop',   () => {
+    if (chatServerProcess) { chatServerProcess.kill(); chatServerProcess = null; }
+    return { running: false };
+});
 ipcMain.handle('chat:serverStatus', () => ({ running: !!chatServerProcess }));
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Helpers
+// Helpers – Process analysis
+// ─────────────────────────────────────────────────────────────────────────────
+
+function isMinecraftProcess(args) {
+    if (!args) return false;
+    return /minecraft|net\.minecraft|com\.mojang|fabric-loader|forge|neoforge|lunar|badlion|feather|tlauncher|prismlauncher|multimc|gdlauncher|curseforge|atlauncher|technic|sklauncher/i.test(args);
+}
+
+function detectLoaderFromArgs(args) {
+    if (!args) return 'Vanilla';
+    const a = args.toLowerCase();
+    if (/lunar/i.test(a))    return 'Lunar';
+    if (/badlion/i.test(a))  return 'Badlion';
+    if (/feather/i.test(a))  return 'Feather';
+    if (/neoforge/i.test(a)) return 'NeoForge';
+    if (/forge/i.test(a))    return 'Forge';
+    if (/fabric/i.test(a))   return 'Fabric';
+    if (/quilt/i.test(a))    return 'Quilt';
+    return 'Vanilla';
+}
+
+function detectLauncherFromArgs(args) {
+    if (!args) return 'Unknown';
+    const a = args.toLowerCase();
+    if (/lunar/i.test(a))        return 'Lunar Client';
+    if (/badlion/i.test(a))      return 'Badlion';
+    if (/feather/i.test(a))      return 'Feather';
+    if (/prismlauncher/i.test(a))return 'Prism';
+    if (/multimc/i.test(a))      return 'MultiMC';
+    if (/gdlauncher/i.test(a))   return 'GDLauncher';
+    if (/curseforge/i.test(a))   return 'CurseForge';
+    if (/atlauncher/i.test(a))   return 'ATLauncher';
+    if (/technic/i.test(a))      return 'Technic';
+    if (/sklauncher/i.test(a))   return 'SKLauncher';
+    if (/tlauncher/i.test(a))    return 'TLauncher';
+    if (/com\.mojang/i.test(a))  return 'Official';
+    if (/minecraft/i.test(a))    return 'Official';
+    return 'Unknown';
+}
+
+function extractMcVersion(args) {
+    if (!args) return null;
+    const m = args.match(/--version\s+([^\s]+)/);
+    return m ? m[1] : null;
+}
+
+function extractMemory(args) {
+    if (!args) return null;
+    const m = args.match(/-Xmx(\d+[gGmM])/);
+    return m ? m[1].toUpperCase() : null;
+}
+
+function extractMainClass(args) {
+    if (!args) return null;
+    // Look for net.minecraft or fabric main classes
+    const m = args.match(/(net\.minecraft\S+|com\.mojang\S+|net\.fabricmc\S+|cpw\.mods\S+|org\.quiltmc\S+)/);
+    return m ? m[1] : null;
+}
+
+function resolveAgentJar() {
+    const custom = store.get('agentPath', '');
+    if (custom && fs.existsSync(custom)) return custom;
+
+    const candidates = [
+        path.join(__dirname, 'agent', 'quark-agent.jar'),
+        path.join(__dirname, '..', 'build', 'libs', 'quark-agent.jar'),
+        path.join(__dirname, 'quark-agent.jar'),
+    ];
+
+    const buildDir = path.join(__dirname, '..', 'build', 'libs');
+    if (fs.existsSync(buildDir)) {
+        for (const f of fs.readdirSync(buildDir)) {
+            if (/quark.*\.jar$/i.test(f)) candidates.unshift(path.join(buildDir, f));
+        }
+    }
+    return candidates.find(p => fs.existsSync(p)) || null;
+}
+
+async function findJava() {
+    const customJava = store.get('javaPath', '');
+    if (customJava && fs.existsSync(customJava)) return customJava;
+
+    if (process.env.JAVA_HOME) {
+        const ext = process.platform === 'win32' ? '.exe' : '';
+        const j = path.join(process.env.JAVA_HOME, 'bin', `java${ext}`);
+        if (fs.existsSync(j)) return j;
+    }
+    return 'java';
+}
+
+function getModsFolder() {
+    const platform = process.platform;
+    let base;
+    if (platform === 'win32')        base = process.env.APPDATA;
+    else if (platform === 'darwin')  base = path.join(os.homedir(), 'Library', 'Application Support');
+    else                             base = path.join(os.homedir(), '.local', 'share');
+    return base ? path.join(base, '.minecraft', 'mods') : null;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Helpers – HTML callback page
 // ─────────────────────────────────────────────────────────────────────────────
 
 function callbackHtml(heading, body, color) {

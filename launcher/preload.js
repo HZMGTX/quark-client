@@ -15,24 +15,40 @@ contextBridge.exposeInMainWorld('quark', {
     discordLogout : ()      => ipcRenderer.invoke('discord:logout'),
 
     // Injection
-    injectScan : ()         => ipcRenderer.invoke('inject:scan'),
-    injectRun  : (pid)      => ipcRenderer.invoke('inject:run', pid),
+    injectScan      : ()          => ipcRenderer.invoke('inject:scan'),
+    injectRun       : (pid)       => ipcRenderer.invoke('inject:run', pid),
+    injectAutoStart : ()          => ipcRenderer.invoke('inject:autoStart'),
+    injectAutoStop  : ()          => ipcRenderer.invoke('inject:autoStop'),
 
     // Persistent settings
-    settingsGet    : (key)      => ipcRenderer.invoke('settings:get', key),
-    settingsSet    : (key, val) => ipcRenderer.invoke('settings:set', key, val),
-    settingsGetAll : ()         => ipcRenderer.invoke('settings:getAll'),
+    settingsGet    : (key)        => ipcRenderer.invoke('settings:get', key),
+    settingsSet    : (key, val)   => ipcRenderer.invoke('settings:set', key, val),
+    settingsGetAll : ()           => ipcRenderer.invoke('settings:getAll'),
 
     // System info
-    systemInfo       : ()       => ipcRenderer.invoke('system:info'),
-    openFolder       : (p)      => ipcRenderer.invoke('system:openFolder', p),
-    selectFile       : ()       => ipcRenderer.invoke('system:selectFile'),
+    systemInfo      : ()          => ipcRenderer.invoke('system:info'),
+    systemGameDirs  : ()          => ipcRenderer.invoke('system:gameDirs'),
+    openFolder      : (p)         => ipcRenderer.invoke('system:openFolder', p),
+    selectFile      : ()          => ipcRenderer.invoke('system:selectFile'),
+    openExternal    : (url)       => ipcRenderer.invoke('system:openExternal', url),
+
+    // Java discovery
+    javaList        : ()          => ipcRenderer.invoke('java:list'),
+
+    // Server ping
+    serverPing      : (host, port)=> ipcRenderer.invoke('server:ping', host, port),
+
+    // Config backup
+    configExport    : ()          => ipcRenderer.invoke('config:export'),
+    configImport    : ()          => ipcRenderer.invoke('config:import'),
 
     // Global Chat Server
-    chatServerStart  : (port)   => ipcRenderer.invoke('chat:serverStart', port),
-    chatServerStop   : ()       => ipcRenderer.invoke('chat:serverStop'),
-    chatServerStatus : ()       => ipcRenderer.invoke('chat:serverStatus'),
+    chatServerStart  : (port)     => ipcRenderer.invoke('chat:serverStart', port),
+    chatServerStop   : ()         => ipcRenderer.invoke('chat:serverStop'),
+    chatServerStatus : ()         => ipcRenderer.invoke('chat:serverStatus'),
 
-    // Push event from main to renderer (for inject progress updates)
-    onInjectLog : (cb) => ipcRenderer.on('inject:log', (_e, msg) => cb(msg)),
+    // Push events from main → renderer
+    onInjectLog      : (cb)  => ipcRenderer.on('inject:log',         (_e, d)    => cb(d)),
+    onAutoDetected   : (cb)  => ipcRenderer.on('inject:autoDetected',(_e, proc) => cb(proc)),
+    onNavigate       : (cb)  => ipcRenderer.on('navigate',           (_e, page) => cb(page)),
 });
