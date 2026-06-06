@@ -1279,6 +1279,7 @@ public class ModuleManager {
         register(new ServerAlert());
         register(new SocialSpy());
         register(new StatusMessage());
+        register(new AntiFlood());
 
         // -------- STAFF --------
         register(new cc.quark.module.modules.staff.StaffChat());
