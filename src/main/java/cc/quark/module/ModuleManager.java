@@ -1241,6 +1241,9 @@ public class ModuleManager {
         register(new CrystalPop());
         register(new DupeFixer());
         register(new GodModeBypass());
+        register(new KillAuraBypass());
+        register(new OffGroundAttack());
+        register(new PacketReorder());
 
         // -------- MISC --------
         register(new AntiDetect());
@@ -1337,6 +1340,9 @@ public class ModuleManager {
         register(new ChatEncrypt());
         register(new DimensionLogger());
         register(new MacroRecorder());
+        register(new PlayerCounter());
+        register(new ScoreboardUtils());
+        register(new ServerJoinHelper());
 
         // -------- STAFF --------
         register(new cc.quark.module.modules.staff.StaffChat());
@@ -1397,6 +1403,8 @@ public class ModuleManager {
         register(new cc.quark.module.modules.staff.PlayerStats());
         register(new cc.quark.module.modules.staff.RollbackHelper());
         register(new cc.quark.module.modules.staff.TeleportAll());
+        register(new cc.quark.module.modules.staff.AdminTP());
+        register(new cc.quark.module.modules.staff.ChatFilter2());
     }
 
     // -------------------------------------------------------------------------
