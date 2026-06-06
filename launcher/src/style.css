@@ -266,6 +266,8 @@ body { display: flex; flex-direction: column; height: 100vh; }
 }
 .btn-discord:hover  { background: var(--discord-hov); box-shadow: 0 4px 20px rgba(88,101,242,0.4); }
 .btn-discord:active { transform: scale(.98); }
+/* When used as a sized variant inside the app, don't force full width */
+.btn.btn-discord { width: auto; padding: 6px 14px; font-size: 12px; }
 
 .divider {
   width: 100%;

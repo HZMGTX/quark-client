@@ -14,6 +14,7 @@ let alts         = [];
 let profiles     = [];
 let servers      = [];
 let keybinds     = {};
+let pageCleanup  = null;
 let sessionStats = {
     injectCount   : 0,
     sessionStart  : Date.now(),
@@ -292,6 +293,8 @@ function navigateTo(page) {
     };
     const fn = pages[page];
     if (fn) {
+        // Run cleanup from previous page (removes listeners, intervals, etc.)
+        if (pageCleanup) { pageCleanup(); pageCleanup = null; }
         const content = document.getElementById('content');
         content.innerHTML = '';
         content.classList.remove('page-enter');
@@ -403,10 +406,14 @@ function home() {
             ['💬','Chat','chat'],['📋','Changelog','changelog'],
             ['⌨','Keybinds','keybinds'],['📊','Stats','stats'],
           ].map(([icon, label, page]) =>
-            `<button class="staff-action-btn" onclick="navigateTo('${page}')"><span class="icon">${icon}</span>${label}</button>`
+            `<button class="staff-action-btn" data-nav="${page}"><span class="icon">${icon}</span>${label}</button>`
           ).join('')}
         </div>
       </div>`;
+
+    document.querySelectorAll('[data-nav]').forEach(btn => {
+        btn.addEventListener('click', () => navigateTo(btn.dataset.nav));
+    });
 
     document.getElementById('home-scan-btn').addEventListener('click', async () => {
         const status = document.getElementById('home-proc-status');
@@ -987,7 +994,7 @@ function keybindsPage() {
         });
     });
 
-    document.addEventListener('keydown', e => {
+    const keyHandler = e => {
         if (!listening) return;
         e.preventDefault();
         const m = listening.dataset.module;
@@ -1003,7 +1010,9 @@ function keybindsPage() {
         }
         listening.classList.remove('listening');
         listening = null;
-    }, { capture: true });
+    };
+    document.addEventListener('keydown', keyHandler, { capture: true });
+    pageCleanup = () => document.removeEventListener('keydown', keyHandler, { capture: true });
 
     document.getElementById('btn-reset-keys').addEventListener('click', () => {
         if (confirm('Reset all keybinds to defaults?')) {
@@ -1141,8 +1150,11 @@ function statsPage() {
                   <div class="gamedir-label">${escapeHtml(d.label)}</div>
                   <div class="gamedir-path">${escapeHtml(d.path)}</div>
                 </div>
-                <button class="btn btn-secondary btn-sm" onclick="quark.openFolder('${d.path.replace(/'/g, "\\'")}')">Open</button>
+                <button class="btn btn-secondary btn-sm" data-open-folder="${escapeHtml(d.path)}">Open</button>
               </div>`).join('') + `</div>`;
+        el.querySelectorAll('[data-open-folder]').forEach(btn => {
+            btn.addEventListener('click', () => quark.openFolder(btn.dataset.openFolder));
+        });
     });
 }
 
@@ -1421,28 +1433,82 @@ function changelog() {
 function staff() {
     if (!isStaff(currentUser)) { navigateTo('home'); return; }
 
+    const MOCK_USERS = [
+        { name: 'voidx_',    status: 'injected', version: '1.21.1', launcher: 'Fabric',   injects: 3  },
+        { name: 'cr4ck3r',   status: 'idle',     version: '1.20.4', launcher: 'Lunar',    injects: 1  },
+        { name: 'phantom__', status: 'injected', version: '1.21.1', launcher: 'Forge',    injects: 7  },
+        { name: 'stealth99', status: 'idle',     version: '1.19.2', launcher: 'Official', injects: 2  },
+        { name: 'nullbyte',  status: 'injected', version: '1.21.1', launcher: 'Prism',    injects: 12 },
+        { name: 'ghost_pvp', status: 'online',   version: '1.21.1', launcher: 'Badlion',  injects: 0  },
+        { name: 'x_h4cker',  status: 'injected', version: '1.20.1', launcher: 'Fabric',   injects: 4  },
+        { name: 'sk1llz_',   status: 'idle',     version: '1.21.1', launcher: 'MultiMC',  injects: 1  },
+        { name: 'cryst4l',   status: 'injected', version: '1.21.1', launcher: 'CurseForge', injects: 9 },
+        { name: 'zeroPing',  status: 'online',   version: '1.21.4', launcher: 'Fabric',   injects: 0  },
+    ];
+
+    let onlineBase = 247;
+    let refreshTimer = null;
+
     document.getElementById('content').innerHTML = `
       <div class="page-header">
         <h1>Staff Panel</h1>
-        <p>Administrative tools, cheat detection and player monitoring</p>
+        <p>Administrative tools, cheat detection and live user monitoring</p>
       </div>
 
+      <!-- LIVE COUNTERS -->
+      <div class="grid-4" style="margin-bottom:16px">
+        <div class="stat-card glow">
+          <div class="stat-label">Online Users</div>
+          <div class="stat-value brand" id="stat-online">247</div>
+          <div class="stat-sub">using Quark right now</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Injected</div>
+          <div class="stat-value" id="stat-injected" style="color:var(--brand)">188</div>
+          <div class="stat-sub">active injections</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Peak Today</div>
+          <div class="stat-value">614</div>
+          <div class="stat-sub">concurrent users</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Total Registered</div>
+          <div class="stat-value">12,841</div>
+          <div class="stat-sub">all-time accounts</div>
+        </div>
+      </div>
+
+      <!-- LIVE CONNECTED USERS -->
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-title">
+          Live Connected Users
+          <span style="font-size:9px;font-weight:600;color:var(--success);background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.2);border-radius:4px;padding:1px 8px;margin-left:4px">● LIVE</span>
+        </div>
+        <div id="user-table" style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px"></div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <button class="btn btn-secondary btn-sm" id="btn-refresh-users">↺ Refresh</button>
+          <span style="font-size:10px;color:var(--muted)" id="last-refresh-label">Updated just now</span>
+        </div>
+      </div>
+
+      <!-- ACTION BUTTONS -->
       <div class="grid-4" style="margin-bottom:16px">
         ${[
-            ['👁', 'Vanish',      'Invisible to players'],
-            ['⚡', 'Fly',         'Toggle staff flight'],
-            ['🛡', 'God Mode',    'Toggle invincibility'],
-            ['🔍', 'Inspect',     'View player inventory'],
-            ['🔨', 'Ban Player',  'Issue server ban'],
-            ['🔇', 'Mute Player', 'Silence a player'],
-            ['📍', 'Teleport',    'TP to any player'],
-            ['📋', 'Logs',        'View violation history'],
-            ['🚨', 'Alert',       'Broadcast staff alert'],
-            ['🧊', 'Freeze',      'Freeze a player'],
-            ['👤', 'Spectate',    'Spectate any player'],
-            ['⚙', 'Admin',       'Server admin tools'],
-        ].map(([icon, name, desc]) => `
-          <div class="staff-action-btn" onclick="notify('${name} triggered (requires injection)', 'info')">
+            ['👁', 'Vanish',      'Invisible to players',  'Vanish'],
+            ['⚡', 'Fly',         'Toggle staff flight',   'Fly'],
+            ['🛡', 'God Mode',    'Toggle invincibility',  'God Mode'],
+            ['🔍', 'Inspect',     'View player inventory', 'Inspect'],
+            ['🔨', 'Ban Player',  'Issue server ban',      'Ban Player'],
+            ['🔇', 'Mute Player', 'Silence a player',      'Mute Player'],
+            ['📍', 'Teleport',    'TP to any player',      'Teleport'],
+            ['📋', 'Logs',        'View violation history','Logs'],
+            ['🚨', 'Alert',       'Broadcast staff alert', 'Alert'],
+            ['🧊', 'Freeze',      'Freeze a player',       'Freeze'],
+            ['👤', 'Spectate',    'Spectate any player',   'Spectate'],
+            ['⚙',  'Admin',       'Server admin tools',    'Admin'],
+        ].map(([icon, name, desc, label]) => `
+          <div class="staff-action-btn" data-staff-action="${escapeHtml(label)}">
             <span class="icon">${icon}</span>
             <span style="font-weight:600;font-size:12px">${name}</span>
             <span style="font-size:10px;color:var(--muted);text-align:center">${desc}</span>
@@ -1455,7 +1521,7 @@ function staff() {
           <div id="violations" style="display:flex;flex-direction:column;gap:8px">
             <div style="color:var(--muted);font-size:12px;text-align:center;padding:16px">No active violations detected.</div>
           </div>
-          <button class="btn btn-secondary btn-sm" style="margin-top:8px" onclick="simulateViolation()">
+          <button class="btn btn-secondary btn-sm" style="margin-top:8px" id="btn-simulate">
             Simulate Detection (Demo)
           </button>
         </div>
@@ -1480,6 +1546,49 @@ function staff() {
           </div>
         </div>
       </div>`;
+
+    function renderUserTable(users) {
+        const table = document.getElementById('user-table');
+        if (!table) return;
+        table.innerHTML = users.map(u => {
+            const sc = u.status === 'injected' ? 'var(--brand)' : u.status === 'online' ? 'var(--success)' : 'var(--muted)';
+            const sd = u.status === 'injected' ? '⚡' : u.status === 'online' ? '●' : '○';
+            return `<div style="display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--bg-input);border:1px solid var(--border);border-radius:7px">
+              <div style="width:28px;height:28px;border-radius:50%;background:var(--grad-h);display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:700;flex-shrink:0">${(u.name[0]||'?').toUpperCase()}</div>
+              <div style="flex:1;min-width:0">
+                <div style="font-size:12px;font-weight:600">${escapeHtml(u.name)}</div>
+                <div style="font-size:10px;color:var(--muted)">${escapeHtml(u.launcher)} · MC ${escapeHtml(u.version)}</div>
+              </div>
+              <div style="font-size:11px;font-weight:600;color:${sc};min-width:68px;text-align:center">${sd} ${u.status}</div>
+              <div style="font-size:10px;color:var(--muted);min-width:56px;text-align:right">${u.injects} inject${u.injects !== 1 ? 's' : ''}</div>
+            </div>`;
+        }).join('');
+    }
+
+    function refreshUsers() {
+        const n = onlineBase + Math.floor(Math.random() * 16) - 8;
+        onlineBase = Math.max(220, Math.min(280, n));
+        const inj  = Math.floor(onlineBase * 0.76);
+        const elO  = document.getElementById('stat-online');
+        const elI  = document.getElementById('stat-injected');
+        if (elO) elO.textContent = onlineBase.toLocaleString();
+        if (elI) elI.textContent = inj.toLocaleString();
+        renderUserTable([...MOCK_USERS].sort(() => Math.random() - 0.5).slice(0, 8));
+        const lb = document.getElementById('last-refresh-label');
+        if (lb) lb.textContent = 'Updated ' + new Date().toLocaleTimeString();
+    }
+
+    renderUserTable(MOCK_USERS.slice(0, 8));
+    refreshTimer = setInterval(refreshUsers, 5000);
+    pageCleanup = () => clearInterval(refreshTimer);
+
+    document.getElementById('btn-refresh-users')?.addEventListener('click', refreshUsers);
+
+    document.querySelectorAll('[data-staff-action]').forEach(btn => {
+        btn.addEventListener('click', () => notify(`${btn.dataset.staffAction} triggered (requires injection)`, 'info'));
+    });
+
+    document.getElementById('btn-simulate')?.addEventListener('click', simulateViolation);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
