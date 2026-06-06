@@ -45,13 +45,11 @@ public class ScaffoldDetector extends Module {
         lastPlaceY.clear();
         lastAlert.clear();
         tick = 0;
-        mc.getEventBus().subscribe(this);
         ChatUtil.info("§6[ScaffoldDetector] §fWatching fast block placement (cooldown ≤§e" + placeCooldown.get() + "§f ticks).");
     }
 
     @Override
     public void onDisable() {
-        mc.getEventBus().unsubscribe(this);
         placeData.clear();
         lastPlaceY.clear();
         lastAlert.clear();

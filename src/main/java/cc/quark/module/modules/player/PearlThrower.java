@@ -16,8 +16,7 @@ public class PearlThrower extends Module {
     private int thrown = 0;
 
     public PearlThrower() { super("PearlThrower", "Throws ender pearls rapidly on demand", Category.PLAYER); }
-    @Override public void onEnable() { mc.getEventBus().subscribe(this); thrown = 0; }
-    @Override public void onDisable() { mc.getEventBus().unsubscribe(this); }
+    @Override public void onEnable() { thrown = 0; }
 
     @EventHandler
     public void onTick(EventTick e) {

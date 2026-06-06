@@ -12,8 +12,6 @@ public class Parkour extends Module {
     private final BoolSetting edgeJump = register(new BoolSetting("Edge Jump", "Auto-jump at block edges", true));
 
     public Parkour() { super("Parkour", "Auto-jumps at block edges for parkour", Category.MOVEMENT); }
-    @Override public void onEnable() { mc.getEventBus().subscribe(this); }
-    @Override public void onDisable() { mc.getEventBus().unsubscribe(this); }
 
     @EventHandler
     public void onTick(EventTick e) {

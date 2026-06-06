@@ -15,8 +15,7 @@ public class ItemGiver extends Module {
     private boolean executed = false;
 
     public ItemGiver() { super("ItemGiver", "Gives items to players using /give", Category.STAFF); }
-    @Override public void onEnable() { mc.getEventBus().subscribe(this); executed = false; }
-    @Override public void onDisable() { mc.getEventBus().unsubscribe(this); }
+    @Override public void onEnable() { executed = false; }
 
     @EventHandler
     public void onTick(EventTick e) {

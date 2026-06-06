@@ -46,13 +46,11 @@ public class SpeedDetector extends Module {
         violations.clear();
         lastPos.clear();
         lastAlert.clear();
-        mc.getEventBus().subscribe(this);
         ChatUtil.info("§6[SpeedDetector] §fChecking player speeds (§e" + multiplier.get() + "x§f threshold).");
     }
 
     @Override
     public void onDisable() {
-        mc.getEventBus().unsubscribe(this);
         violations.clear();
         lastPos.clear();
         lastAlert.clear();

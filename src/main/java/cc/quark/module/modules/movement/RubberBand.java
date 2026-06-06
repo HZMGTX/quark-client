@@ -15,8 +15,7 @@ public class RubberBand extends Module {
     private int rbCount = 0;
 
     public RubberBand() { super("RubberBand", "Detects and handles server rubberbanding", Category.MOVEMENT); }
-    @Override public void onEnable() { mc.getEventBus().subscribe(this); rbCount = 0; }
-    @Override public void onDisable() { mc.getEventBus().unsubscribe(this); }
+    @Override public void onEnable() { rbCount = 0; }
 
     @EventHandler
     public void onPacketReceive(EventPacketReceive e) {

@@ -17,8 +17,7 @@ public class ArmorBreakAlert extends Module {
     private boolean[] alerted = new boolean[4];
 
     public ArmorBreakAlert() { super("ArmorBreakAlert", "Warns when armor is about to break", Category.RENDER); }
-    @Override public void onEnable() { mc.getEventBus().subscribe(this); alerted = new boolean[4]; }
-    @Override public void onDisable() { mc.getEventBus().unsubscribe(this); }
+    @Override public void onEnable() { alerted = new boolean[4]; }
 
     @EventHandler
     public void onTick(EventTick e) {

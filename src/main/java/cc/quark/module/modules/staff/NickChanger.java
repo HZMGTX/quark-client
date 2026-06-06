@@ -13,9 +13,8 @@ public class NickChanger extends Module {
     private boolean set = false;
 
     public NickChanger() { super("NickChanger", "Changes your server nickname via command", Category.STAFF); }
-    @Override public void onEnable() { mc.getEventBus().subscribe(this); set = false; }
+    @Override public void onEnable() { set = false; }
     @Override public void onDisable() {
-        mc.getEventBus().unsubscribe(this);
         if (mc.player != null && set) mc.player.networkHandler.sendChatCommand(command.get() + " off");
     }
 

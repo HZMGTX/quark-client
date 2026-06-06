@@ -42,14 +42,12 @@ public class AutoXBow extends Module {
 
     @Override
     public void onEnable() {
-        mc.getEventBus().subscribe(this);
         state = 0;
         loadCounter = 0;
     }
 
     @Override
     public void onDisable() {
-        mc.getEventBus().unsubscribe(this);
         if (mc.options != null) mc.options.useKey.setPressed(false);
     }
 

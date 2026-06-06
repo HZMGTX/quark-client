@@ -40,16 +40,6 @@ public class BlockInfo extends Module {
         super("BlockInfo", "Shows info about the block you are looking at on the HUD", Category.RENDER);
     }
 
-    @Override
-    public void onEnable() {
-        mc.getEventBus().subscribe(this);
-    }
-
-    @Override
-    public void onDisable() {
-        mc.getEventBus().unsubscribe(this);
-    }
-
     @EventHandler
     public void onRender2D(EventRender2D event) {
         if (mc.player == null || mc.world == null) return;

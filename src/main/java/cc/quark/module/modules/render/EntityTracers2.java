@@ -50,16 +50,6 @@ public class EntityTracers2 extends Module {
         super("EntityTracers2", "Enhanced entity tracers with per-type colors and distance fade", Category.RENDER);
     }
 
-    @Override
-    public void onEnable() {
-        mc.getEventBus().subscribe(this);
-    }
-
-    @Override
-    public void onDisable() {
-        mc.getEventBus().unsubscribe(this);
-    }
-
     @EventHandler
     public void onRender3D(EventRender3D event) {
         if (mc.world == null || mc.player == null) return;

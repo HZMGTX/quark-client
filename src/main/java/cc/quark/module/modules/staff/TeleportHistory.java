@@ -40,14 +40,12 @@ public class TeleportHistory extends Module {
         if (mc.player == null) { disable(); return; }
         lastPos.clear();
         history.clear();
-        mc.getEventBus().subscribe(this);
         ChatUtil.info("§6[TeleportHistory] §fLogging teleport events (threshold: §e"
                 + teleportThreshold.get() + " blocks§f).");
     }
 
     @Override
     public void onDisable() {
-        mc.getEventBus().unsubscribe(this);
         printHistory();
         lastPos.clear();
         history.clear();

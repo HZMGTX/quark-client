@@ -29,12 +29,6 @@ public class CrawlMove extends Module {
         super("CrawlMove", "Move through 1-block-high gaps via crawl pose", Category.MOVEMENT);
     }
 
-    @Override
-    public void onEnable() { mc.getEventBus().subscribe(this); }
-
-    @Override
-    public void onDisable() { mc.getEventBus().unsubscribe(this); }
-
     @EventHandler
     public void onTick(EventTick event) {
         if (mc.player == null || mc.world == null) return;

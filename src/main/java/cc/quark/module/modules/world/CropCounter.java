@@ -17,8 +17,6 @@ public class CropCounter extends Module {
     private int matureCount = 0, totalCount = 0;
 
     public CropCounter() { super("CropCounter", "Counts nearby crops on HUD", Category.WORLD); }
-    @Override public void onEnable() { mc.getEventBus().subscribe(this); }
-    @Override public void onDisable() { mc.getEventBus().unsubscribe(this); }
 
     @EventHandler
     public void onTick(EventTick e) {

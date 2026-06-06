@@ -10,8 +10,8 @@ public class StepPlus extends Module {
     private final DoubleSetting height = register(new DoubleSetting("Height", "Step height", 2.0, 1.0, 5.0));
 
     public StepPlus() { super("StepPlus", "Step up blocks of any height instantly", Category.MOVEMENT); }
-    @Override public void onEnable() { mc.getEventBus().subscribe(this); if (mc.player != null) mc.player.stepHeight = (float) height.get(); }
-    @Override public void onDisable() { mc.getEventBus().unsubscribe(this); if (mc.player != null) mc.player.stepHeight = 0.6f; }
+    @Override public void onEnable() { if (mc.player != null) mc.player.stepHeight = (float) height.get(); }
+    @Override public void onDisable() { if (mc.player != null) mc.player.stepHeight = 0.6f; }
 
     @EventHandler
     public void onTick(EventTick e) {

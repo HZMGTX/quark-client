@@ -18,8 +18,8 @@ public class TreeChopper extends Module {
     private final List<BlockPos> logQueue = new ArrayList<>();
 
     public TreeChopper() { super("TreeChopper", "Chops entire trees by breaking one log", Category.WORLD); }
-    @Override public void onEnable() { mc.getEventBus().subscribe(this); logQueue.clear(); }
-    @Override public void onDisable() { mc.getEventBus().unsubscribe(this); logQueue.clear(); }
+    @Override public void onEnable() { logQueue.clear(); }
+    @Override public void onDisable() { logQueue.clear(); }
 
     @EventHandler
     public void onTick(EventTick e) {

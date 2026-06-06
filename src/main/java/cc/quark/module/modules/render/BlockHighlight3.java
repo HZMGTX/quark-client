@@ -17,8 +17,6 @@ public class BlockHighlight3 extends Module {
     private final DoubleSetting lineWidth = register(new DoubleSetting("Width", "Line width", 2.0, 0.5, 5.0));
 
     public BlockHighlight3() { super("BlockHighlight3", "Custom block selection outline", Category.RENDER); }
-    @Override public void onEnable() { mc.getEventBus().subscribe(this); }
-    @Override public void onDisable() { mc.getEventBus().unsubscribe(this); }
 
     @EventHandler
     public void onRender3D(EventRender3D e) {

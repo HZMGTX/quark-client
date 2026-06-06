@@ -12,8 +12,6 @@ public class AutoMLG extends Module {
     private final IntSetting fallHeight = register(new IntSetting("Fall Height", "Fall height to trigger MLG", 10, 3, 30));
 
     public AutoMLG() { super("AutoMLG", "Auto-places water bucket on fall damage", Category.COMBAT); }
-    @Override public void onEnable() { mc.getEventBus().subscribe(this); }
-    @Override public void onDisable() { mc.getEventBus().unsubscribe(this); }
 
     @EventHandler
     public void onTick(EventTick e) {

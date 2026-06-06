@@ -27,16 +27,6 @@ public class MovementHUD extends Module {
         super("MovementHUD", "Shows movement state (sprinting, sneaking, swimming, flying) on HUD", Category.RENDER);
     }
 
-    @Override
-    public void onEnable() {
-        mc.getEventBus().subscribe(this);
-    }
-
-    @Override
-    public void onDisable() {
-        mc.getEventBus().unsubscribe(this);
-    }
-
     @EventHandler
     public void onRender2D(EventRender2D event) {
         if (mc.player == null) return;

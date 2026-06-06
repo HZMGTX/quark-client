@@ -21,16 +21,6 @@ public class ChatEncrypt extends Module {
         super("ChatEncrypt", "Encrypts outgoing chat messages and decrypts incoming ones with a shared XOR key", Category.MISC);
     }
 
-    @Override
-    public void onEnable() {
-        mc.getEventBus().subscribe(this);
-    }
-
-    @Override
-    public void onDisable() {
-        mc.getEventBus().unsubscribe(this);
-    }
-
     @EventHandler
     public void onChat(EventChat event) {
         String msg = event.getMessage();

@@ -20,8 +20,6 @@ public class NoteBlockPlayer extends Module {
     private final IntSetting targetNote = register(new IntSetting("Note", "Target note (0-24)", 12, 0, 24));
 
     public NoteBlockPlayer() { super("NoteBlockPlayer", "Auto-tunes and plays noteblocks", Category.MISC); }
-    @Override public void onEnable() { mc.getEventBus().subscribe(this); }
-    @Override public void onDisable() { mc.getEventBus().unsubscribe(this); }
 
     @EventHandler
     public void onTick(EventTick e) {

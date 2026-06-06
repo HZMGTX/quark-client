@@ -16,8 +16,6 @@ public class PlayerList extends Module {
     private final BoolSetting showPing = register(new BoolSetting("Ping", "Show ping", true));
 
     public PlayerList() { super("PlayerList", "Compact player list HUD overlay", Category.RENDER); }
-    @Override public void onEnable() { mc.getEventBus().subscribe(this); }
-    @Override public void onDisable() { mc.getEventBus().unsubscribe(this); }
 
     @EventHandler
     public void onRender2D(EventRender2D e) {

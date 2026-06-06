@@ -8,8 +8,6 @@ import net.minecraft.client.gui.screen.ingame.HandledScreen;
 
 public class InventoryWalk extends Module {
     public InventoryWalk() { super("InventoryWalk", "Move while inventory screens are open", Category.MOVEMENT); }
-    @Override public void onEnable() { mc.getEventBus().subscribe(this); }
-    @Override public void onDisable() { mc.getEventBus().unsubscribe(this); }
 
     @EventHandler
     public void onTick(EventTick e) {

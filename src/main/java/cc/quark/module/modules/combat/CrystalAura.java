@@ -25,8 +25,6 @@ public class CrystalAura extends Module {
     private final TimerUtil breakTimer = new TimerUtil();
 
     public CrystalAura() { super("CrystalAura", "Auto-places and detonates end crystals on enemies", Category.COMBAT); }
-    @Override public void onEnable() { mc.getEventBus().subscribe(this); }
-    @Override public void onDisable() { mc.getEventBus().unsubscribe(this); }
 
     @EventHandler
     public void onTick(EventTick e) {

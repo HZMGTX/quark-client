@@ -12,8 +12,6 @@ public class FPSCounter extends Module {
     private final IntSetting y = register(new IntSetting("Y", "Y position", 2, 0, 600));
 
     public FPSCounter() { super("FPSCounter", "Shows current FPS on the HUD", Category.RENDER); }
-    @Override public void onEnable() { mc.getEventBus().subscribe(this); }
-    @Override public void onDisable() { mc.getEventBus().unsubscribe(this); }
 
     @EventHandler
     public void onRender2D(EventRender2D e) {

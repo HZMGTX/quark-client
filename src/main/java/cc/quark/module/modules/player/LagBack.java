@@ -16,8 +16,7 @@ public class LagBack extends Module {
     private final TimerUtil lagTimer = new TimerUtil();
 
     public LagBack() { super("LagBack", "Detects lag-backs and optionally stops movement", Category.PLAYER); }
-    @Override public void onEnable() { mc.getEventBus().subscribe(this); lagging = false; }
-    @Override public void onDisable() { mc.getEventBus().unsubscribe(this); }
+    @Override public void onEnable() { lagging = false; }
 
     @EventHandler
     public void onPacketReceive(EventPacketReceive e) {

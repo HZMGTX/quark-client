@@ -36,13 +36,7 @@ public class CommandSpy2 extends Module {
     @Override
     public void onEnable() {
         if (mc.player == null) { disable(); return; }
-        mc.getEventBus().subscribe(this);
         ChatUtil.info("§6[CommandSpy2] §fNow logging player commands.");
-    }
-
-    @Override
-    public void onDisable() {
-        mc.getEventBus().unsubscribe(this);
     }
 
     @EventHandler

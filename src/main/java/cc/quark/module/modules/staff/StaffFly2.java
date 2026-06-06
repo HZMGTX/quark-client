@@ -31,7 +31,6 @@ public class StaffFly2 extends Module {
     @Override
     public void onEnable() {
         if (mc.player == null) { disable(); return; }
-        mc.getEventBus().subscribe(this);
 
         wasFlying = mc.player.getAbilities().flying;
         hadAllowFly = mc.player.getAbilities().allowFlying;
@@ -46,7 +45,6 @@ public class StaffFly2 extends Module {
 
     @Override
     public void onDisable() {
-        mc.getEventBus().unsubscribe(this);
         if (mc.player == null) return;
 
         mc.player.getAbilities().allowFlying = hadAllowFly;

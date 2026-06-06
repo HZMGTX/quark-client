@@ -15,8 +15,7 @@ public class TeleportHub extends Module {
     private boolean executed = false;
 
     public TeleportHub() { super("TeleportHub", "Teleports to server hub or lobby", Category.STAFF); }
-    @Override public void onEnable() { mc.getEventBus().subscribe(this); executed = false; }
-    @Override public void onDisable() { mc.getEventBus().unsubscribe(this); }
+    @Override public void onEnable() { executed = false; }
 
     @EventHandler
     public void onTick(EventTick e) {

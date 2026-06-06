@@ -16,8 +16,6 @@ public class NametagsPlus extends Module {
     private final IntSetting range = register(new IntSetting("Range", "Nametag range", 32, 4, 128));
 
     public NametagsPlus() { super("NametagsPlus", "Enhanced nametags with ping, health and armor", Category.RENDER); }
-    @Override public void onEnable() { mc.getEventBus().subscribe(this); }
-    @Override public void onDisable() { mc.getEventBus().unsubscribe(this); }
 
     @EventHandler
     public void onRender3D(EventRender3D e) {

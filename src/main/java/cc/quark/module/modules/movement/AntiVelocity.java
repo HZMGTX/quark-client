@@ -12,8 +12,6 @@ public class AntiVelocity extends Module {
     private final DoubleSetting vMult = register(new DoubleSetting("V Mult", "Vertical velocity multiplier", 0.0, 0.0, 1.0));
 
     public AntiVelocity() { super("AntiVelocity", "Reduces knockback velocity from hits", Category.MOVEMENT); }
-    @Override public void onEnable() { mc.getEventBus().subscribe(this); }
-    @Override public void onDisable() { mc.getEventBus().unsubscribe(this); }
 
     @EventHandler
     public void onPacketReceive(EventPacketReceive e) {

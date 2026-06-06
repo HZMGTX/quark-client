@@ -44,13 +44,11 @@ public class FlightDetector extends Module {
         airViolations.clear();
         lastPos.clear();
         lastAlert.clear();
-        mc.getEventBus().subscribe(this);
         ChatUtil.info("§6[FlightDetector] §fMonitoring vertical/horizontal velocity anomalies.");
     }
 
     @Override
     public void onDisable() {
-        mc.getEventBus().unsubscribe(this);
         airViolations.clear();
         lastPos.clear();
         lastAlert.clear();

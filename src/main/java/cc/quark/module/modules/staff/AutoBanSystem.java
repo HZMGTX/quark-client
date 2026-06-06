@@ -37,14 +37,12 @@ public class AutoBanSystem extends Module {
     public void onEnable() {
         if (mc.player == null) { disable(); return; }
         processed.clear();
-        mc.getEventBus().subscribe(this);
         ChatUtil.info("§6[AutoBanSystem] §fAuto-ban armed — threshold §e" + banThreshold.get()
                 + "§f pts, duration §e" + banDuration.get() + "d§f, confirm=§e" + requireConfirmation.isEnabled() + "§f.");
     }
 
     @Override
     public void onDisable() {
-        mc.getEventBus().unsubscribe(this);
         processed.clear();
     }
 

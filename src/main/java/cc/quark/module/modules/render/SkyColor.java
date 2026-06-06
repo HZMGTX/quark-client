@@ -12,8 +12,6 @@ public class SkyColor extends Module {
     private final BoolSetting rainbow = register(new BoolSetting("Rainbow", "Cycle rainbow sky", false));
 
     public SkyColor() { super("SkyColor", "Changes sky color to custom color", Category.RENDER); }
-    @Override public void onEnable() { mc.getEventBus().subscribe(this); }
-    @Override public void onDisable() { mc.getEventBus().unsubscribe(this); }
 
     @EventHandler
     public void onTick(EventTick e) {

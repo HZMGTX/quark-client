@@ -13,8 +13,6 @@ public class ClipboardShare extends Module {
     private String lastClip = "";
 
     public ClipboardShare() { super("ClipboardShare", "Shares clipboard coords and URLs in chat", Category.MISC); }
-    @Override public void onEnable() { mc.getEventBus().subscribe(this); }
-    @Override public void onDisable() { mc.getEventBus().unsubscribe(this); }
 
     @EventHandler
     public void onTick(EventTick e) {

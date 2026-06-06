@@ -14,8 +14,6 @@ public class HotbarViewer extends Module {
     private final BoolSetting showCount = register(new BoolSetting("Count", "Show item counts", true));
 
     public HotbarViewer() { super("HotbarViewer", "Enhanced hotbar with item names display", Category.RENDER); }
-    @Override public void onEnable() { mc.getEventBus().subscribe(this); }
-    @Override public void onDisable() { mc.getEventBus().unsubscribe(this); }
 
     @EventHandler
     public void onRender2D(EventRender2D e) {

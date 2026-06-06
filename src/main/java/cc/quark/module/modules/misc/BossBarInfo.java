@@ -16,8 +16,6 @@ public class BossBarInfo extends Module {
     private final BoolSetting showPercent = register(new BoolSetting("Percent", "Show boss HP percentage", true));
 
     public BossBarInfo() { super("BossBarInfo", "Shows extra boss bar info and HP percentage", Category.MISC); }
-    @Override public void onEnable() { mc.getEventBus().subscribe(this); }
-    @Override public void onDisable() { mc.getEventBus().unsubscribe(this); }
 
     @EventHandler
     public void onRender2D(EventRender2D e) {

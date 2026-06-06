@@ -11,8 +11,6 @@ public class FastClimb extends Module {
     private final DoubleSetting speed = register(new DoubleSetting("Speed", "Climb speed", 0.3, 0.1, 2.0));
 
     public FastClimb() { super("FastClimb", "Climb ladders and vines faster", Category.MOVEMENT); }
-    @Override public void onEnable() { mc.getEventBus().subscribe(this); }
-    @Override public void onDisable() { mc.getEventBus().unsubscribe(this); }
 
     @EventHandler
     public void onTick(EventTick e) {

@@ -15,8 +15,6 @@ public class ConsoleLogger extends Module {
     private final BoolSetting logOutgoing = register(new BoolSetting("Outgoing", "Also log outgoing messages", false));
 
     public ConsoleLogger() { super("ConsoleLogger", "Logs all chat messages to file for staff review", Category.STAFF); }
-    @Override public void onEnable() { mc.getEventBus().subscribe(this); }
-    @Override public void onDisable() { mc.getEventBus().unsubscribe(this); }
 
     @EventHandler
     public void onChat(EventChat e) {

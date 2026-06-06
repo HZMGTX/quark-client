@@ -11,8 +11,6 @@ public class ItemSwitcher extends Module {
     private final ModeSetting trigger = register(new ModeSetting("Trigger", "When to switch", "Attack", "Attack", "Use", "Manual"));
 
     public ItemSwitcher() { super("ItemSwitcher", "Automatically switches to best item for context", Category.PLAYER); }
-    @Override public void onEnable() { mc.getEventBus().subscribe(this); }
-    @Override public void onDisable() { mc.getEventBus().unsubscribe(this); }
 
     @EventHandler
     public void onKey(EventKey e) {

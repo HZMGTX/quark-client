@@ -15,8 +15,6 @@ public class ArmorHUD2 extends Module {
     private final IntSetting y = register(new IntSetting("Y", "Y position", 50, 0, 600));
 
     public ArmorHUD2() { super("ArmorHUD2", "Compact armor durability HUD with bars", Category.RENDER); }
-    @Override public void onEnable() { mc.getEventBus().subscribe(this); }
-    @Override public void onDisable() { mc.getEventBus().unsubscribe(this); }
 
     @EventHandler
     public void onRender2D(EventRender2D e) {

@@ -14,8 +14,6 @@ public class AutoBrew extends Module {
     private final TimerUtil timer = new TimerUtil();
 
     public AutoBrew() { super("AutoBrew", "Automates brewing stand operation", Category.PLAYER); }
-    @Override public void onEnable() { mc.getEventBus().subscribe(this); }
-    @Override public void onDisable() { mc.getEventBus().unsubscribe(this); }
 
     @EventHandler
     public void onTick(EventTick e) {

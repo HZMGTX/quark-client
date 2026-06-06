@@ -35,13 +35,11 @@ public class GodCheck extends Module {
         lastHealth.clear();
         noChangeStreak.clear();
         alerted.clear();
-        mc.getEventBus().subscribe(this);
         ChatUtil.info("§6[GodCheck] §fMonitoring for god-mode players.");
     }
 
     @Override
     public void onDisable() {
-        mc.getEventBus().unsubscribe(this);
         lastHealth.clear();
         noChangeStreak.clear();
         alerted.clear();

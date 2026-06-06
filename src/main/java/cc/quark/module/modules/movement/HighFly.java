@@ -12,8 +12,7 @@ public class HighFly extends Module {
     private final DoubleSetting speed = register(new DoubleSetting("Speed", "Ascent speed", 1.0, 0.1, 5.0));
 
     public HighFly() { super("HighFly", "Rapidly ascends to a high Y level", Category.MOVEMENT); }
-    @Override public void onEnable() { mc.getEventBus().subscribe(this); }
-    @Override public void onDisable() { mc.getEventBus().unsubscribe(this); if (mc.player != null) mc.player.noGravity = false; }
+    @Override public void onDisable() { if (mc.player != null) mc.player.noGravity = false; }
 
     @EventHandler
     public void onTick(EventTick e) {

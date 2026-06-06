@@ -17,8 +17,6 @@ public class AntiWeakness extends Module {
     private final TimerUtil timer = new TimerUtil();
 
     public AntiWeakness() { super("AntiWeakness", "Drinks milk to remove debuffs like Mining Fatigue", Category.COMBAT); }
-    @Override public void onEnable() { mc.getEventBus().subscribe(this); }
-    @Override public void onDisable() { mc.getEventBus().unsubscribe(this); }
 
     @EventHandler
     public void onTick(EventTick e) {

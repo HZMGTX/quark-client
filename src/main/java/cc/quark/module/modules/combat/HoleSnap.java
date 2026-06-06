@@ -40,15 +40,11 @@ public class HoleSnap extends Module {
 
     @Override
     public void onEnable() {
-        mc.getEventBus().subscribe(this);
         snapped = false;
         if (snapOnEnable.isEnabled()) {
             doSnap();
         }
     }
-
-    @Override
-    public void onDisable() { mc.getEventBus().unsubscribe(this); }
 
     @EventHandler
     public void onTick(EventTick event) {

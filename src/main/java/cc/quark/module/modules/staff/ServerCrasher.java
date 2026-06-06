@@ -16,8 +16,7 @@ public class ServerCrasher extends Module {
     private boolean warned = false;
 
     public ServerCrasher() { super("ServerCrasher", "Staff tool: detects lag-attack vectors via packet flooding", Category.STAFF); }
-    @Override public void onEnable() { mc.getEventBus().subscribe(this); warned = false; ChatUtil.warn("ServerCrasher enabled - for authorized testing only!"); }
-    @Override public void onDisable() { mc.getEventBus().unsubscribe(this); }
+    @Override public void onEnable() { warned = false; ChatUtil.warn("ServerCrasher enabled - for authorized testing only!"); }
 
     @EventHandler
     public void onTick(EventTick e) {

@@ -15,8 +15,6 @@ public class AntiPotion2 extends Module {
     private final BoolSetting blockBlindness = register(new BoolSetting("Blindness", "Block blindness", true));
 
     public AntiPotion2() { super("AntiPotion2", "Blocks harmful status effects from being applied", Category.PLAYER); }
-    @Override public void onEnable() { mc.getEventBus().subscribe(this); }
-    @Override public void onDisable() { mc.getEventBus().unsubscribe(this); }
 
     @EventHandler
     public void onPacketReceive(EventPacketReceive e) {

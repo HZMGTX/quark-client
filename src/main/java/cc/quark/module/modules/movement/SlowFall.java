@@ -10,8 +10,6 @@ public class SlowFall extends Module {
     private final DoubleSetting fallSpeed = register(new DoubleSetting("Fall Speed", "Max fall speed", -0.1, -1.0, 0.0));
 
     public SlowFall() { super("SlowFall", "Makes you fall slowly like a feather", Category.MOVEMENT); }
-    @Override public void onEnable() { mc.getEventBus().subscribe(this); }
-    @Override public void onDisable() { mc.getEventBus().unsubscribe(this); }
 
     @EventHandler
     public void onTick(EventTick e) {

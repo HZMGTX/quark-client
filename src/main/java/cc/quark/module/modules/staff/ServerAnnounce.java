@@ -34,14 +34,8 @@ public class ServerAnnounce extends Module {
     @Override
     public void onEnable() {
         if (mc.player == null) { disable(); return; }
-        mc.getEventBus().subscribe(this);
         ticksSinceLast = intervalTicks.get(); // send immediately on first tick
         sentOnce = false;
-    }
-
-    @Override
-    public void onDisable() {
-        mc.getEventBus().unsubscribe(this);
     }
 
     @EventHandler

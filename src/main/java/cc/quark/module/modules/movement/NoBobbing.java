@@ -30,7 +30,6 @@ public class NoBobbing extends Module {
 
     @Override
     public void onEnable() {
-        mc.getEventBus().subscribe(this);
         if (mc.options != null) {
             savedBobView = mc.options.getBobView().getValue();
             if (viewBob.isEnabled()) {
@@ -41,7 +40,6 @@ public class NoBobbing extends Module {
 
     @Override
     public void onDisable() {
-        mc.getEventBus().unsubscribe(this);
         // Restore vanilla bobbing option
         if (mc.options != null) {
             mc.options.getBobView().setValue(savedBobView);

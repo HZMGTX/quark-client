@@ -17,8 +17,6 @@ public class MobESP extends Module {
     private final IntSetting range = register(new IntSetting("Range", "Detection range", 32, 8, 128));
 
     public MobESP() { super("MobESP", "ESP for mobs - shows hostile and passive mobs", Category.RENDER); }
-    @Override public void onEnable() { mc.getEventBus().subscribe(this); }
-    @Override public void onDisable() { mc.getEventBus().unsubscribe(this); }
 
     @EventHandler
     public void onRender3D(EventRender3D e) {

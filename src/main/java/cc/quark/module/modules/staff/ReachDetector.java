@@ -38,13 +38,11 @@ public class ReachDetector extends Module {
         if (mc.player == null) { disable(); return; }
         violationCount.clear();
         lastAlert.clear();
-        mc.getEventBus().subscribe(this);
         ChatUtil.info("§6[ReachDetector] §fFlagging hits beyond §e" + maxReach.get() + "§f blocks.");
     }
 
     @Override
     public void onDisable() {
-        mc.getEventBus().unsubscribe(this);
         violationCount.clear();
         lastAlert.clear();
     }

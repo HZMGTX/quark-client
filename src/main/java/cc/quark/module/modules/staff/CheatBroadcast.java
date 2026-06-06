@@ -36,7 +36,6 @@ public class CheatBroadcast extends Module {
         if (mc.player == null) { disable(); return; }
         instance = this;
         synchronized (QUEUE_LOCK) { queue.clear(); }
-        mc.getEventBus().subscribe(this);
         ChatUtil.info("§6[CheatBroadcast] §fBroadcasting to §e" + broadcastChannel.get()
                 + " §f(min severity: §e" + minSeverity.get() + "§f).");
     }
@@ -44,7 +43,6 @@ public class CheatBroadcast extends Module {
     @Override
     public void onDisable() {
         instance = null;
-        mc.getEventBus().unsubscribe(this);
         synchronized (QUEUE_LOCK) { queue.clear(); }
     }
 

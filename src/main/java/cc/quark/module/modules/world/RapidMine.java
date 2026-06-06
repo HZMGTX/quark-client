@@ -12,8 +12,6 @@ public class RapidMine extends Module {
     private final BoolSetting instantBreak = register(new BoolSetting("Instant", "Break blocks instantly", false));
 
     public RapidMine() { super("RapidMine", "Increases mining speed significantly", Category.WORLD); }
-    @Override public void onEnable() { mc.getEventBus().subscribe(this); }
-    @Override public void onDisable() { mc.getEventBus().unsubscribe(this); }
 
     @EventHandler
     public void onTick(EventTick e) {

@@ -17,8 +17,7 @@ public class WorldEditor extends Module {
     private boolean executed = false;
 
     public WorldEditor() { super("WorldEditor", "Sends WorldEdit commands for bulk editing", Category.STAFF); }
-    @Override public void onEnable() { mc.getEventBus().subscribe(this); executed = false; }
-    @Override public void onDisable() { mc.getEventBus().unsubscribe(this); }
+    @Override public void onEnable() { executed = false; }
 
     @EventHandler
     public void onTick(EventTick e) {

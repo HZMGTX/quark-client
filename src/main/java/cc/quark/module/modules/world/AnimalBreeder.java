@@ -16,8 +16,6 @@ public class AnimalBreeder extends Module {
     private final TimerUtil timer = new TimerUtil();
 
     public AnimalBreeder() { super("AnimalBreeder", "Auto-breeds nearby animals with appropriate food", Category.WORLD); }
-    @Override public void onEnable() { mc.getEventBus().subscribe(this); }
-    @Override public void onDisable() { mc.getEventBus().unsubscribe(this); }
 
     @EventHandler
     public void onTick(EventTick e) {

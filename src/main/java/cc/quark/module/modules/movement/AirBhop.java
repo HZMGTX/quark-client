@@ -11,8 +11,6 @@ public class AirBhop extends Module {
     private boolean wasOnGround = false;
 
     public AirBhop() { super("AirBhop", "Automatically jumps and boosts when landing", Category.MOVEMENT); }
-    @Override public void onEnable() { mc.getEventBus().subscribe(this); }
-    @Override public void onDisable() { mc.getEventBus().unsubscribe(this); }
 
     @EventHandler
     public void onTick(EventTick e) {

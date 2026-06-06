@@ -15,8 +15,6 @@ public class HitConfirm extends Module {
     private int lastHealth = 0;
 
     public HitConfirm() { super("HitConfirm", "Shows visual feedback when hitting an entity", Category.COMBAT); }
-    @Override public void onEnable() { mc.getEventBus().subscribe(this); }
-    @Override public void onDisable() { mc.getEventBus().unsubscribe(this); }
 
     @EventHandler
     public void onTick(EventTick e) {

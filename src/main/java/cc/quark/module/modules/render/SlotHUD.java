@@ -33,16 +33,6 @@ public class SlotHUD extends Module {
         super("SlotHUD", "Shows all hotbar slots with items, counts, and durability in a custom HUD", Category.RENDER);
     }
 
-    @Override
-    public void onEnable() {
-        mc.getEventBus().subscribe(this);
-    }
-
-    @Override
-    public void onDisable() {
-        mc.getEventBus().unsubscribe(this);
-    }
-
     @EventHandler
     public void onRender2D(EventRender2D event) {
         if (mc.player == null) return;

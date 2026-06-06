@@ -49,13 +49,11 @@ public class AimAssistDetector extends Module {
         rotHistory.clear();
         flags.clear();
         lastAlert.clear();
-        mc.getEventBus().subscribe(this);
         ChatUtil.info("§6[AimAssistDetector] §fTracking rotation patterns (snap > §e" + snapThreshold.get() + "°§f).");
     }
 
     @Override
     public void onDisable() {
-        mc.getEventBus().unsubscribe(this);
         lastYaw.clear();
         lastPitch.clear();
         rotHistory.clear();

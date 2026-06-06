@@ -41,13 +41,11 @@ public class InventoryHackDetector extends Module {
         lastSlotChange.clear();
         violations.clear();
         lastAlert.clear();
-        mc.getEventBus().subscribe(this);
         ChatUtil.info("§6[InventoryHackDetector] §fMonitoring slot changes (min cooldown §e" + cooldownMs.get() + "ms§f).");
     }
 
     @Override
     public void onDisable() {
-        mc.getEventBus().unsubscribe(this);
         lastSlotChange.clear();
         violations.clear();
         lastAlert.clear();

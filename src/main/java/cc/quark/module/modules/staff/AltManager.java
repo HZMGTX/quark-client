@@ -13,8 +13,7 @@ public class AltManager extends Module {
     private final BoolSetting showInHUD = register(new BoolSetting("Show HUD", "Show alt info in HUD", true));
 
     public AltManager() { super("AltManager", "Manages alt accounts and tracks alt identities", Category.STAFF); }
-    @Override public void onEnable() { mc.getEventBus().subscribe(this); if (!altName.get().isEmpty()) ChatUtil.info("Managing alt: " + altName.get()); }
-    @Override public void onDisable() { mc.getEventBus().unsubscribe(this); }
+    @Override public void onEnable() { if (!altName.get().isEmpty()) ChatUtil.info("Managing alt: " + altName.get()); }
 
     @EventHandler
     public void onTick(EventTick e) { /* Alt switching requires auth API integration */ }

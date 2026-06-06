@@ -11,8 +11,7 @@ public class AutoSprint2 extends Module {
     private final BoolSetting stopOnHit = register(new BoolSetting("Stop On Hit", "Stop sprint when taking damage", false));
 
     public AutoSprint2() { super("AutoSprint2", "Enhanced auto-sprint with combat awareness", Category.PLAYER); }
-    @Override public void onEnable() { mc.getEventBus().subscribe(this); }
-    @Override public void onDisable() { mc.getEventBus().unsubscribe(this); if (mc.player != null) mc.player.setSprinting(false); }
+    @Override public void onDisable() { if (mc.player != null) mc.player.setSprinting(false); }
 
     @EventHandler
     public void onTick(EventTick e) {

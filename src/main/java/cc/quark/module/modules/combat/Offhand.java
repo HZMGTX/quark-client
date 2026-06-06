@@ -12,8 +12,6 @@ public class Offhand extends Module {
     private final ModeSetting item = register(new ModeSetting("Item", "Item to keep in offhand", "Totem", "Totem", "Gapple", "Shield", "Crystal"));
 
     public Offhand() { super("Offhand", "Auto-manages your offhand item slot", Category.COMBAT); }
-    @Override public void onEnable() { mc.getEventBus().subscribe(this); }
-    @Override public void onDisable() { mc.getEventBus().unsubscribe(this); }
 
     @EventHandler
     public void onTick(EventTick e) {

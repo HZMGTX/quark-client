@@ -11,8 +11,6 @@ public class WallJump extends Module {
     private boolean wasAgainstWall = false;
 
     public WallJump() { super("WallJump", "Jump off walls by pressing jump while against them", Category.MOVEMENT); }
-    @Override public void onEnable() { mc.getEventBus().subscribe(this); }
-    @Override public void onDisable() { mc.getEventBus().unsubscribe(this); }
 
     @EventHandler
     public void onTick(EventTick e) {

@@ -22,16 +22,6 @@ public class LevelDisplay extends Module {
         super("LevelDisplay", "Shows XP level and progress bar on HUD", Category.RENDER);
     }
 
-    @Override
-    public void onEnable() {
-        mc.getEventBus().subscribe(this);
-    }
-
-    @Override
-    public void onDisable() {
-        mc.getEventBus().unsubscribe(this);
-    }
-
     @EventHandler
     public void onRender2D(EventRender2D event) {
         if (mc.player == null) return;

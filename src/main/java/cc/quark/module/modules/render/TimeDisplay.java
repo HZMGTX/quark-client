@@ -17,8 +17,6 @@ public class TimeDisplay extends Module {
     private final IntSetting y = register(new IntSetting("Y", "Y position", 120, 0, 600));
 
     public TimeDisplay() { super("TimeDisplay", "Shows real-time and in-game time on HUD", Category.RENDER); }
-    @Override public void onEnable() { mc.getEventBus().subscribe(this); }
-    @Override public void onDisable() { mc.getEventBus().unsubscribe(this); }
 
     @EventHandler
     public void onRender2D(EventRender2D e) {

@@ -14,8 +14,6 @@ public class TridentFly extends Module {
     private final DoubleSetting speed = register(new DoubleSetting("Speed", "Fly speed", 1.5, 0.5, 5.0));
 
     public TridentFly() { super("TridentFly", "Fly using trident Riptide enchantment", Category.MOVEMENT); }
-    @Override public void onEnable() { mc.getEventBus().subscribe(this); }
-    @Override public void onDisable() { mc.getEventBus().unsubscribe(this); }
 
     @EventHandler
     public void onTick(EventTick e) {

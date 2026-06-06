@@ -40,13 +40,11 @@ public class TeleportHackDetector extends Module {
         lastPos.clear();
         flags.clear();
         lastAlert.clear();
-        mc.getEventBus().subscribe(this);
         ChatUtil.info("§6[TeleportHackDetector] §fMonitoring position deltas (max §e" + maxDelta.get() + " blocks/tick§f).");
     }
 
     @Override
     public void onDisable() {
-        mc.getEventBus().unsubscribe(this);
         lastPos.clear();
         flags.clear();
         lastAlert.clear();

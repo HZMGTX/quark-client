@@ -12,8 +12,7 @@ public class GravityControl extends Module {
     private final DoubleSetting factor = register(new DoubleSetting("Factor", "Gravity multiplier", 0.5, 0.0, 1.0));
 
     public GravityControl() { super("GravityControl", "Modifies player gravity", Category.MOVEMENT); }
-    @Override public void onEnable() { mc.getEventBus().subscribe(this); }
-    @Override public void onDisable() { mc.getEventBus().unsubscribe(this); if (mc.player != null) mc.player.noGravity = false; }
+    @Override public void onDisable() { if (mc.player != null) mc.player.noGravity = false; }
 
     @EventHandler
     public void onTick(EventTick e) {

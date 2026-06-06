@@ -35,16 +35,6 @@ public class FoodESP extends Module {
         super("FoodESP", "Highlights food item drops in the world with colored outlines", Category.RENDER);
     }
 
-    @Override
-    public void onEnable() {
-        mc.getEventBus().subscribe(this);
-    }
-
-    @Override
-    public void onDisable() {
-        mc.getEventBus().unsubscribe(this);
-    }
-
     @EventHandler
     public void onRender3D(EventRender3D event) {
         if (mc.world == null || mc.player == null) return;

@@ -16,8 +16,6 @@ public class AntiCrash extends Module {
     private long lastReset = 0;
 
     public AntiCrash() { super("AntiCrash", "Blocks malicious packets that could crash your client", Category.MISC); }
-    @Override public void onEnable() { mc.getEventBus().subscribe(this); }
-    @Override public void onDisable() { mc.getEventBus().unsubscribe(this); }
 
     @EventHandler
     public void onPacketReceive(EventPacketReceive e) {

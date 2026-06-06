@@ -44,13 +44,11 @@ public class XrayDetector extends Module {
         suspectCount.clear();
         lastPos.clear();
         lastAlert.clear();
-        mc.getEventBus().subscribe(this);
         ChatUtil.info("§6[XrayDetector] §fMonitoring ore mining in §e" + range.get() + "§f block radius.");
     }
 
     @Override
     public void onDisable() {
-        mc.getEventBus().unsubscribe(this);
         suspectCount.clear();
         lastPos.clear();
         lastAlert.clear();

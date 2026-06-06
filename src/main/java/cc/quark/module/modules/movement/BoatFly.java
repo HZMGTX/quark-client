@@ -13,8 +13,6 @@ public class BoatFly extends Module {
     private final DoubleSetting vSpeed = register(new DoubleSetting("V Speed", "Vertical speed", 0.5, 0.1, 3.0));
 
     public BoatFly() { super("BoatFly", "Fly while sitting in a boat", Category.MOVEMENT); }
-    @Override public void onEnable() { mc.getEventBus().subscribe(this); }
-    @Override public void onDisable() { mc.getEventBus().unsubscribe(this); }
 
     @EventHandler
     public void onTick(EventTick e) {

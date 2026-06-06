@@ -42,13 +42,11 @@ public class FreezeAll extends Module {
         queue.clear();
         tickCounter = 0;
         initialized = false;
-        mc.getEventBus().subscribe(this);
         ChatUtil.info("§6[FreezeAll] §fQueuing freeze commands...");
     }
 
     @Override
     public void onDisable() {
-        mc.getEventBus().unsubscribe(this);
         queue.clear();
         initialized = false;
     }

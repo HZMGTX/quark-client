@@ -34,13 +34,11 @@ public class AntiDupe extends Module {
         if (mc.player == null || mc.getNetworkHandler() == null) { disable(); return; }
         flagCount.clear();
         prevItemCount.clear();
-        mc.getEventBus().subscribe(this);
         ChatUtil.info("§6[AntiDupe] §fMonitoring for dupe exploits.");
     }
 
     @Override
     public void onDisable() {
-        mc.getEventBus().unsubscribe(this);
         flagCount.clear();
         prevItemCount.clear();
     }

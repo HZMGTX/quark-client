@@ -36,16 +36,10 @@ public class WorldBackup extends Module {
     @Override
     public void onEnable() {
         if (mc.player == null) { disable(); return; }
-        mc.getEventBus().subscribe(this);
         commandSent = false;
         saveComplete = false;
         ticksElapsed = 0;
         ChatUtil.info("§6[WorldBackup] §fInitiating world save...");
-    }
-
-    @Override
-    public void onDisable() {
-        mc.getEventBus().unsubscribe(this);
     }
 
     @EventHandler

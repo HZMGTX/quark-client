@@ -41,16 +41,6 @@ public class LightLevel extends Module {
         super("LightLevel", "Highlights block light levels to identify mob-spawn-safe zones", Category.RENDER);
     }
 
-    @Override
-    public void onEnable() {
-        mc.getEventBus().subscribe(this);
-    }
-
-    @Override
-    public void onDisable() {
-        mc.getEventBus().unsubscribe(this);
-    }
-
     @EventHandler
     public void onRender3D(EventRender3D event) {
         if (mc.world == null || mc.player == null) return;

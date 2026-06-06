@@ -47,7 +47,6 @@ public class ZoneProtect extends Module {
     @Override
     public void onEnable() {
         if (mc.player == null) { disable(); return; }
-        mc.getEventBus().subscribe(this);
         lastWarned.clear();
         currentTick = 0;
         zone = null;
@@ -70,7 +69,6 @@ public class ZoneProtect extends Module {
 
     @Override
     public void onDisable() {
-        mc.getEventBus().unsubscribe(this);
         lastWarned.clear();
         zone = null;
     }

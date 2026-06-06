@@ -13,8 +13,6 @@ public class TunnelVision extends Module {
     private final IntSetting size = register(new IntSetting("Size", "Vignette size percent", 40, 10, 80));
 
     public TunnelVision() { super("TunnelVision", "Adds a vignette effect to edges of screen", Category.RENDER); }
-    @Override public void onEnable() { mc.getEventBus().subscribe(this); }
-    @Override public void onDisable() { mc.getEventBus().unsubscribe(this); }
 
     @EventHandler
     public void onRender2D(EventRender2D e) {

@@ -11,8 +11,6 @@ public class AntiHunger extends Module {
     private final IntSetting minFood = register(new IntSetting("Min Food", "Cancel packets below this food", 10, 1, 20));
 
     public AntiHunger() { super("AntiHunger", "Reduces server-side hunger drain", Category.PLAYER); }
-    @Override public void onEnable() { mc.getEventBus().subscribe(this); }
-    @Override public void onDisable() { mc.getEventBus().unsubscribe(this); }
 
     @EventHandler
     public void onPacketReceive(EventPacketReceive e) {

@@ -32,12 +32,6 @@ public class NoPush extends Module {
         super("NoPush", "Prevents being pushed by other players/mobs", Category.COMBAT);
     }
 
-    @Override
-    public void onEnable() { mc.getEventBus().subscribe(this); }
-
-    @Override
-    public void onDisable() { mc.getEventBus().unsubscribe(this); }
-
     @EventHandler
     public void onTick(EventTick event) {
         if (mc.player == null || mc.world == null) return;

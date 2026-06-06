@@ -35,11 +35,7 @@ public class AutoFly extends Module {
     }
 
     @Override
-    public void onEnable() { mc.getEventBus().subscribe(this); }
-
-    @Override
     public void onDisable() {
-        mc.getEventBus().unsubscribe(this);
         // Stop gliding if still active
         if (mc.player != null && mc.player.isFallFlying() && mc.getNetworkHandler() != null) {
             mc.getNetworkHandler().sendPacket(

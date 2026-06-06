@@ -16,8 +16,6 @@ public class AutoEnchant extends Module {
     private final TimerUtil timer = new TimerUtil();
 
     public AutoEnchant() { super("AutoEnchant", "Auto-selects best enchantment in enchanting table", Category.WORLD); }
-    @Override public void onEnable() { mc.getEventBus().subscribe(this); }
-    @Override public void onDisable() { mc.getEventBus().unsubscribe(this); }
 
     @EventHandler
     public void onTick(EventTick e) {

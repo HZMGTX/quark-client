@@ -13,8 +13,6 @@ public class SlipSpeed extends Module {
     private final DoubleSetting boost = register(new DoubleSetting("Boost", "Speed boost on ice/slime", 1.5, 1.0, 5.0));
 
     public SlipSpeed() { super("SlipSpeed", "Move faster on ice and slime blocks", Category.MOVEMENT); }
-    @Override public void onEnable() { mc.getEventBus().subscribe(this); }
-    @Override public void onDisable() { mc.getEventBus().unsubscribe(this); }
 
     @EventHandler
     public void onTick(EventTick e) {

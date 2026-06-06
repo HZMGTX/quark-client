@@ -54,13 +54,7 @@ public class MaceAura extends Module {
 
     @Override
     public void onEnable() {
-        mc.getEventBus().subscribe(this);
         timer.reset();
-    }
-
-    @Override
-    public void onDisable() {
-        mc.getEventBus().unsubscribe(this);
     }
 
     @Override

@@ -17,8 +17,6 @@ public class MapHelper extends Module {
     private final IntSetting size = register(new IntSetting("Size", "Map preview size", 64, 32, 256));
 
     public MapHelper() { super("MapHelper", "Enhanced map item display and navigation", Category.MISC); }
-    @Override public void onEnable() { mc.getEventBus().subscribe(this); }
-    @Override public void onDisable() { mc.getEventBus().unsubscribe(this); }
 
     @EventHandler
     public void onRender2D(EventRender2D e) {

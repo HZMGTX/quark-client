@@ -12,8 +12,6 @@ public class PlayerModel extends Module {
     private final BoolSetting hideArmor = register(new BoolSetting("Hide Armor", "Render players without armor visually", false));
 
     public PlayerModel() { super("PlayerModel", "Modifies how players are rendered visually", Category.RENDER); }
-    @Override public void onEnable() { mc.getEventBus().subscribe(this); }
-    @Override public void onDisable() { mc.getEventBus().unsubscribe(this); }
 
     @EventHandler
     public void onTick(EventTick e) {

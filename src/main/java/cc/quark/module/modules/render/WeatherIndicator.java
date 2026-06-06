@@ -8,8 +8,6 @@ import net.minecraft.client.gui.DrawContext;
 
 public class WeatherIndicator extends Module {
     public WeatherIndicator() { super("WeatherIndicator", "Shows current weather on HUD", Category.RENDER); }
-    @Override public void onEnable() { mc.getEventBus().subscribe(this); }
-    @Override public void onDisable() { mc.getEventBus().unsubscribe(this); }
 
     @EventHandler
     public void onRender2D(EventRender2D e) {

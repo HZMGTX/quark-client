@@ -12,8 +12,6 @@ public class TabOverlay extends Module {
     private final BoolSetting customHeader = register(new BoolSetting("Custom Header", "Show custom tab header", true));
 
     public TabOverlay() { super("TabOverlay", "Custom styling for the player tab list", Category.RENDER); }
-    @Override public void onEnable() { mc.getEventBus().subscribe(this); }
-    @Override public void onDisable() { mc.getEventBus().unsubscribe(this); }
 
     @EventHandler
     public void onRender2D(EventRender2D e) {

@@ -40,7 +40,6 @@ public class SuspicionTracker extends Module {
     public void onEnable() {
         if (mc.player == null) { disable(); return; }
         instance = this;
-        mc.getEventBus().subscribe(this);
         ChatUtil.info("§6[SuspicionTracker] §fTracking suspicion scores. Decay=§e" + decay.isEnabled()
                 + "§f, display=§e" + displayMode.get() + "§f.");
         printTop5();
@@ -49,7 +48,6 @@ public class SuspicionTracker extends Module {
     @Override
     public void onDisable() {
         instance = null;
-        mc.getEventBus().unsubscribe(this);
     }
 
     @EventHandler

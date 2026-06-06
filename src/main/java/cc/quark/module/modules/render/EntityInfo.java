@@ -17,8 +17,6 @@ public class EntityInfo extends Module {
     private final IntSetting range = register(new IntSetting("Range", "Range to show info", 20, 1, 64));
 
     public EntityInfo() { super("EntityInfo", "Shows health and info tags above entities", Category.RENDER); }
-    @Override public void onEnable() { mc.getEventBus().subscribe(this); }
-    @Override public void onDisable() { mc.getEventBus().unsubscribe(this); }
 
     @EventHandler
     public void onRender3D(EventRender3D e) {

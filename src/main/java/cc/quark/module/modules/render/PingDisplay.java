@@ -14,8 +14,6 @@ public class PingDisplay extends Module {
     private long ping = 0;
 
     public PingDisplay() { super("PingDisplay", "Shows your current server ping on HUD", Category.RENDER); }
-    @Override public void onEnable() { mc.getEventBus().subscribe(this); }
-    @Override public void onDisable() { mc.getEventBus().unsubscribe(this); }
 
     @EventHandler
     public void onTick(EventTick e) {

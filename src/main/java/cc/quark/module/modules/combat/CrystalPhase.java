@@ -17,8 +17,6 @@ public class CrystalPhase extends Module {
     private final BoolSetting autoAttack = register(new BoolSetting("Auto Attack", "Auto-attack visible crystals", true));
 
     public CrystalPhase() { super("CrystalPhase", "Interacts with end crystals through blocks", Category.COMBAT); }
-    @Override public void onEnable() { mc.getEventBus().subscribe(this); }
-    @Override public void onDisable() { mc.getEventBus().unsubscribe(this); }
 
     @EventHandler
     public void onTick(EventTick e) {

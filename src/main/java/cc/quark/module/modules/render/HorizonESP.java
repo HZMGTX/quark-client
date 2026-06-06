@@ -28,16 +28,6 @@ public class HorizonESP extends Module {
         super("HorizonESP", "Shows the ESP horizon boundary ring around the player in 3D", Category.RENDER);
     }
 
-    @Override
-    public void onEnable() {
-        mc.getEventBus().subscribe(this);
-    }
-
-    @Override
-    public void onDisable() {
-        mc.getEventBus().unsubscribe(this);
-    }
-
     @EventHandler
     public void onRender3D(EventRender3D event) {
         if (mc.world == null || mc.player == null) return;

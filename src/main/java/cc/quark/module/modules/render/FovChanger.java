@@ -14,13 +14,11 @@ public class FovChanger extends Module {
 
     @Override
     public void onEnable() {
-        mc.getEventBus().subscribe(this);
         if (mc.options != null) originalFov = mc.options.getFov().getValue();
     }
 
     @Override
     public void onDisable() {
-        mc.getEventBus().unsubscribe(this);
         if (mc.options != null) mc.options.getFov().setValue((int)originalFov);
     }
 

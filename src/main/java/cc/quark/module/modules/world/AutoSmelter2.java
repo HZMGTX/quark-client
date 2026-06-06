@@ -17,8 +17,6 @@ public class AutoSmelter2 extends Module {
     private final TimerUtil timer = new TimerUtil();
 
     public AutoSmelter2() { super("AutoSmelter2", "Enhanced auto-smelter with smart fuel management", Category.WORLD); }
-    @Override public void onEnable() { mc.getEventBus().subscribe(this); }
-    @Override public void onDisable() { mc.getEventBus().unsubscribe(this); }
 
     @EventHandler
     public void onTick(EventTick e) {

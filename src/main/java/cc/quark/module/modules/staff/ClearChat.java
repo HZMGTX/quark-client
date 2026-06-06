@@ -29,13 +29,11 @@ public class ClearChat extends Module {
         if (mc.player == null) { disable(); return; }
         linesRemaining = lines.get();
         tickCounter = 0;
-        mc.getEventBus().subscribe(this);
         ChatUtil.info("§6[ClearChat] §fSpamming §e" + linesRemaining + " §fblank lines...");
     }
 
     @Override
     public void onDisable() {
-        mc.getEventBus().unsubscribe(this);
         linesRemaining = 0;
         tickCounter = 0;
     }

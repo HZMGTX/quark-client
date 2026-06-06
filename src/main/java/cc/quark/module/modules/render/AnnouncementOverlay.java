@@ -43,13 +43,11 @@ public class AnnouncementOverlay extends Module {
 
     @Override
     public void onEnable() {
-        mc.getEventBus().subscribe(this);
         entries.clear();
     }
 
     @Override
     public void onDisable() {
-        mc.getEventBus().unsubscribe(this);
         entries.clear();
     }
 

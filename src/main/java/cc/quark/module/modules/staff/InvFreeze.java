@@ -28,14 +28,12 @@ public class InvFreeze extends Module {
     @Override
     public void onEnable() {
         if (mc.player == null) { disable(); return; }
-        mc.getEventBus().subscribe(this);
         String tgt = targetName.get().trim().isEmpty() ? "all" : targetName.get().trim();
         ChatUtil.info("§6[InvFreeze] §fInventory locked for: §e" + tgt);
     }
 
     @Override
     public void onDisable() {
-        mc.getEventBus().unsubscribe(this);
         ChatUtil.info("§6[InvFreeze] §fInventory unlocked.");
     }
 

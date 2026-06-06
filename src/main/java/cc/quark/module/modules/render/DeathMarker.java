@@ -27,15 +27,9 @@ public class DeathMarker extends Module {
 
     @Override
     public void onEnable() {
-        mc.getEventBus().subscribe(this);
         deathPos = null;
         deathDim = null;
         wasDead = false;
-    }
-
-    @Override
-    public void onDisable() {
-        mc.getEventBus().unsubscribe(this);
     }
 
     @EventHandler

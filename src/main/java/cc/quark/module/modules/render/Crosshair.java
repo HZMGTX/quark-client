@@ -17,8 +17,6 @@ public class Crosshair extends Module {
     private final IntSetting thickness = register(new IntSetting("Thickness", "Line thickness", 1, 1, 5));
 
     public Crosshair() { super("Crosshair", "Custom crosshair styles and colors", Category.RENDER); }
-    @Override public void onEnable() { mc.getEventBus().subscribe(this); }
-    @Override public void onDisable() { mc.getEventBus().unsubscribe(this); }
 
     @EventHandler
     public void onRender2D(EventRender2D e) {

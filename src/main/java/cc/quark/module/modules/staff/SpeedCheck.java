@@ -37,13 +37,11 @@ public class SpeedCheck extends Module {
         if (mc.player == null) { disable(); return; }
         lastPos.clear();
         flagCount.clear();
-        mc.getEventBus().subscribe(this);
         ChatUtil.info("§6[SpeedCheck] §fMonitoring player movement (max §e" + maxSpeedBps.get() + " BPS§f).");
     }
 
     @Override
     public void onDisable() {
-        mc.getEventBus().unsubscribe(this);
         lastPos.clear();
         flagCount.clear();
     }

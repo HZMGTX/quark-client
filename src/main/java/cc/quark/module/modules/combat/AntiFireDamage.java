@@ -13,8 +13,6 @@ public class AntiFireDamage extends Module {
     private final BoolSetting useWater = register(new BoolSetting("Use Water", "Use water bucket when on fire", false));
 
     public AntiFireDamage() { super("AntiFireDamage", "Auto-extinguishes fire using milk or water", Category.COMBAT); }
-    @Override public void onEnable() { mc.getEventBus().subscribe(this); }
-    @Override public void onDisable() { mc.getEventBus().unsubscribe(this); }
 
     @EventHandler
     public void onTick(EventTick e) {

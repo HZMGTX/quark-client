@@ -24,13 +24,7 @@ public class AutoNightVision extends Module {
     }
 
     @Override
-    public void onEnable() {
-        mc.getEventBus().subscribe(this);
-    }
-
-    @Override
     public void onDisable() {
-        mc.getEventBus().unsubscribe(this);
         if (fallback.isEnabled() && mc.options != null) {
             mc.options.getGamma().setValue(1.0);
         }

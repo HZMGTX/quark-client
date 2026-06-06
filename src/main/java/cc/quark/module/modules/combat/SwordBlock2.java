@@ -45,13 +45,7 @@ public class SwordBlock2 extends Module {
     }
 
     @Override
-    public void onEnable() {
-        mc.getEventBus().subscribe(this);
-    }
-
-    @Override
     public void onDisable() {
-        mc.getEventBus().unsubscribe(this);
         if (mc.options != null) mc.options.useKey.setPressed(false);
     }
 

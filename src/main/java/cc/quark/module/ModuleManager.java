@@ -1490,6 +1490,86 @@ public class ModuleManager {
         register(new cc.quark.module.modules.staff.SuspicionTracker());
         register(new cc.quark.module.modules.staff.SilentBan());
         register(new cc.quark.module.modules.staff.StaffDashboard());
+
+        // ── New Staff ─────────────────────────────────────────────────────────
+        register(new cc.quark.module.modules.staff.StaffMode());
+        register(new cc.quark.module.modules.staff.ChatFilter2());
+        register(new cc.quark.module.modules.staff.PlayerWatch());
+        register(new cc.quark.module.modules.staff.ViolationLog());
+        register(new cc.quark.module.modules.staff.SpectatorTools());
+        register(new cc.quark.module.modules.staff.AutoMute2());
+
+        // ── New Combat ────────────────────────────────────────────────────────
+        register(new cc.quark.module.modules.combat.PacketReach());
+        register(new cc.quark.module.modules.combat.DoubleHit());
+        register(new cc.quark.module.modules.combat.SuperCrit());
+        register(new cc.quark.module.modules.combat.ComboHit());
+        register(new cc.quark.module.modules.combat.InfinityKill());
+        register(new cc.quark.module.modules.combat.ArmorPierce());
+        register(new cc.quark.module.modules.combat.PingPredict());
+        register(new cc.quark.module.modules.combat.AntiHeal2());
+
+        // ── New Movement ──────────────────────────────────────────────────────
+        register(new cc.quark.module.modules.movement.TeleportFly());
+        register(new cc.quark.module.modules.movement.PistonFly());
+        register(new cc.quark.module.modules.movement.FastHead());
+        register(new cc.quark.module.modules.movement.SmoothStep());
+        register(new cc.quark.module.modules.movement.ClimbSpeed());
+        register(new cc.quark.module.modules.movement.WaterFly());
+        register(new cc.quark.module.modules.movement.JumpBoost());
+        register(new cc.quark.module.modules.movement.SneakFlight());
+
+        // ── New Render ────────────────────────────────────────────────────────
+        register(new cc.quark.module.modules.render.HideSelf());
+        register(new cc.quark.module.modules.render.ClearVision());
+        register(new cc.quark.module.modules.render.EntityGlow());
+        register(new cc.quark.module.modules.render.SoundESP());
+        register(new cc.quark.module.modules.render.ChunkESP());
+        register(new cc.quark.module.modules.render.ReplayRecorder());
+        register(new cc.quark.module.modules.render.StatusEffectTimer());
+
+        // ── New World ─────────────────────────────────────────────────────────
+        register(new cc.quark.module.modules.world.AutoEnderFarm());
+        register(new cc.quark.module.modules.world.BlockRotator());
+        register(new cc.quark.module.modules.world.AutoAnvil2());
+        register(new cc.quark.module.modules.world.FillChunk());
+        register(new cc.quark.module.modules.world.AutoTerraformer());
+        register(new cc.quark.module.modules.world.AutoFeed2());
+        register(new cc.quark.module.modules.world.AutoWither2());
+        register(new cc.quark.module.modules.world.CobwebSpammer());
+        register(new cc.quark.module.modules.world.FluidTracer());
+
+        // ── New Player ────────────────────────────────────────────────────────
+        register(new cc.quark.module.modules.player.FoodSwapper());
+        register(new cc.quark.module.modules.player.InvProtect());
+        register(new cc.quark.module.modules.player.NoSwing2());
+        register(new cc.quark.module.modules.player.AutoRefill2());
+        register(new cc.quark.module.modules.player.PotionSelector());
+        register(new cc.quark.module.modules.player.EnchantHelper());
+        register(new cc.quark.module.modules.player.AutoBridge2());
+        register(new cc.quark.module.modules.player.SmartEat2());
+        register(new cc.quark.module.modules.player.ArrowCounter2());
+
+        // ── New Misc ──────────────────────────────────────────────────────────
+        register(new cc.quark.module.modules.misc.StreamerFilter());
+        register(new cc.quark.module.modules.misc.AutoWaypoint());
+        register(new cc.quark.module.modules.misc.PanicHotkey());
+        register(new cc.quark.module.modules.misc.GamepadSupport());
+        register(new cc.quark.module.modules.misc.SessionLog());
+        register(new cc.quark.module.modules.misc.AutoCommand2());
+        register(new cc.quark.module.modules.misc.TabListLogger());
+        register(new cc.quark.module.modules.misc.ServerPinger());
+        register(new cc.quark.module.modules.misc.PositionHistory());
+        register(new cc.quark.module.modules.misc.CrashDetector2());
+
+        // ── New Exploit ───────────────────────────────────────────────────────
+        register(new cc.quark.module.modules.exploit.SignCrash());
+        register(new cc.quark.module.modules.exploit.LecternExploit());
+        register(new cc.quark.module.modules.exploit.PacketDupe());
+        register(new cc.quark.module.modules.exploit.InventoryAbuse());
+        register(new cc.quark.module.modules.exploit.ChestGhost2());
+        register(new cc.quark.module.modules.exploit.CommandSpoof());
+        register(new cc.quark.module.modules.exploit.RubberBand2());
     }
 
     // -------------------------------------------------------------------------

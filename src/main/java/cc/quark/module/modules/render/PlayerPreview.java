@@ -34,16 +34,6 @@ public class PlayerPreview extends Module {
         super("PlayerPreview", "Shows a 3D player model preview in the corner of the HUD", Category.RENDER);
     }
 
-    @Override
-    public void onEnable() {
-        mc.getEventBus().subscribe(this);
-    }
-
-    @Override
-    public void onDisable() {
-        mc.getEventBus().unsubscribe(this);
-    }
-
     @EventHandler
     public void onRender2D(EventRender2D event) {
         if (mc.player == null) return;

@@ -15,8 +15,6 @@ public class HealthBar extends Module {
     private final BoolSetting showNum = register(new BoolSetting("Number", "Show HP number", true));
 
     public HealthBar() { super("HealthBar", "Custom health bar with color gradient", Category.RENDER); }
-    @Override public void onEnable() { mc.getEventBus().subscribe(this); }
-    @Override public void onDisable() { mc.getEventBus().unsubscribe(this); }
 
     @EventHandler
     public void onRender2D(EventRender2D e) {

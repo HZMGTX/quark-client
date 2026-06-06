@@ -14,8 +14,6 @@ public class ElytraRecast extends Module {
     private final BoolSetting autoFire = register(new BoolSetting("Auto Fire", "Auto use firework to boost", false));
 
     public ElytraRecast() { super("ElytraRecast", "Auto-recasts elytra to keep flying", Category.MOVEMENT); }
-    @Override public void onEnable() { mc.getEventBus().subscribe(this); }
-    @Override public void onDisable() { mc.getEventBus().unsubscribe(this); }
 
     @EventHandler
     public void onTick(EventTick e) {

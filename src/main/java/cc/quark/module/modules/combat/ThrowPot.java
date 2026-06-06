@@ -23,8 +23,6 @@ public class ThrowPot extends Module {
     private final TimerUtil throwTimer = new TimerUtil();
 
     public ThrowPot() { super("ThrowPot", "Auto-throws splash potions at enemies", Category.COMBAT); }
-    @Override public void onEnable() { mc.getEventBus().subscribe(this); }
-    @Override public void onDisable() { mc.getEventBus().unsubscribe(this); }
 
     @EventHandler
     public void onTick(EventTick e) {

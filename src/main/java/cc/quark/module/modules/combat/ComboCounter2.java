@@ -16,8 +16,7 @@ public class ComboCounter2 extends Module {
     private int lastTargetId = -1;
 
     public ComboCounter2() { super("ComboCounter2", "Tracks your hit combo with visual display", Category.COMBAT); }
-    @Override public void onEnable() { mc.getEventBus().subscribe(this); combo = 0; }
-    @Override public void onDisable() { mc.getEventBus().unsubscribe(this); }
+    @Override public void onEnable() { combo = 0; }
 
     @EventHandler
     public void onTick(EventTick e) {

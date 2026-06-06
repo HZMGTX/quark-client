@@ -42,14 +42,10 @@ public class BurstClick extends Module {
 
     @Override
     public void onEnable() {
-        mc.getEventBus().subscribe(this);
         burstTicks = 0;
         cooldownTicks = 0;
         currentBurst = 0;
     }
-
-    @Override
-    public void onDisable() { mc.getEventBus().unsubscribe(this); }
 
     @EventHandler
     public void onTick(EventTick event) {

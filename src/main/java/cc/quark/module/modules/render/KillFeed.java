@@ -45,13 +45,11 @@ public class KillFeed extends Module {
 
     @Override
     public void onEnable() {
-        mc.getEventBus().subscribe(this);
         feed.clear();
     }
 
     @Override
     public void onDisable() {
-        mc.getEventBus().unsubscribe(this);
         feed.clear();
     }
 

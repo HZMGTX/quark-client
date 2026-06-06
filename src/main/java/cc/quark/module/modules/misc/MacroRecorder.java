@@ -43,13 +43,11 @@ public class MacroRecorder extends Module {
 
     @Override
     public void onEnable() {
-        mc.getEventBus().subscribe(this);
         state = State.IDLE;
     }
 
     @Override
     public void onDisable() {
-        mc.getEventBus().unsubscribe(this);
         state = State.IDLE;
     }
 

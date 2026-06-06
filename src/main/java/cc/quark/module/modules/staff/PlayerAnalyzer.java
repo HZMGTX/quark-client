@@ -50,7 +50,6 @@ public class PlayerAnalyzer extends Module {
     @Override
     public void onEnable() {
         if (mc.player == null) { disable(); return; }
-        mc.getEventBus().subscribe(this);
         flags.clear();
         lastY.clear();
         airTicks.clear();
@@ -59,7 +58,6 @@ public class PlayerAnalyzer extends Module {
 
     @Override
     public void onDisable() {
-        mc.getEventBus().unsubscribe(this);
         flags.clear();
         lastY.clear();
         airTicks.clear();

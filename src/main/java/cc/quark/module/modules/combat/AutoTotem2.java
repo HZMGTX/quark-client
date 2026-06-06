@@ -14,8 +14,6 @@ public class AutoTotem2 extends Module {
     private final BoolSetting alwaysEquip = register(new BoolSetting("Always Equip", "Keep totem in offhand always", true));
 
     public AutoTotem2() { super("AutoTotem2", "Enhanced auto-totem with smart HP threshold", Category.COMBAT); }
-    @Override public void onEnable() { mc.getEventBus().subscribe(this); }
-    @Override public void onDisable() { mc.getEventBus().unsubscribe(this); }
 
     @EventHandler
     public void onTick(EventTick e) {

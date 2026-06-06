@@ -43,13 +43,11 @@ public class KillauraDetector extends Module {
         lastYaw.clear();
         snapFlags.clear();
         lastAlert.clear();
-        mc.getEventBus().subscribe(this);
         ChatUtil.info("§6[KillauraDetector] §fWatching attack patterns (max CPS: §e" + maxCPS.get() + "§f).");
     }
 
     @Override
     public void onDisable() {
-        mc.getEventBus().unsubscribe(this);
         attackTimestamps.clear();
         lastYaw.clear();
         snapFlags.clear();

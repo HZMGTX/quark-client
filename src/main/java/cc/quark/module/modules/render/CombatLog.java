@@ -43,13 +43,11 @@ public class CombatLog extends Module {
 
     @Override
     public void onEnable() {
-        mc.getEventBus().subscribe(this);
         log.clear();
     }
 
     @Override
     public void onDisable() {
-        mc.getEventBus().unsubscribe(this);
         log.clear();
     }
 

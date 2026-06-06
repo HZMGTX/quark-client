@@ -31,14 +31,12 @@ public class ChatBroadcast extends Module {
     public void onEnable() {
         if (mc.player == null) { disable(); return; }
         tickTimer = 0;
-        mc.getEventBus().subscribe(this);
         sendBroadcast(); // send immediately on enable
         ChatUtil.info("§6[ChatBroadcast] §fBroadcasting every §e" + intervalSeconds.get() + "s§f.");
     }
 
     @Override
     public void onDisable() {
-        mc.getEventBus().unsubscribe(this);
         tickTimer = 0;
     }
 

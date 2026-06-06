@@ -36,7 +36,6 @@ public class MassKick extends Module {
     @Override
     public void onEnable() {
         if (mc.player == null || mc.getNetworkHandler() == null) { disable(); return; }
-        mc.getEventBus().subscribe(this);
         kickQueue.clear();
         tickCounter = 0;
         initialized = false;
@@ -45,7 +44,6 @@ public class MassKick extends Module {
 
     @Override
     public void onDisable() {
-        mc.getEventBus().unsubscribe(this);
         kickQueue.clear();
         initialized = false;
     }

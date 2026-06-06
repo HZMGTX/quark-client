@@ -16,8 +16,7 @@ public class AutoCrossbow extends Module {
     private int loadTicks = 0;
 
     public AutoCrossbow() { super("AutoCrossbow", "Auto-loads and fires crossbow at enemies", Category.COMBAT); }
-    @Override public void onEnable() { mc.getEventBus().subscribe(this); state = 0; }
-    @Override public void onDisable() { mc.getEventBus().unsubscribe(this); }
+    @Override public void onEnable() { state = 0; }
 
     @EventHandler
     public void onTick(EventTick e) {

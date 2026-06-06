@@ -15,8 +15,6 @@ public class AttackCooldown extends Module {
     private final IntSetting y = register(new IntSetting("Y", "Y position", 100, 0, 500));
 
     public AttackCooldown() { super("AttackCooldown", "Displays attack cooldown bar on HUD", Category.COMBAT); }
-    @Override public void onEnable() { mc.getEventBus().subscribe(this); }
-    @Override public void onDisable() { mc.getEventBus().unsubscribe(this); }
 
     @EventHandler
     public void onRender2D(EventRender2D e) {

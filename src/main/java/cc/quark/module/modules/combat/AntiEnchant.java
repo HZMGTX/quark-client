@@ -40,12 +40,10 @@ public class AntiEnchant extends Module {
         targetHasProtection = false;
         axeSlot = -1;
         swordSlot = -1;
-        mc.getEventBus().subscribe(this);
     }
 
     @Override
     public void onDisable() {
-        mc.getEventBus().unsubscribe(this);
         if (mc.player != null && axeSlot != -1 && swordSlot != -1) {
             mc.player.getInventory().selectedSlot = swordSlot;
         }

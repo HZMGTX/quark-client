@@ -15,8 +15,6 @@ public class MountControl extends Module {
     private final DoubleSetting speedMult = register(new DoubleSetting("Speed Mult", "Speed multiplier", 1.5, 1.0, 5.0));
 
     public MountControl() { super("MountControl", "Enhanced control of mounts and vehicles", Category.PLAYER); }
-    @Override public void onEnable() { mc.getEventBus().subscribe(this); }
-    @Override public void onDisable() { mc.getEventBus().unsubscribe(this); }
 
     @EventHandler
     public void onTick(EventTick e) {

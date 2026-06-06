@@ -21,16 +21,6 @@ public class NoFall3 extends Module {
         super("NoFall3", "Cancels fall damage via ground packet spoofing", Category.PLAYER);
     }
 
-    @Override
-    public void onEnable() {
-        mc.getEventBus().subscribe(this);
-    }
-
-    @Override
-    public void onDisable() {
-        mc.getEventBus().unsubscribe(this);
-    }
-
     @EventHandler
     public void onTick(EventTick event) {
         if (mc.player == null) return;

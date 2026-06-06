@@ -31,16 +31,6 @@ public class ScoreHUD extends Module {
         super("ScoreHUD", "Shows scoreboard objectives on a custom HUD overlay", Category.RENDER);
     }
 
-    @Override
-    public void onEnable() {
-        mc.getEventBus().subscribe(this);
-    }
-
-    @Override
-    public void onDisable() {
-        mc.getEventBus().unsubscribe(this);
-    }
-
     @EventHandler
     public void onRender2D(EventRender2D event) {
         if (mc.player == null || mc.world == null) return;

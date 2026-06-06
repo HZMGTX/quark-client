@@ -17,8 +17,7 @@ public class AutoTrader extends Module {
     private int tradeCount = 0;
 
     public AutoTrader() { super("AutoTrader", "Auto-trades with villagers repeatedly", Category.WORLD); }
-    @Override public void onEnable() { mc.getEventBus().subscribe(this); tradeCount = 0; }
-    @Override public void onDisable() { mc.getEventBus().unsubscribe(this); }
+    @Override public void onEnable() { tradeCount = 0; }
 
     @EventHandler
     public void onTick(EventTick e) {

@@ -14,8 +14,6 @@ public class SoundNotifier extends Module {
     private int playerCount = 0;
 
     public SoundNotifier() { super("SoundNotifier", "Plays sounds for important game events", Category.MISC); }
-    @Override public void onEnable() { mc.getEventBus().subscribe(this); }
-    @Override public void onDisable() { mc.getEventBus().unsubscribe(this); }
 
     @EventHandler
     public void onTick(EventTick e) {

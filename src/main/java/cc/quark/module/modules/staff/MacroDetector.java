@@ -41,13 +41,11 @@ public class MacroDetector extends Module {
         if (mc.player == null) { disable(); return; }
         swingTimestamps.clear();
         lastAlert.clear();
-        mc.getEventBus().subscribe(this);
         ChatUtil.info("§6[MacroDetector] §fStatistical macro detection active (variance ≤§e" + variance.get() + "ms§f).");
     }
 
     @Override
     public void onDisable() {
-        mc.getEventBus().unsubscribe(this);
         swingTimestamps.clear();
         lastAlert.clear();
     }

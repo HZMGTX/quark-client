@@ -19,8 +19,6 @@ public class AutoFish2 extends Module {
     private int dropCount = 0;
 
     public AutoFish2() { super("AutoFish2", "Improved auto-fishing with better bite detection", Category.MISC); }
-    @Override public void onEnable() { mc.getEventBus().subscribe(this); }
-    @Override public void onDisable() { mc.getEventBus().unsubscribe(this); }
 
     @EventHandler
     public void onTick(EventTick e) {

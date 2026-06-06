@@ -18,8 +18,7 @@ public class StructureSave extends Module {
     private boolean capturing = false;
 
     public StructureSave() { super("StructureSave", "Saves nearby block structure to memory", Category.WORLD); }
-    @Override public void onEnable() { mc.getEventBus().subscribe(this); capture(); }
-    @Override public void onDisable() { mc.getEventBus().unsubscribe(this); }
+    @Override public void onEnable() { capture(); }
 
     private void capture() {
         if (mc.player == null || mc.world == null) return;

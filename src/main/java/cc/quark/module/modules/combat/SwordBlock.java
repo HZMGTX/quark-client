@@ -13,8 +13,7 @@ public class SwordBlock extends Module {
     private final BoolSetting onlyWhenEnemy = register(new BoolSetting("Only Enemy", "Only block when enemy nearby", false));
 
     public SwordBlock() { super("SwordBlock", "Simulates old-style sword blocking", Category.COMBAT); }
-    @Override public void onEnable() { mc.getEventBus().subscribe(this); }
-    @Override public void onDisable() { mc.getEventBus().unsubscribe(this); mc.options.useKey.setPressed(false); }
+    @Override public void onDisable() { mc.options.useKey.setPressed(false); }
 
     @EventHandler
     public void onTick(EventTick e) {

@@ -46,16 +46,6 @@ public class AutoMace extends Module {
         super("AutoMace", "Auto-attacks with the 1.21 mace weapon for maximum impact", Category.COMBAT);
     }
 
-    @Override
-    public void onEnable() {
-        mc.getEventBus().subscribe(this);
-    }
-
-    @Override
-    public void onDisable() {
-        mc.getEventBus().unsubscribe(this);
-    }
-
     @EventHandler
     public void onTick(EventTick event) {
         if (mc.player == null || mc.world == null || mc.interactionManager == null) return;

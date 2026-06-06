@@ -43,14 +43,12 @@ public class AntiCheatMonitor extends Module {
         instance = this;
         synchronized (LOG_LOCK) { eventLog.clear(); }
         lastLogSize = 0;
-        mc.getEventBus().subscribe(this);
         ChatUtil.info("§6[AntiCheatMonitor] §fLive flag log active (max §e" + maxEntries.get() + "§f entries).");
     }
 
     @Override
     public void onDisable() {
         instance = null;
-        mc.getEventBus().unsubscribe(this);
     }
 
     @EventHandler

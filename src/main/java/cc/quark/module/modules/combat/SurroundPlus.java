@@ -50,7 +50,6 @@ public class SurroundPlus extends Module {
 
     @Override
     public void onEnable() {
-        mc.getEventBus().subscribe(this);
         delayTicks = 0;
         placeIndex = 0;
         if (center.isEnabled() && mc.player != null) {
@@ -58,9 +57,6 @@ public class SurroundPlus extends Module {
             mc.player.setPosition(feet.getX() + 0.5, mc.player.getY(), feet.getZ() + 0.5);
         }
     }
-
-    @Override
-    public void onDisable() { mc.getEventBus().unsubscribe(this); }
 
     @EventHandler
     public void onTick(EventTick event) {
