@@ -751,6 +751,8 @@ public class ModuleManager {
         register(new EatDelay());
         register(new PickupFilter());
         register(new ThrowItems());
+        register(new AutoDismount());
+        register(new AutoNightVision());
 
         // -------- RENDER --------
         register(new ActiveMods());
