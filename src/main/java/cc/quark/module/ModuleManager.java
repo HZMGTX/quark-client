@@ -935,6 +935,7 @@ public class ModuleManager {
         register(new EntityTracers2());
         register(new FoodESP());
         register(new HorizonESP());
+        register(new LightLevel());
 
         // -------- WORLD --------
         register(new AutoBed());
@@ -1097,6 +1098,7 @@ public class ModuleManager {
         register(new AutoBreed());
         register(new AutoButcher());
         register(new AutoCollect());
+        register(new AutoPot());
 
         // -------- EXPLOIT --------
         register(new AntiAim());
