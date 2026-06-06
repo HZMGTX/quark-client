@@ -1480,6 +1480,11 @@ public class ModuleManager {
         register(new cc.quark.module.modules.staff.InventoryHackDetector());
         register(new cc.quark.module.modules.staff.MacroDetector());
         register(new cc.quark.module.modules.staff.TimeWeatherAdmin());
+        register(new cc.quark.module.modules.staff.AntiCheatMonitor());
+        register(new cc.quark.module.modules.staff.PlayerFreezeSingle());
+        register(new cc.quark.module.modules.staff.StaffChatLogger());
+        register(new cc.quark.module.modules.staff.StaffTeleportMenu());
+        register(new cc.quark.module.modules.staff.TeleportHackDetector());
     }
 
     // -------------------------------------------------------------------------
