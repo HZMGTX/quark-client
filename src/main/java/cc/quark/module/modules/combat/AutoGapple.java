@@ -5,7 +5,7 @@ import cc.quark.event.events.EventTick;
 import cc.quark.module.Category;
 import cc.quark.module.Module;
 import cc.quark.setting.BoolSetting;
-import cc.quark.setting.DoubleSetting;
+import cc.quark.setting.IntSetting;
 import cc.quark.util.TimerUtil;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
@@ -13,65 +13,67 @@ import net.minecraft.util.Hand;
 
 public class AutoGapple extends Module {
 
-    private final DoubleSetting health = register(new DoubleSetting("Health", "Eat a gapple when health is at or below this value", 8.0, 1.0, 10.0));
-    private final BoolSetting enchanted = register(new BoolSetting("Enchanted", "Prefer enchanted golden apples", true));
+    private final IntSetting healthThreshold = register(new IntSetting(
+            "Health Threshold", "Eat a gapple when health drops at or below this half-heart value", 12, 6, 18));
+
+    private final BoolSetting absorbOnly = register(new BoolSetting(
+            "Absorb Only", "Only eat enchanted golden apples (provides absorption)", false));
 
     private final TimerUtil timer = new TimerUtil();
-    private int previousSlot = -1;
+    private int prevSlot = -1;
     private boolean eating = false;
 
     public AutoGapple() {
-        super("AutoGapple", "Automatically eats golden apples when health is low", Category.COMBAT);
+        super("AutoGapple", "Automatically eats golden apples when health drops below a threshold", Category.COMBAT);
     }
 
     @Override
     public void onEnable() {
-        previousSlot = -1;
+        prevSlot = -1;
         eating = false;
         timer.reset();
     }
 
     @Override
     public void onDisable() {
-        if (mc.player != null && previousSlot != -1) {
-            mc.player.getInventory().selectedSlot = previousSlot;
+        if (mc.player != null && prevSlot != -1) {
+            mc.player.getInventory().selectedSlot = prevSlot;
         }
-        previousSlot = -1;
+        prevSlot = -1;
         eating = false;
     }
 
     @EventHandler
     public void onTick(EventTick event) {
         if (mc.player == null || mc.world == null || mc.interactionManager == null) return;
-        if (!timer.hasReached(500)) return;
+        if (!timer.hasReached(400)) return;
 
-        float currentHealth = mc.player.getHealth();
-        float maxHealth = mc.player.getMaxHealth();
-        float threshold = (float) health.get() * (maxHealth / 20f);
+        float health = mc.player.getHealth();
+        float threshold = healthThreshold.get();
 
-        if (eating && currentHealth >= threshold) {
-            if (previousSlot != -1) {
-                mc.player.getInventory().selectedSlot = previousSlot;
-                previousSlot = -1;
+        if (eating && health > threshold) {
+            if (prevSlot != -1) {
+                mc.player.getInventory().selectedSlot = prevSlot;
+                prevSlot = -1;
             }
             eating = false;
             return;
         }
 
-        if (currentHealth >= threshold) return;
+        if (health > threshold) return;
 
         int slot = findGappleSlot();
         if (slot == -1) {
-            if (eating && previousSlot != -1) {
-                mc.player.getInventory().selectedSlot = previousSlot;
-                previousSlot = -1;
+            if (eating && prevSlot != -1) {
+                mc.player.getInventory().selectedSlot = prevSlot;
+                prevSlot = -1;
             }
             eating = false;
             return;
         }
 
         if (mc.player.getInventory().selectedSlot != slot) {
-            if (!eating) previousSlot = mc.player.getInventory().selectedSlot;
+            if (!eating) prevSlot = mc.player.getInventory().selectedSlot;
             mc.player.getInventory().selectedSlot = slot;
         }
 
@@ -86,8 +88,7 @@ public class AutoGapple extends Module {
             ItemStack stack = mc.player.getInventory().getStack(i);
             if (stack.isEmpty()) continue;
             if (stack.isOf(Items.ENCHANTED_GOLDEN_APPLE)) return i;
-            if (stack.isOf(Items.GOLDEN_APPLE) && regularSlot == -1) {
-                if (!enchanted.isEnabled()) return i;
+            if (!absorbOnly.isEnabled() && stack.isOf(Items.GOLDEN_APPLE) && regularSlot == -1) {
                 regularSlot = i;
             }
         }

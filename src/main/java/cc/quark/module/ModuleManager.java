@@ -289,6 +289,10 @@ public class ModuleManager {
         register(new AntiEnchant());
         register(new cc.quark.module.modules.combat.AutoTotem());
         register(new cc.quark.module.modules.combat.JumpReset());
+        register(new ClickSpeed());
+        register(new ThunderSword());
+        register(new BlindnessHit());
+        register(new WTapPlus());
 
         // -------- MOVEMENT --------
         register(new Acceleration());
@@ -525,6 +529,10 @@ public class ModuleManager {
         register(new StrafeSpeed());
         register(new cc.quark.module.modules.movement.JumpReset());
         register(new StepClimb());
+        register(new CrawlSprint());
+        register(new EdgeClamp());
+        register(new SlimeJump());
+        register(new TunnelMode());
 
         // -------- PLAYER --------
         register(new AFKMode());
@@ -759,6 +767,11 @@ public class ModuleManager {
         register(new AutoDismount());
         register(new AutoNightVision());
         register(new cc.quark.module.modules.player.NoFall3());
+        register(new AutoShield());
+        register(new AntiHurtCam());
+        register(new AutoSword());
+        register(new InventorySort());
+        register(new AntiStuck());
 
         // -------- RENDER --------
         register(new ActiveMods());
@@ -966,6 +979,12 @@ public class ModuleManager {
         register(new MovementHUD());
         register(new ReachDisplay());
         register(new ScoreHUD());
+        register(new AnvilESP());
+        register(new BiomeInfo());
+        register(new CpsDisplay());
+        register(new TrapESP());
+        register(new WeatherHUD());
+        register(new TpsDisplay());
 
         // -------- WORLD --------
         register(new AutoBed());
@@ -1140,9 +1159,15 @@ public class ModuleManager {
         register(new TreeFarm());
         register(new VillagerTrader());
         register(new cc.quark.module.modules.world.ChestStealer());
+        register(new MobTrap());
 
         // -------- EXPLOIT --------
         register(new AntiAim());
+        register(new BlockFly2());
+        register(new AutoDisconnect2());
+        register(new ElytraFly2());
+        register(new NoComPress());
+        register(new Phase2());
         register(new AntiCheat());
         register(new AntiCrash());
         register(new AntiKick2());

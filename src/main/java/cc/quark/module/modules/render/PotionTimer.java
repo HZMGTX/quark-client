@@ -10,63 +10,61 @@ import net.minecraft.client.gui.DrawContext;
 import net.minecraft.entity.effect.StatusEffectInstance;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 public class PotionTimer extends Module {
 
-    private final IntSetting x       = register(new IntSetting("X", "HUD X position", 4, 0, 1920));
-    private final IntSetting y       = register(new IntSetting("Y", "HUD Y position", 80, 0, 1080));
-    private final BoolSetting color  = register(new BoolSetting("Color", "Color by beneficial/harmful", true));
+    private final BoolSetting compact = register(new BoolSetting("Compact", "Show only the time, no effect name", false));
+    private final IntSetting x = register(new IntSetting("X", "HUD X position", 4, 0, 3840));
+    private final IntSetting y = register(new IntSetting("Y", "HUD Y position", 80, 0, 2160));
 
     public PotionTimer() {
-        super("PotionTimer", "Shows active potion effect durations", Category.RENDER);
+        super("PotionTimer", "Shows duration remaining for each active potion effect", Category.RENDER);
     }
 
     @EventHandler
     public void onRender2D(EventRender2D event) {
         if (mc.player == null) return;
-        DrawContext ctx = event.getDrawContext();
 
-        Collection<StatusEffectInstance> effects = mc.player.getStatusEffects();
+        List<StatusEffectInstance> effects = new ArrayList<>(mc.player.getStatusEffects());
         if (effects.isEmpty()) return;
 
-        List<StatusEffectInstance> sorted = new ArrayList<>(effects);
-        sorted.sort((a, b) -> Integer.compare(b.getDuration(), a.getDuration()));
+        effects.sort((a, b) -> Integer.compare(b.getDuration(), a.getDuration()));
 
-        int px = x.get();
-        int py = y.get();
+        DrawContext ctx = event.getDrawContext();
+        int px = x.get(), py = y.get();
         int lineH = 11;
 
-        for (int i = 0; i < sorted.size(); i++) {
-            StatusEffectInstance eff = sorted.get(i);
-            String name = eff.getEffectType().value().getName().getString();
-            int amp = eff.getAmplifier() + 1;
-            int durTicks = eff.getDuration();
-            int durSec   = durTicks / 20;
+        for (int i = 0; i < effects.size(); i++) {
+            StatusEffectInstance eff = effects.get(i);
 
+            int durTicks = eff.getDuration();
             String timeStr;
             if (durTicks == 32767) {
                 timeStr = "**:**";
             } else {
+                int durSec = durTicks / 20;
                 timeStr = String.format("%d:%02d", durSec / 60, durSec % 60);
             }
 
-            String label = (amp > 1 ? name + " " + amp : name) + " " + timeStr;
-
-            int textColor;
-            if (color.isEnabled()) {
-                boolean beneficial = eff.getEffectType().value().isBeneficial();
-                // Fade color based on time remaining
-                if (!beneficial) {
-                    textColor = 0xFFFF5555;
-                } else if (durSec < 10) {
-                    textColor = 0xFFFFAA00; // Warning: low time
-                } else {
-                    textColor = 0xFF55FF55;
-                }
+            String label;
+            if (compact.isEnabled()) {
+                label = timeStr;
             } else {
-                textColor = 0xFFFFFFFF;
+                String name = eff.getEffectType().value().getName().getString();
+                int amp = eff.getAmplifier() + 1;
+                label = (amp > 1 ? name + " " + amp : name) + " " + timeStr;
+            }
+
+            boolean beneficial = eff.getEffectType().value().isBeneficial();
+            int durSec = durTicks / 20;
+            int textColor;
+            if (!beneficial) {
+                textColor = 0xFFFF5555;
+            } else if (durSec < 10) {
+                textColor = 0xFFFFAA00;
+            } else {
+                textColor = 0xFF55FF55;
             }
 
             ctx.drawTextWithShadow(mc.textRenderer, label, px, py + i * lineH, textColor);
