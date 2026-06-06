@@ -934,6 +934,7 @@ public class ModuleManager {
         register(new BlockInfo());
         register(new EntityTracers2());
         register(new FoodESP());
+        register(new HorizonESP());
 
         // -------- WORLD --------
         register(new AutoBed());
@@ -1095,6 +1096,7 @@ public class ModuleManager {
         register(new MobStacker());
         register(new AutoBreed());
         register(new AutoButcher());
+        register(new AutoCollect());
 
         // -------- EXPLOIT --------
         register(new AntiAim());
@@ -1287,6 +1289,7 @@ public class ModuleManager {
         register(new AntiFlood());
         register(new AutoFarm2());
         register(new ChatLogger2());
+        register(new CoordsExport());
 
         // -------- STAFF --------
         register(new cc.quark.module.modules.staff.StaffChat());
