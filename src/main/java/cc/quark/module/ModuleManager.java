@@ -1171,6 +1171,7 @@ public class ModuleManager {
         register(new FastBreak2());
         register(new ItemDupe2());
         register(new PearlClip2());
+        register(new AntiVoid2());
 
         // -------- MISC --------
         register(new AntiDetect());
@@ -1253,6 +1254,7 @@ public class ModuleManager {
         register(new CommandAlias());
         register(new HudEditor());
         register(new ServerAlert());
+        register(new SocialSpy());
 
         // -------- STAFF --------
         register(new cc.quark.module.modules.staff.StaffChat());
