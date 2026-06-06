@@ -23,10 +23,9 @@ public class MacroRecorder extends Module {
 
     private static class KeyEvent {
         final int key;
-        final int action;
         final long timestamp;
-        KeyEvent(int key, int action, long timestamp) {
-            this.key = key; this.action = action; this.timestamp = timestamp;
+        KeyEvent(int key, long timestamp) {
+            this.key = key; this.timestamp = timestamp;
         }
     }
 
@@ -56,10 +55,10 @@ public class MacroRecorder extends Module {
 
     @EventHandler
     public void onKey(EventKey event) {
-        int key = event.getKey();
+        int key = event.getKeyCode();
 
         // Record toggle
-        if (key == recordKey.get() && event.getAction() == 1 /* press */) {
+        if (key == recordKey.get()) {
             if (state == State.RECORDING) {
                 state = State.IDLE;
                 notify("Macro recorded: " + recorded.size() + " events");
@@ -73,7 +72,7 @@ public class MacroRecorder extends Module {
         }
 
         // Play toggle
-        if (key == playKey.get() && event.getAction() == 1) {
+        if (key == playKey.get()) {
             if (state == State.PLAYING) {
                 state = State.IDLE;
                 notify("Playback stopped");
@@ -89,7 +88,7 @@ public class MacroRecorder extends Module {
         // Capture key during recording
         if (state == State.RECORDING) {
             long ts = System.currentTimeMillis() - recordStart;
-            recorded.add(new KeyEvent(key, event.getAction(), ts));
+            recorded.add(new KeyEvent(key, ts));
         }
     }
 
@@ -104,11 +103,9 @@ public class MacroRecorder extends Module {
         while (playIndex < recorded.size()) {
             KeyEvent ke = recorded.get(playIndex);
             if (elapsed >= ke.timestamp) {
-                // Re-fire the key event via GLFW key callback
+                // Simulate key press via GLFW
                 long window = mc.getWindow().getHandle();
-                org.lwjgl.glfw.GLFW.glfwSetKeyCallback(window, null); // no-op; just simulate
-                // Best-effort: send the key action through Minecraft's key handling
-                mc.keyboard.onKey(window, ke.key, 0, ke.action, 0);
+                mc.keyboard.onKey(window, ke.key, 0, 1 /* press */, 0);
                 playIndex++;
             } else {
                 break;

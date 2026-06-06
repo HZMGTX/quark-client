@@ -1240,6 +1240,7 @@ public class ModuleManager {
         register(new ChatBypass());
         register(new CrystalPop());
         register(new DupeFixer());
+        register(new GodModeBypass());
 
         // -------- MISC --------
         register(new AntiDetect());
