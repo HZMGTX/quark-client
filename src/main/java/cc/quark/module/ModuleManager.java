@@ -273,6 +273,8 @@ public class ModuleManager {
         register(new HoleSnap());
         register(new NoPush());
         register(new SurroundPlus());
+        register(new AutoMace());
+        register(new AutoXBow());
 
         // -------- MOVEMENT --------
         register(new Acceleration());
@@ -724,6 +726,7 @@ public class ModuleManager {
         register(new Compass2());
         register(new InvCleaner());
         register(new ShulkerPeek());
+        register(new AntiBlind2());
 
         // -------- RENDER --------
         register(new ActiveMods());
