@@ -932,6 +932,7 @@ public class ModuleManager {
         register(new ItemGlint());
         register(new PingColor());
         register(new BlockInfo());
+        register(new EntityTracers2());
 
         // -------- WORLD --------
         register(new AutoBed());
@@ -1195,6 +1196,7 @@ public class ModuleManager {
         register(new NoSlowdown());
         register(new AntiChestLock());
         register(new BedrockBreaker());
+        register(new SwimSpeed2());
 
         // -------- MISC --------
         register(new AntiDetect());
