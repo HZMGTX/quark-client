@@ -1477,6 +1477,9 @@ public class ModuleManager {
         register(new cc.quark.module.modules.staff.AimAssistDetector());
         register(new cc.quark.module.modules.staff.RegionProtect2());
         register(new cc.quark.module.modules.staff.ScaffoldDetector());
+        register(new cc.quark.module.modules.staff.InventoryHackDetector());
+        register(new cc.quark.module.modules.staff.MacroDetector());
+        register(new cc.quark.module.modules.staff.TimeWeatherAdmin());
     }
 
     // -------------------------------------------------------------------------
