@@ -15,8 +15,8 @@ import java.util.Date;
 
 public class ScreenshotHelper extends Module {
 
-    private final BoolSetting autoName    = register(new BoolSetting("Auto Name",    "Name screenshots by date/time/coords", true));
-    private final BoolSetting openFolder  = register(new BoolSetting("Open Folder",  "Open screenshots folder after capture", false));
+    private final BoolSetting autoName   = register(new BoolSetting("Auto Name",   "Organise screenshots into date sub-folders", true));
+    private final BoolSetting openFolder = register(new BoolSetting("Open Folder", "Open screenshots folder after capture",       false));
 
     public ScreenshotHelper() {
         super("ScreenshotHelper", "Auto-labels and saves screenshots to organised folders", Category.MISC);
@@ -25,26 +25,25 @@ public class ScreenshotHelper extends Module {
     @EventHandler
     public void onKey(EventKey e) {
         if (e.getKeyCode() != GLFW.GLFW_KEY_F2) return;
-        if (mc.player == null || mc.world == null) return;
+        if (mc.player == null) return;
 
-        File dir = new File(mc.runDirectory, "screenshots");
-        if (!dir.exists()) dir.mkdirs();
+        File base = new File(mc.runDirectory, "screenshots");
+        File dir  = base;
 
         if (autoName.isEnabled()) {
-            String timestamp = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss").format(new Date());
-            String coords = String.format("%.0f_%.0f_%.0f",
-                mc.player.getX(), mc.player.getY(), mc.player.getZ());
-            String name = timestamp + "_" + coords;
-            File sub = new File(dir, new SimpleDateFormat("yyyy-MM-dd").format(new Date()));
-            if (!sub.exists()) sub.mkdirs();
-            ScreenshotRecorder.saveScreenshot(sub, name + ".png", mc.getFramebuffer(), msg ->
-                mc.execute(() -> ChatUtil.info("Screenshot saved: " + name)));
+            String today = new SimpleDateFormat("yyyy-MM-dd").format(new Date());
+            dir = new File(base, today);
         }
 
-        if (openFolder.isEnabled()) {
-            try {
-                java.awt.Desktop.getDesktop().open(dir);
-            } catch (Exception ignored) {}
-        }
+        if (!dir.exists()) dir.mkdirs();
+        final File targetDir = dir;
+
+        ScreenshotRecorder.saveScreenshot(targetDir, mc.getFramebuffer(), msg ->
+            mc.execute(() -> {
+                ChatUtil.info("Screenshot saved to " + targetDir.getName());
+                if (openFolder.isEnabled()) {
+                    try { java.awt.Desktop.getDesktop().open(targetDir); } catch (Exception ignored) {}
+                }
+            }));
     }
 }

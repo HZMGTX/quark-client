@@ -9,28 +9,27 @@ import cc.quark.module.Module;
 import cc.quark.setting.BoolSetting;
 import cc.quark.util.RenderUtil;
 import net.minecraft.client.gui.DrawContext;
-import net.minecraft.entity.damage.DamageTypes;
 
 public class SessionInfo extends Module {
 
-    private final BoolSetting showKD  = register(new BoolSetting("K/D",    "Show kill/death ratio",   true));
-    private final BoolSetting showDmg = register(new BoolSetting("Damage", "Show total damage dealt",  true));
+    private final BoolSetting showKD  = register(new BoolSetting("K/D",    "Show kill/death ratio",       true));
+    private final BoolSetting showDmg = register(new BoolSetting("Damage", "Show total damage received",  true));
 
     private long  sessionStart = 0;
     private int   kills        = 0;
     private int   deaths       = 0;
-    private float damageDealt  = 0f;
+    private float damageTotal  = 0f;
     private float prevHealth   = -1f;
 
     public SessionInfo() {
-        super("SessionInfo", "HUD displaying session stats: kills, deaths, damage dealt, time played", Category.MISC);
+        super("SessionInfo", "HUD displaying session stats: kills, deaths, damage taken, time played", Category.MISC);
     }
 
     @Override
     public void onEnable() {
         sessionStart = System.currentTimeMillis();
         kills = deaths = 0;
-        damageDealt = 0f;
+        damageTotal = 0f;
         prevHealth  = -1f;
     }
 
@@ -45,10 +44,7 @@ public class SessionInfo extends Module {
 
     @EventHandler
     public void onDamage(EventDamage e) {
-        if (mc.player == null) return;
-        if (!e.getSource().isIn(DamageTypes.BYPASSES_ARMOR)) {
-            damageDealt += e.getAmount();
-        }
+        damageTotal += e.getAmount();
     }
 
     @EventHandler
@@ -66,7 +62,7 @@ public class SessionInfo extends Module {
             y += 10;
         }
         if (showDmg.isEnabled()) {
-            RenderUtil.drawCustomText(ctx, "DMG: " + String.format("%.1f", damageDealt), x, y, 0xFFAAAAAA);
+            RenderUtil.drawCustomText(ctx, "DMG: " + String.format("%.1f", damageTotal), x, y, 0xFFAAAAAA);
         }
     }
 }

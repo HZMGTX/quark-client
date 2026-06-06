@@ -5,17 +5,19 @@ import cc.quark.event.events.EventPacketSend;
 import cc.quark.module.Category;
 import cc.quark.module.Module;
 import cc.quark.setting.IntSetting;
+import net.minecraft.network.packet.Packet;
+import net.minecraft.network.packet.c2s.play.PlayerMoveC2SPacket;
 
 import java.util.ArrayDeque;
-import java.util.Deque;
 import java.util.AbstractMap;
+import java.util.Deque;
 import java.util.Map;
 
 public class PingSpoof extends Module {
 
     private final IntSetting targetMs = register(new IntSetting("Target MS", "Simulated latency in milliseconds", 100, 50, 500));
 
-    private final Deque<Map.Entry<Long, net.minecraft.network.packet.Packet<?>>> queue = new ArrayDeque<>();
+    private final Deque<Map.Entry<Long, Packet<?>>> queue = new ArrayDeque<>();
 
     public PingSpoof() {
         super("PingSpoof", "Delays packet sending to simulate a target ping", Category.MISC);
@@ -23,31 +25,24 @@ public class PingSpoof extends Module {
 
     @Override
     public void onDisable() {
-        flushAll();
+        if (mc.getNetworkHandler() != null) {
+            while (!queue.isEmpty()) mc.getNetworkHandler().sendPacket(queue.pollFirst().getValue());
+        }
+        queue.clear();
     }
 
     @EventHandler
     public void onPacketSend(EventPacketSend e) {
         if (mc.getNetworkHandler() == null) return;
+        if (!(e.getPacket() instanceof PlayerMoveC2SPacket)) return;
+
         long now = System.currentTimeMillis();
         queue.addLast(new AbstractMap.SimpleEntry<>(now, e.getPacket()));
         e.cancel();
 
         long threshold = now - targetMs.get();
         while (!queue.isEmpty() && queue.peekFirst().getKey() <= threshold) {
-            var entry = queue.pollFirst();
-            try {
-                mc.getNetworkHandler().getConnection().send(entry.getValue());
-            } catch (Exception ignored) {}
-        }
-    }
-
-    private void flushAll() {
-        if (mc.getNetworkHandler() == null) { queue.clear(); return; }
-        while (!queue.isEmpty()) {
-            try {
-                mc.getNetworkHandler().getConnection().send(queue.pollFirst().getValue());
-            } catch (Exception ignored) {}
+            mc.getNetworkHandler().sendPacket(queue.pollFirst().getValue());
         }
     }
 }
