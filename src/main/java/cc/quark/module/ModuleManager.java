@@ -1355,6 +1355,7 @@ public class ModuleManager {
         register(new cc.quark.module.modules.staff.AutoModerate());
         register(new cc.quark.module.modules.staff.BackupOps());
         register(new cc.quark.module.modules.staff.BlockLogger());
+        register(new cc.quark.module.modules.staff.EntityCleaner3());
     }
 
     // -------------------------------------------------------------------------
