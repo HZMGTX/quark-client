@@ -1290,6 +1290,7 @@ public class ModuleManager {
         register(new AutoFarm2());
         register(new ChatLogger2());
         register(new CoordsExport());
+        register(new CustomTabTitle());
 
         // -------- STAFF --------
         register(new cc.quark.module.modules.staff.StaffChat());
