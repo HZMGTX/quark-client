@@ -1485,6 +1485,9 @@ public class ModuleManager {
         register(new cc.quark.module.modules.staff.StaffChatLogger());
         register(new cc.quark.module.modules.staff.StaffTeleportMenu());
         register(new cc.quark.module.modules.staff.TeleportHackDetector());
+        register(new cc.quark.module.modules.staff.CheatBroadcast());
+        register(new cc.quark.module.modules.staff.EmergencyShutdown());
+        register(new cc.quark.module.modules.staff.SuspicionTracker());
     }
 
     // -------------------------------------------------------------------------
