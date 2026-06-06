@@ -738,6 +738,7 @@ public class ModuleManager {
         register(new ChestStealer2());
         register(new EatDelay());
         register(new PickupFilter());
+        register(new ThrowItems());
 
         // -------- RENDER --------
         register(new ActiveMods());
@@ -930,6 +931,7 @@ public class ModuleManager {
         register(new HitMarker());
         register(new ItemGlint());
         register(new PingColor());
+        register(new BlockInfo());
 
         // -------- WORLD --------
         register(new AutoBed());
@@ -1192,6 +1194,7 @@ public class ModuleManager {
         register(new HighJump2());
         register(new NoSlowdown());
         register(new AntiChestLock());
+        register(new BedrockBreaker());
 
         // -------- MISC --------
         register(new AntiDetect());
