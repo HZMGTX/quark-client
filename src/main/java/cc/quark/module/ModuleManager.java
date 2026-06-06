@@ -286,6 +286,9 @@ public class ModuleManager {
         register(new GhastAura());
         register(new MaceAura());
         register(new SwordBlock2());
+        register(new AntiEnchant());
+        register(new cc.quark.module.modules.combat.AutoTotem());
+        register(new cc.quark.module.modules.combat.JumpReset());
 
         // -------- MOVEMENT --------
         register(new Acceleration());
@@ -520,6 +523,8 @@ public class ModuleManager {
         register(new AutoSprint3());
         register(new GlitchWalk());
         register(new StrafeSpeed());
+        register(new cc.quark.module.modules.movement.JumpReset());
+        register(new StepClimb());
 
         // -------- PLAYER --------
         register(new AFKMode());
@@ -753,6 +758,7 @@ public class ModuleManager {
         register(new ThrowItems());
         register(new AutoDismount());
         register(new AutoNightVision());
+        register(new cc.quark.module.modules.player.NoFall3());
 
         // -------- RENDER --------
         register(new ActiveMods());
@@ -1133,6 +1139,7 @@ public class ModuleManager {
         register(new MobKiller());
         register(new TreeFarm());
         register(new VillagerTrader());
+        register(new cc.quark.module.modules.world.ChestStealer());
 
         // -------- EXPLOIT --------
         register(new AntiAim());
