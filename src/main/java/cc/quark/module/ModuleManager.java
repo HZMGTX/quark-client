@@ -937,6 +937,7 @@ public class ModuleManager {
         register(new HorizonESP());
         register(new LightLevel());
         register(new PlayerPreview());
+        register(new SlotHUD());
 
         // -------- WORLD --------
         register(new AutoBed());
