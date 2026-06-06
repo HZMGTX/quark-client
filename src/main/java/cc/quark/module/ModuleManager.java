@@ -1357,6 +1357,7 @@ public class ModuleManager {
         register(new cc.quark.module.modules.staff.BlockLogger());
         register(new cc.quark.module.modules.staff.EntityCleaner3());
         register(new cc.quark.module.modules.staff.KillAll());
+        register(new cc.quark.module.modules.staff.PlayerStats());
     }
 
     // -------------------------------------------------------------------------
