@@ -1379,6 +1379,9 @@ public class ModuleManager {
         register(new ScoreboardUtils());
         register(new ServerJoinHelper());
         register(new ScreenshotHelper());
+        register(new AutoQueue());
+        register(new EntityLogger());
+        register(new MemoryOptimizer());
 
         // -------- STAFF --------
         register(new cc.quark.module.modules.staff.StaffChat());
