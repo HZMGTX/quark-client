@@ -1488,6 +1488,8 @@ public class ModuleManager {
         register(new cc.quark.module.modules.staff.CheatBroadcast());
         register(new cc.quark.module.modules.staff.EmergencyShutdown());
         register(new cc.quark.module.modules.staff.SuspicionTracker());
+        register(new cc.quark.module.modules.staff.SilentBan());
+        register(new cc.quark.module.modules.staff.StaffDashboard());
     }
 
     // -------------------------------------------------------------------------
