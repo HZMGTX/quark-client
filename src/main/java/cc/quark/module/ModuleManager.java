@@ -293,6 +293,7 @@ public class ModuleManager {
         register(new ThunderSword());
         register(new BlindnessHit());
         register(new WTapPlus());
+        register(new Surround2());
 
         // -------- MOVEMENT --------
         register(new Acceleration());
@@ -1377,6 +1378,7 @@ public class ModuleManager {
         register(new PlayerCounter());
         register(new ScoreboardUtils());
         register(new ServerJoinHelper());
+        register(new ScreenshotHelper());
 
         // -------- STAFF --------
         register(new cc.quark.module.modules.staff.StaffChat());
