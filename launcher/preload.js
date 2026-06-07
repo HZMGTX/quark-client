@@ -42,11 +42,6 @@ contextBridge.exposeInMainWorld('quark', {
     configExport    : ()          => ipcRenderer.invoke('config:export'),
     configImport    : ()          => ipcRenderer.invoke('config:import'),
 
-    // Global Chat Server
-    chatServerStart  : (port)     => ipcRenderer.invoke('chat:serverStart', port),
-    chatServerStop   : ()         => ipcRenderer.invoke('chat:serverStop'),
-    chatServerStatus : ()         => ipcRenderer.invoke('chat:serverStatus'),
-
     // Push events from main → renderer
     onInjectLog      : (cb)  => ipcRenderer.on('inject:log',         (_e, d)    => cb(d)),
     onAutoDetected   : (cb)  => ipcRenderer.on('inject:autoDetected',(_e, proc) => cb(proc)),

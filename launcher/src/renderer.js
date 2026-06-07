@@ -31,6 +31,7 @@ const MODULE_COUNTS = {
     world: 206, exploit: 146, misc: 133, staff: 126,
 };
 const TOTAL_MODULES = Object.values(MODULE_COUNTS).reduce((a, b) => a + b, 0);
+const MAX_MODULE_COUNT = Math.max(...Object.values(MODULE_COUNTS));
 
 const DEFAULT_KEYBINDS = {
     KillAura: 'R', Speed: 'V', Flight: 'F', Sprint: 'LSHIFT',
@@ -384,15 +385,12 @@ function home() {
 
         <div class="card">
           <div class="card-title">Module Breakdown</div>
-          ${(() => {
-            const maxN = Math.max(...Object.values(MODULE_COUNTS));
-            return Object.entries(MODULE_COUNTS).map(([cat, n]) => `
+          ${Object.entries(MODULE_COUNTS).map(([cat, n]) => `
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
               <span style="font-size:11px;color:var(--muted);width:68px;text-transform:capitalize">${cat}</span>
-              <div class="progress-wrap" style="flex:1"><div class="progress-bar" style="width:${Math.round(n / maxN * 100)}%"></div></div>
+              <div class="progress-wrap" style="flex:1"><div class="progress-bar" style="width:${Math.round(n / MAX_MODULE_COUNT * 100)}%"></div></div>
               <span style="font-size:11px;color:var(--muted);width:28px;text-align:right">${n}</span>
-            </div>`).join('');
-          })()}
+            </div>`).join('')}
         </div>
       </div>
 
@@ -1283,7 +1281,7 @@ function altsPage() {
         <button class="btn btn-primary btn-sm" id="btn-add-alt">+ Add Alt</button>
       </div>
       <div class="card" style="margin-bottom:14px">
-        <div class="card-title">Saved Alts (${alts.length})</div>
+        <div class="card-title" id="alt-count-title">Saved Alts (${alts.length})</div>
         <div id="alt-list" style="display:flex;flex-direction:column;gap:8px"></div>
         ${alts.length === 0 ? '<div style="color:var(--muted);font-size:12px;text-align:center;padding:16px">No alts saved. Click + Add Alt.</div>' : ''}
       </div>
@@ -1305,7 +1303,7 @@ function altsPage() {
         alts.push({ name, type, added: Date.now() });
         quark.settingsSet('alts', alts);
         // Update in-place — no full page reload
-        const titleEl = document.querySelector('.card-title');
+        const titleEl = document.getElementById('alt-count-title');
         if (titleEl) titleEl.textContent = `Saved Alts (${alts.length})`;
         renderAlts();
         notify('Alt added: ' + name, 'success');
@@ -1347,7 +1345,7 @@ function renderAlts() {
                 alts.splice(idx, 1);
                 quark.settingsSet('alts', alts);
                 renderAlts();
-                const titleEl = document.querySelector('.card-title');
+                const titleEl = document.getElementById('alt-count-title');
                 if (titleEl) titleEl.textContent = `Saved Alts (${alts.length})`;
             }
         });
@@ -1385,11 +1383,12 @@ function chat() {
         </div>
       </div>`;
 
-    setTimeout(() => {
+    const connectTimer = setTimeout(() => {
         const el = document.getElementById('chat-online');
         if (el) el.textContent = '● 8 online';
         addChatMsg('System', 'Chat relay connected.', true);
     }, 900);
+    pageCleanup = () => clearTimeout(connectTimer);
 
     const input = document.getElementById('chat-input');
     document.getElementById('btn-chat-send').addEventListener('click', sendChatMsg);
@@ -1538,20 +1537,20 @@ function staff() {
       <!-- ACTION BUTTONS -->
       <div class="grid-4" style="margin-bottom:16px">
         ${[
-            ['👁', 'Vanish',      'Invisible to players',  'Vanish'],
-            ['⚡', 'Fly',         'Toggle staff flight',   'Fly'],
-            ['🛡', 'God Mode',    'Toggle invincibility',  'God Mode'],
-            ['🔍', 'Inspect',     'View player inventory', 'Inspect'],
-            ['🔨', 'Ban Player',  'Issue server ban',      'Ban Player'],
-            ['🔇', 'Mute Player', 'Silence a player',      'Mute Player'],
-            ['📍', 'Teleport',    'TP to any player',      'Teleport'],
-            ['📋', 'Logs',        'View violation history','Logs'],
-            ['🚨', 'Alert',       'Broadcast staff alert', 'Alert'],
-            ['🧊', 'Freeze',      'Freeze a player',       'Freeze'],
-            ['👤', 'Spectate',    'Spectate any player',   'Spectate'],
-            ['⚙',  'Admin',       'Server admin tools',    'Admin'],
-        ].map(([icon, name, desc, label]) => `
-          <div class="staff-action-btn" data-staff-action="${escapeHtml(label)}">
+            ['👁', 'Vanish',      'Invisible to players'],
+            ['⚡', 'Fly',         'Toggle staff flight'],
+            ['🛡', 'God Mode',    'Toggle invincibility'],
+            ['🔍', 'Inspect',     'View player inventory'],
+            ['🔨', 'Ban Player',  'Issue server ban'],
+            ['🔇', 'Mute Player', 'Silence a player'],
+            ['📍', 'Teleport',    'TP to any player'],
+            ['📋', 'Logs',        'View violation history'],
+            ['🚨', 'Alert',       'Broadcast staff alert'],
+            ['🧊', 'Freeze',      'Freeze a player'],
+            ['👤', 'Spectate',    'Spectate any player'],
+            ['⚙',  'Admin',       'Server admin tools'],
+        ].map(([icon, name, desc]) => `
+          <div class="staff-action-btn" data-staff-action="${escapeHtml(name)}">
             <span class="icon">${icon}</span>
             <span style="font-weight:600;font-size:12px">${name}</span>
             <span style="font-size:10px;color:var(--muted);text-align:center">${desc}</span>
@@ -1616,7 +1615,7 @@ function staff() {
         const elI  = document.getElementById('stat-injected');
         if (elO) elO.textContent = onlineBase.toLocaleString();
         if (elI) elI.textContent = inj.toLocaleString();
-        renderUserTable([...MOCK_USERS].sort(() => Math.random() - 0.5).slice(0, 8));
+        renderUserTable(shuffle(MOCK_USERS).slice(0, 8));
         const lb = document.getElementById('last-refresh-label');
         if (lb) lb.textContent = 'Updated ' + new Date().toLocaleTimeString();
     }
@@ -1836,4 +1835,13 @@ function escapeHtml(str)   {
     return String(str)
         .replace(/&/g,'&amp;').replace(/</g,'&lt;')
         .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function shuffle(arr) {
+    const out = [...arr];
+    for (let i = out.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [out[i], out[j]] = [out[j], out[i]];
+    }
+    return out;
 }

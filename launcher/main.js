@@ -434,7 +434,7 @@ function tryJattach(pid, agentJar, resolve, reject, prevErr) {
     const tryNext = i => {
         if (i >= candidates.length) { fallbackModsInstall(agentJar, resolve, reject, prevErr); return; }
         const jattach = candidates[i];
-        exec(`"${jattach}" ${Number(pid)} load instrument false "${agentJar.replace(/"/g,'')}"`, (err) => {
+        exec(`"${jattach}" ${Number(pid)} load instrument false "${agentJar.replace(/"/g,'')}=quark"`, (err) => {
             if (!err) {
                 autoInjectedPids.add(pid);
                 sendLog('[jattach] Attach successful');
@@ -713,27 +713,6 @@ ipcMain.handle('system:gameDirs', () => {
     }
     return dirs;
 });
-
-// ─────────────────────────────────────────────────────────────────────────────
-// IPC – Global Chat relay
-// ─────────────────────────────────────────────────────────────────────────────
-
-let chatServerProcess = null;
-
-ipcMain.handle('chat:serverStart', (_e, port) => {
-    if (chatServerProcess) return { running: true, port };
-    const serverScript = path.join(__dirname, '..', 'server', 'chat-server.js');
-    if (!fs.existsSync(serverScript)) throw new Error('Chat server not found.');
-    const p = parseInt(port, 10) || 8765;
-    chatServerProcess = exec(`node "${serverScript}"`, { env: { ...process.env, PORT: p } });
-    chatServerProcess.on('exit', () => { chatServerProcess = null; });
-    return { running: true, port: p };
-});
-ipcMain.handle('chat:serverStop',   () => {
-    if (chatServerProcess) { chatServerProcess.kill(); chatServerProcess = null; }
-    return { running: false };
-});
-ipcMain.handle('chat:serverStatus', () => ({ running: !!chatServerProcess }));
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers – Process analysis
