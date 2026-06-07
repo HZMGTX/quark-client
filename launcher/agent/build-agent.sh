@@ -31,8 +31,8 @@ fi
 
 if [ ! -f "$ASM_JAR" ]; then
     echo "[Builder] Downloading ASM 9.6…"
-    curl -fsSL "https://search.maven.org/remotecontent?filepath=org/ow2/asm/asm/9.6/asm-9.6.jar" -o "$ASM_JAR"
-    curl -fsSL "https://search.maven.org/remotecontent?filepath=org/ow2/asm/asm-commons/9.6/asm-commons-9.6.jar" -o "$ASM_COMMONS"
+    curl -fsSL "https://repo1.maven.org/maven2/org/ow2/asm/asm/9.6/asm-9.6.jar" -o "$ASM_JAR"
+    curl -fsSL "https://repo1.maven.org/maven2/org/ow2/asm/asm-commons/9.6/asm-commons-9.6.jar" -o "$ASM_COMMONS"
     echo "[Builder] ASM downloaded."
 fi
 
@@ -46,7 +46,7 @@ JAVA_FILES=$(find "$SCRIPT_DIR" -name "*.java" | sort)
 javac \
     -cp "$CLASSPATH" \
     -d "$OUT_DIR" \
-    --release 11 \
+    --release 17 \
     -Xlint:none \
     $JAVA_FILES
 

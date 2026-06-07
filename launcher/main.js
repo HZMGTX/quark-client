@@ -432,7 +432,7 @@ function tryJattach(pid, agentJar, resolve, reject, prevErr) {
         path.join(__dirname, 'bin', 'jattach.exe')];
 
     const tryNext = i => {
-        if (i >= candidates.length) { fallbackModsInstall(agentJar, resolve, reject, prevErr); return; }
+        if (i >= candidates.length) { fallbackModsInstall(resolve, reject, prevErr); return; }
         const jattach = candidates[i];
         exec(`"${jattach}" ${Number(pid)} load instrument false "${agentJar.replace(/"/g,'')}=quark"`, (err) => {
             if (!err) {
@@ -447,15 +447,24 @@ function tryJattach(pid, agentJar, resolve, reject, prevErr) {
     tryNext(0);
 }
 
-function fallbackModsInstall(agentJar, resolve, reject, prevErr) {
+function fallbackModsInstall(resolve, reject, prevErr) {
     sendLog('[Quark] Pure injection unavailable — staging as Fabric mod (requires restart)', 'warn');
     try {
+        // NOTE: the standalone agent JAR (cc.quark.agent.*) is a javaagent, not a
+        // Fabric mod — it has no fabric.mod.json and Fabric Loader would ignore it.
+        // The mods-folder fallback needs the actual Fabric mod JAR built by Gradle.
+        const modJar = resolveModJar();
+        if (!modJar) {
+            sendLog('[Quark] No Fabric mod JAR found in build/libs. Build it with ./gradlew build first.', 'error');
+            reject(new Error('All injection methods failed. Details: ' + prevErr.slice(0, 300)));
+            return;
+        }
         const modsDir = getModsFolder();
         if (modsDir) {
             if (!fs.existsSync(modsDir)) fs.mkdirSync(modsDir, { recursive: true });
-            const dest = path.join(modsDir, path.basename(agentJar));
-            fs.copyFileSync(agentJar, dest);
-            sendLog('[Quark] JAR copied to mods folder. Restart Minecraft.', 'warn');
+            const dest = path.join(modsDir, path.basename(modJar));
+            fs.copyFileSync(modJar, dest);
+            sendLog('[Quark] Mod JAR copied to mods folder. Restart Minecraft.', 'warn');
             resolve({ success: true, pid: 0, method: 'mods-install', requiresRestart: true });
             return;
         }
@@ -778,19 +787,27 @@ function resolveAgentJar() {
     const custom = store.get('agentPath', '');
     if (custom && fs.existsSync(custom)) return custom;
 
+    // Must be the standalone javaagent JAR (Agent-Class/Premain-Class manifest) —
+    // NOT the Fabric mod JAR or the CLI injector JAR, both of which Gradle also
+    // drops into build/libs and would make Instrumentation.loadAgent() fail.
     const candidates = [
         path.join(__dirname, 'agent', 'quark-agent.jar'),
         path.join(__dirname, '..', 'build', 'libs', 'quark-agent.jar'),
         path.join(__dirname, 'quark-agent.jar'),
     ];
-
-    const buildDir = path.join(__dirname, '..', 'build', 'libs');
-    if (fs.existsSync(buildDir)) {
-        for (const f of fs.readdirSync(buildDir)) {
-            if (/quark.*\.jar$/i.test(f)) candidates.unshift(path.join(buildDir, f));
-        }
-    }
     return candidates.find(p => fs.existsSync(p)) || null;
+}
+
+function resolveModJar() {
+    const buildDir = path.join(__dirname, '..', 'build', 'libs');
+    if (!fs.existsSync(buildDir)) return null;
+
+    const skip = new Set(['quark-agent.jar', 'quark-injector.jar']);
+    const modJars = fs.readdirSync(buildDir)
+        .filter(f => /^quark.*\.jar$/i.test(f) && !skip.has(f) && !/-(sources|dev)\.jar$/i.test(f))
+        .sort()
+        .map(f => path.join(buildDir, f));
+    return modJars[0] || null;
 }
 
 async function findJava() {
