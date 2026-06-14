@@ -270,7 +270,8 @@ public class ClickGUI extends Screen {
                 boolean rev = (modifiers & org.lwjgl.glfw.GLFW.GLFW_MOD_SHIFT) != 0;
                 tabFocusIndex = rev ? (tabFocusIndex - 1 + panels.size()) % panels.size()
                                     : (tabFocusIndex + 1) % panels.size();
-                panels.get(tabFocusIndex).setX((this.width - PANEL_WIDTH) / 2);
+                CategoryPanel focused = panels.get(tabFocusIndex);
+                focused.setX((this.width - focused.getWidth()) / 2);
             }
             return true;
         }
