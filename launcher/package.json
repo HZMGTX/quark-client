@@ -3,7 +3,11 @@
   "version": "2.0.0",
   "description": "Quark Ghost Client launcher — pure JVM injection for all Minecraft launchers",
   "main": "main.js",
-  "author": "Quark.cc",
+  "homepage": "https://github.com/HZMGTX/quark-client",
+  "author": {
+    "name": "Quark.cc",
+    "email": "support@quark.cc"
+  },
   "license": "MIT",
   "scripts": {
     "start": "electron .",
