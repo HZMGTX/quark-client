@@ -4,32 +4,26 @@ import cc.quark.event.EventHandler;
 import cc.quark.event.events.EventTick;
 import cc.quark.module.Category;
 import cc.quark.module.Module;
-import cc.quark.setting.IntSetting;
+import cc.quark.setting.DoubleSetting;
 
-public class FOVChanger extends Module {
+public class FovChanger extends Module {
+    private final DoubleSetting fov = register(new DoubleSetting("FOV", "Custom field of view", 90.0, 30.0, 180.0));
+    private double originalFov = 70.0;
 
-    private final IntSetting fov = register(new IntSetting(
-            "FOV", "Field of view in degrees", 90, 30, 160));
-
-    private int savedFov = 70;
-
-    public FOVChanger() {
-        super("FOVChanger", "Overrides the game's field of view independently of vanilla FOV settings", Category.RENDER);
-    }
+    public FovChanger() { super("FovChanger", "Overrides your field of view", Category.RENDER); }
 
     @Override
     public void onEnable() {
-        if (mc.options != null) savedFov = mc.options.getFov().getValue();
+        if (mc.options != null) originalFov = mc.options.getFov().getValue();
     }
 
     @Override
     public void onDisable() {
-        if (mc.options != null) mc.options.getFov().setValue(savedFov);
+        if (mc.options != null) mc.options.getFov().setValue((int)originalFov);
     }
 
     @EventHandler
-    public void onTick(EventTick event) {
-        if (mc.options == null) return;
-        mc.options.getFov().setValue(fov.get());
+    public void onTick(EventTick e) {
+        if (mc.options != null) mc.options.getFov().setValue((int)fov.get());
     }
 }
