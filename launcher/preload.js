@@ -30,6 +30,7 @@ contextBridge.exposeInMainWorld('quark', {
     systemGameDirs  : ()          => ipcRenderer.invoke('system:gameDirs'),
     openFolder      : (p)         => ipcRenderer.invoke('system:openFolder', p),
     selectFile      : ()          => ipcRenderer.invoke('system:selectFile'),
+    selectImage     : ()          => ipcRenderer.invoke('system:selectImage'),
     openExternal    : (url)       => ipcRenderer.invoke('system:openExternal', url),
 
     // Java discovery

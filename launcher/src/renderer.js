@@ -99,8 +99,11 @@ window.addEventListener('DOMContentLoaded', async () => {
     sessionStats  = (await quark.settingsGet('stats'))    || sessionStats;
     sessionStats.sessionStart = Date.now();
 
+    const avatarOverride = await quark.settingsGet('avatarOverride');
+
     if (stored) {
         currentUser = stored;
+        if (avatarOverride) currentUser.avatarOverride = avatarOverride;
         showMain();
     } else {
         showLogin();
@@ -109,6 +112,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('btn-discord-login').addEventListener('click', handleDiscordLogin);
     document.getElementById('btn-skip').addEventListener('click', () => {
         currentUser = { username: 'Guest', guest: true };
+        if (avatarOverride) currentUser.avatarOverride = avatarOverride;
         showMain();
     });
     document.getElementById('btn-cancel-oauth')?.addEventListener('click', () => setOauthOverlay(false));
@@ -273,8 +277,9 @@ function buildSidebar() {
 
     const role = getRole(currentUser);
     const ur   = document.getElementById('user-row');
-    const avatar = currentUser.avatarUrl
-        ? `<img class="user-avatar" src="${currentUser.avatarUrl}" alt="">`
+    const avatarSrc = currentUser.avatarOverride || currentUser.avatarUrl;
+    const avatar = avatarSrc
+        ? `<img class="user-avatar" src="${avatarSrc}" alt="">`
         : `<div class="user-avatar-placeholder">${(currentUser.username || 'G')[0].toUpperCase()}</div>`;
 
     ur.innerHTML = `
@@ -1712,6 +1717,20 @@ async function settings() {
           </div>
 
           <div class="card">
+            <div class="card-title">Profile Picture</div>
+            <div style="display:flex;align-items:center;gap:14px">
+              ${currentUser.avatarOverride || currentUser.avatarUrl
+                  ? `<img class="avatar-preview-lg" id="avatar-preview" src="${currentUser.avatarOverride || currentUser.avatarUrl}" alt="">`
+                  : `<div class="avatar-preview-placeholder-lg" id="avatar-preview">${(currentUser.username || 'G')[0].toUpperCase()}</div>`}
+              <div style="display:flex;flex-direction:column;gap:8px">
+                <button class="btn btn-secondary btn-sm" id="btn-change-avatar">Change Picture</button>
+                ${currentUser.avatarOverride ? `<button class="btn btn-danger btn-sm" id="btn-remove-avatar">Remove Picture</button>` : ''}
+              </div>
+            </div>
+            <p style="font-size:10px;color:var(--muted);margin-top:8px">PNG, JPG, GIF, WEBP or BMP — max 4MB. Stored locally and used across the launcher.</p>
+          </div>
+
+          <div class="card">
             <div class="card-title">Account</div>
             <div style="display:flex;flex-direction:column;gap:8px">
               ${currentUser && !currentUser.guest ? `
@@ -1780,6 +1799,28 @@ async function settings() {
     document.getElementById('btn-import-config')?.addEventListener('click', async () => {
         const ok = await quark.configImport();
         notify(ok ? 'Config imported — reload launcher to apply' : 'Import cancelled', ok ? 'success' : 'info');
+    });
+
+    document.getElementById('btn-change-avatar')?.addEventListener('click', async () => {
+        try {
+            const dataUri = await quark.selectImage();
+            if (!dataUri) return;
+            currentUser.avatarOverride = dataUri;
+            await quark.settingsSet('avatarOverride', dataUri);
+            buildSidebar();
+            navigateTo('settings');
+            notify('Profile picture updated', 'success');
+        } catch (e) {
+            notify('Failed to set profile picture: ' + e.message, 'error');
+        }
+    });
+
+    document.getElementById('btn-remove-avatar')?.addEventListener('click', async () => {
+        delete currentUser.avatarOverride;
+        await quark.settingsSet('avatarOverride', null);
+        buildSidebar();
+        navigateTo('settings');
+        notify('Profile picture removed', 'info');
     });
 
     document.getElementById('btn-logout')?.addEventListener('click', () => {

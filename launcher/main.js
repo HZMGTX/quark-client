@@ -679,6 +679,29 @@ ipcMain.handle('system:selectFile', async () => {
     return result.canceled ? null : result.filePaths[0];
 });
 
+const IMAGE_MIME_TYPES = { png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', gif: 'image/gif', webp: 'image/webp', bmp: 'image/bmp' };
+const MAX_AVATAR_BYTES = 4 * 1024 * 1024; // 4MB
+
+ipcMain.handle('system:selectImage', async () => {
+    const result = await dialog.showOpenDialog(win, {
+        title     : 'Choose Profile Picture',
+        filters   : [{ name: 'Images', extensions: Object.keys(IMAGE_MIME_TYPES) }],
+        properties: ['openFile'],
+    });
+    if (result.canceled || !result.filePaths[0]) return null;
+
+    const filePath = result.filePaths[0];
+    const ext = path.extname(filePath).slice(1).toLowerCase();
+    const mime = IMAGE_MIME_TYPES[ext];
+    if (!mime) throw new Error('Unsupported image format: ' + ext);
+
+    const stat = fs.statSync(filePath);
+    if (stat.size > MAX_AVATAR_BYTES) throw new Error('Image too large (max 4MB)');
+
+    const data = fs.readFileSync(filePath);
+    return `data:${mime};base64,${data.toString('base64')}`;
+});
+
 ipcMain.handle('system:openExternal', (_e, url) => {
     // Only allow safe URLs
     if (url && (url.startsWith('https://') || url.startsWith('http://localhost'))) {
