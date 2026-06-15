@@ -838,8 +838,13 @@ function resolveAgentJar() {
     // Must be the standalone javaagent JAR (Agent-Class/Premain-Class manifest) —
     // NOT the Fabric mod JAR or the CLI injector JAR, both of which Gradle also
     // drops into build/libs and would make Instrumentation.loadAgent() fail.
+    //
+    // In a packaged build, main.js runs from inside app.asar, so the bundled
+    // agent (an electron-builder "extraResources" entry) lives alongside the
+    // asar under resourcesPath/agent — not under __dirname.
     const candidates = [
         path.join(__dirname, 'agent', 'quark-agent.jar'),
+        path.join(process.resourcesPath || '', 'agent', 'quark-agent.jar'),
         path.join(__dirname, '..', 'build', 'libs', 'quark-agent.jar'),
         path.join(__dirname, 'quark-agent.jar'),
     ];

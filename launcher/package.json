@@ -25,6 +25,7 @@
     "electron-builder": "^24.13.3"
   },
   "build": {
+    "beforeBuild": "./scripts/build-agent.js",
     "appId": "cc.quark.launcher",
     "productName": "Quark Launcher",
     "copyright": "Copyright © 2025 Quark.cc",
