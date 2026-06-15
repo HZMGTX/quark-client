@@ -7,6 +7,7 @@ versions/*/run/
 *.class
 *.jar
 !gradle/wrapper/gradle-wrapper.jar
+!launcher/agent/lib/*.jar
 out/
 .idea/
 *.iml
