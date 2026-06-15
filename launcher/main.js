@@ -824,11 +824,14 @@ async function findJava() {
 
 function getModsFolder() {
     const platform = process.platform;
-    let base;
-    if (platform === 'win32')        base = process.env.APPDATA;
-    else if (platform === 'darwin')  base = path.join(os.homedir(), 'Library', 'Application Support');
-    else                             base = path.join(os.homedir(), '.local', 'share');
-    return base ? path.join(base, '.minecraft', 'mods') : null;
+    if (platform === 'win32') {
+        const appdata = process.env.APPDATA;
+        return appdata ? path.join(appdata, '.minecraft', 'mods') : null;
+    } else if (platform === 'darwin') {
+        return path.join(os.homedir(), 'Library', 'Application Support', 'minecraft', 'mods');
+    } else {
+        return path.join(os.homedir(), '.minecraft', 'mods');
+    }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

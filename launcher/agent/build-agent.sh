@@ -55,6 +55,13 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
+# Bundle ASM classes into the output dir so the agent is self-contained —
+# when loaded into a target JVM via the Attach API, only quark-agent.jar
+# itself is on that JVM's classpath, so org.objectweb.asm.* must be shaded
+# in rather than left as an external dependency.
+echo "[Builder] Merging ASM runtime classes into agent JAR…"
+( cd "$OUT_DIR" && jar xf "$ASM_JAR" && jar xf "$ASM_COMMONS" && rm -rf META-INF module-info.class )
+
 echo "[Builder] Packaging quark-agent.jar…"
 cd "$OUT_DIR"
 
