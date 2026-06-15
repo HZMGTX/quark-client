@@ -271,67 +271,92 @@ function tryJps() {
     });
 }
 
-function tryNativeScan() {
+// wmic was removed from recent Windows 11 builds, so it can no longer be
+// relied on as the only Windows process source — fall back to a PowerShell
+// CIM query (Get-CimInstance), which is available on all supported versions.
+function tryWmicProcesses() {
     return new Promise(resolve => {
-        const isWin = process.platform === 'win32';
-        const cmd   = isWin
-            ? 'wmic process where "name like \'%java%\'" get processid,commandline /format:csv'
-            : 'ps -eo pid,comm,args | grep -i java | grep -v grep';
-
-        exec(cmd, { maxBuffer: 8 * 1024 * 1024, timeout: 8000 }, (err, stdout) => {
-            if (err && !stdout) { resolve([]); return; }
+        exec('wmic process where "name like \'%java%\'" get processid,commandline /format:csv', { maxBuffer: 8 * 1024 * 1024, timeout: 8000 }, (err, stdout) => {
+            if (err || !stdout) { resolve(null); return; }
             const results = [];
-
-            if (isWin) {
-                for (const line of stdout.split('\n')) {
-                    const parts = line.split(',');
-                    if (parts.length < 2) continue;
-                    const pid  = parseInt(parts[parts.length - 1], 10);
-                    const args = parts.slice(1, -1).join(',');
-                    if (isNaN(pid)) continue;
-                    const isMC = isMinecraftProcess(args);
-                    if (!isMC && results.length > 10) continue;
-                    results.push({
-                        pid,
-                        name   : extractMainClass(args) || 'java',
-                        args,
-                        loader  : detectLoaderFromArgs(args),
-                        launcher: detectLauncherFromArgs(args),
-                        version : extractMcVersion(args),
-                        memory  : extractMemory(args),
-                        isMinecraft: isMC,
-                    });
-                }
-            } else {
-                for (const line of stdout.split('\n')) {
-                    const parts = line.trim().split(/\s+/);
-                    if (parts.length < 2) continue;
-                    const pid  = parseInt(parts[0], 10);
-                    if (isNaN(pid)) continue;
-                    const args = parts.slice(2).join(' ');
-                    const isMC = isMinecraftProcess(args);
-                    if (!isMC && results.length > 10) continue;
-                    results.push({
-                        pid,
-                        name   : extractMainClass(args) || 'java',
-                        args,
-                        loader  : detectLoaderFromArgs(args),
-                        launcher: detectLauncherFromArgs(args),
-                        version : extractMcVersion(args),
-                        memory  : extractMemory(args),
-                        isMinecraft: isMC,
-                    });
-                }
+            for (const line of stdout.split('\n')) {
+                const parts = line.split(',');
+                if (parts.length < 2) continue;
+                const pid  = parseInt(parts[parts.length - 1], 10);
+                if (isNaN(pid)) continue;
+                const args = parts.slice(1, -1).join(',');
+                results.push({ pid, args });
             }
-
-            // De-duplicate
-            const seen = new Set();
-            resolve(results.filter(r => {
-                if (seen.has(r.pid) || isNaN(r.pid)) return false;
-                seen.add(r.pid); return true;
-            }));
+            resolve(results.length > 0 ? results : null);
         });
     });
+}
+
+function tryPowershellProcesses() {
+    return new Promise(resolve => {
+        const script = "Get-CimInstance Win32_Process -Filter \"Name LIKE '%java%'\" | Select-Object ProcessId,CommandLine | ConvertTo-Json -Compress";
+        execFile('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', script], { maxBuffer: 8 * 1024 * 1024, timeout: 8000 }, (err, stdout) => {
+            if (err || !stdout || !stdout.trim()) { resolve(null); return; }
+            try {
+                let data = JSON.parse(stdout);
+                if (!Array.isArray(data)) data = [data];
+                const results = data
+                    .map(p => ({ pid: parseInt(p.ProcessId, 10), args: p.CommandLine || '' }))
+                    .filter(p => !isNaN(p.pid));
+                resolve(results.length > 0 ? results : null);
+            } catch (_) {
+                resolve(null);
+            }
+        });
+    });
+}
+
+function tryUnixProcesses() {
+    return new Promise(resolve => {
+        exec('ps -eo pid,args', { maxBuffer: 8 * 1024 * 1024, timeout: 8000 }, (err, stdout) => {
+            if (err || !stdout) { resolve(null); return; }
+            const results = [];
+            for (const line of stdout.split('\n')) {
+                const m = line.trim().match(/^(\d+)\s+(.*)$/);
+                if (!m) continue;
+                const args = m[2];
+                if (!/java/i.test(args)) continue;
+                results.push({ pid: parseInt(m[1], 10), args });
+            }
+            resolve(results.length > 0 ? results : null);
+        });
+    });
+}
+
+async function tryNativeScan() {
+    const isWin = process.platform === 'win32';
+    let rows;
+    if (isWin) {
+        rows = await tryWmicProcesses() || await tryPowershellProcesses();
+    } else {
+        rows = await tryUnixProcesses();
+    }
+    if (!rows) return [];
+
+    const results = [];
+    const seen = new Set();
+    for (const { pid, args } of rows) {
+        if (isNaN(pid) || seen.has(pid)) continue;
+        seen.add(pid);
+        const isMC = isMinecraftProcess(args);
+        if (!isMC && results.length > 10) continue;
+        results.push({
+            pid,
+            name   : extractMainClass(args) || 'java',
+            args,
+            loader  : detectLoaderFromArgs(args),
+            launcher: detectLauncherFromArgs(args),
+            version : extractMcVersion(args),
+            memory  : extractMemory(args),
+            isMinecraft: isMC,
+        });
+    }
+    return results;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
