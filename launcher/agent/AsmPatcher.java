@@ -21,6 +21,10 @@ public class AsmPatcher {
         ClassReader  cr = new ClassReader(bytes);
         ClassWriter  cw = new ClassWriter(cr, ClassWriter.COMPUTE_FRAMES | ClassWriter.COMPUTE_MAXS);
 
+        // Ensures only one render method per class receives the RENDER2D hook,
+        // so the overlay is drawn exactly once per frame.
+        final boolean[] render2dPatched = { false };
+
         cr.accept(new ClassVisitor(Opcodes.ASM9, cw) {
             @Override
             public MethodVisitor visitMethod(int access, String name, String descriptor,
@@ -28,7 +32,7 @@ public class AsmPatcher {
                 MethodVisitor mv = super.visitMethod(access, name, descriptor, signature, exceptions);
                 return switch (patchTarget) {
                     case "TICK"     -> maybeTickPatch(name, descriptor, access, mv);
-                    case "RENDER2D" -> maybeRender2DPatch(name, descriptor, access, mv);
+                    case "RENDER2D" -> maybeRender2DPatch(name, descriptor, access, mv, render2dPatched);
                     case "RENDER3D" -> maybeRender3DPatch(name, descriptor, access, mv);
                     case "PACKET"   -> maybePacketPatch(name, descriptor, access, mv);
                     case "KEY"      -> maybeKeyPatch(name, descriptor, access, mv);
@@ -67,30 +71,56 @@ public class AsmPatcher {
         };
     }
 
-    // ── Render2D: InGameHud.render(DrawContext/MatrixStack/GuiGraphics, float) ─
-    // 1.16-  MatrixStack arg  →  (Lnet/minecraft/class_4587;F)V  or  (Lnet/.../MatrixStack;F)V
-    // 1.17+  DrawContext arg  →  (Lnet/minecraft/client/gui/DrawContext;F)V
-    // 1.20+  GuiGraphics arg  →  (Lcom/mojang/blaze3d/vertex/PoseStack;F)V  (Forge)
+    // ── Render2D: InGameHud render method ─────────────────────────────────────
+    // The reliable, version-agnostic signal is the first parameter type, which is
+    // always the 2D draw surface, regardless of mapping or MC version:
+    //   1.20.2+  DrawContext   →  Lnet/minecraft/class_332;        (Fabric)
+    //                              Lnet/minecraft/client/gui/DrawContext;
+    //   Forge    GuiGraphics   →  Lnet/minecraft/client/gui/GuiGraphics;
+    //   ≤1.20.1  MatrixStack   →  Lnet/minecraft/class_4587;
+    // The second arg may be a float (≤1.20.1) or a RenderTickCounter object
+    // (1.21+), so we don't depend on it — we pass 0f as the delta.
+    //
+    // We hook the first matching method in the class (guarded) so the overlay is
+    // drawn exactly once per frame.
 
-    private static MethodVisitor maybeRender2DPatch(String name, String desc, int access, MethodVisitor mv) {
+    private static final java.util.Set<String> DRAW_SURFACE_TYPES = java.util.Set.of(
+        "net/minecraft/class_332",                  // DrawContext (intermediary)
+        "net/minecraft/client/gui/DrawContext",     // DrawContext (Yarn)
+        "net/minecraft/client/gui/GuiGraphics",     // GuiGraphics (Mojmap/Forge)
+        "net/minecraft/class_4587",                 // MatrixStack (intermediary, ≤1.20.1)
+        "com/mojang/blaze3d/vertex/PoseStack"       // PoseStack (Mojmap, ≤1.20.1)
+    );
+
+    private static MethodVisitor maybeRender2DPatch(String name, String desc, int access,
+                                                    MethodVisitor mv, boolean[] alreadyPatched) {
+        if (alreadyPatched[0]) return mv;
         if ((access & Opcodes.ACC_STATIC) != 0) return mv;
-        boolean nameOk = name.equals("render")
-                      || name.equals("func_73830_a")
-                      || name.equals("method_1722")
-                      || name.equals("m_168686_");
-        if (!nameOk) return mv;
-        if (!desc.endsWith(")V") || !desc.contains("F")) return mv;
-        // Must have exactly 2 params (Object + float)
-        if (!hasTwoParams(desc)) return mv;
+        if (!desc.endsWith(")V")) return mv;
 
+        String first = firstParamType(desc);
+        if (first == null || !DRAW_SURFACE_TYPES.contains(first)) return mv;
+
+        alreadyPatched[0] = true;
         return new AdviceAdapter(Opcodes.ASM9, mv, access, name, desc) {
             @Override
             protected void onMethodEnter() {
-                visitVarInsn(ALOAD, 1);   // DrawContext / MatrixStack
-                visitVarInsn(FLOAD, 2);   // tickDelta float
+                visitVarInsn(ALOAD, 1);   // the draw surface (DrawContext / GuiGraphics)
+                visitInsn(FCONST_0);      // delta = 0f (second arg type varies by version)
                 visitMethodInsn(INVOKESTATIC, HOOK, "onRender2D", "(Ljava/lang/Object;F)V", false);
             }
         };
+    }
+
+    /** Returns the internal name of the first object parameter, or null. */
+    private static String firstParamType(String desc) {
+        int open = desc.indexOf('(') + 1;
+        if (open <= 0 || open >= desc.length()) return null;
+        char c = desc.charAt(open);
+        if (c != 'L') return null;            // first param must be an object
+        int semi = desc.indexOf(';', open);
+        if (semi < 0) return null;
+        return desc.substring(open + 1, semi);
     }
 
     // ── Render3D: GameRenderer.renderWorld / renderLevel ────────────────────

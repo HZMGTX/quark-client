@@ -33,7 +33,7 @@ public class ClassTransformer implements ClassFileTransformer {
         // ── InGameHud / Gui ──────────────────────────────────────────────────
         m.put("net/minecraft/client/gui/hud/InGameHud",                  "RENDER2D");
         m.put("net/minecraft/client/gui/Gui",                            "RENDER2D"); // Forge
-        m.put("net/minecraft/class_1695",                                "RENDER2D"); // intermediary
+        m.put("net/minecraft/class_329",                                 "RENDER2D"); // intermediary 1.21.x
 
         // ── GameRenderer ─────────────────────────────────────────────────────
         m.put("net/minecraft/client/render/GameRenderer",                "RENDER3D");

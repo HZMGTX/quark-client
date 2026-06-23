@@ -60,10 +60,9 @@ public class ClassResolver {
     };
 
     private static final String[] INGAME_HUD_NAMES = {
-        "net.minecraft.client.gui.hud.InGameHud",
-        "net.minecraft.client.gui.Gui",
-        "net.minecraft.class_1695",
-        "net.minecraft.client.gui.components.BossHealthOverlay",
+        "net.minecraft.client.gui.hud.InGameHud",   // Fabric Yarn
+        "net.minecraft.client.gui.Gui",             // Forge Mojmap
+        "net.minecraft.class_329",                  // Fabric intermediary (1.21.x)
     };
 
     private static final String[] GAME_RENDERER_NAMES = {

@@ -53,6 +53,10 @@ public class Bootstrap {
 
                     MinecraftHook.setup(mcInstance, mcClassLoader);
 
+                    // Start the self-contained client (ClickGUI + HUD + modules).
+                    // Works in pure-injection mode without any Fabric mod present.
+                    StandaloneClient.init(mcInstance);
+
                     // Signal to user that injection worked
                     Thread.sleep(1500);
                     pingQuark(mcClassLoader);
