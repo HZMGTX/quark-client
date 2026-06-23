@@ -2,6 +2,8 @@ package cc.quark.agent;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Reflection helpers for talking to a live Minecraft from inside the agent,
@@ -129,6 +131,13 @@ public final class McReflect {
     public static final int KEY_RIGHT       = 262;
     public static final int KEY_ENTER       = 257;
     public static final int KEY_ESCAPE      = 256;
+    public static final int KEY_C           = 67;
+
+    public static final int MOUSE_LEFT  = 0;
+    public static final int MOUSE_RIGHT = 1;
+
+    private static Method glfwGetMouseButtonM;
+    private static Class<?> glfwClass;
 
     /** True while the given GLFW key is physically held down. */
     public static boolean keyDown(int key) {
@@ -136,15 +145,35 @@ public final class McReflect {
             long handle = window();
             if (handle == 0L) return false;
             if (glfwGetKeyM == null) {
-                Class<?> glfw = Class.forName("org.lwjgl.glfw.GLFW", false,
-                        mcInstance != null ? mcInstance.getClass().getClassLoader()
-                                           : Thread.currentThread().getContextClassLoader());
-                glfwGetKeyM = glfw.getMethod("glfwGetKey", long.class, int.class);
+                glfwGetKeyM = glfw().getMethod("glfwGetKey", long.class, int.class);
             }
             int state = (int) glfwGetKeyM.invoke(null, handle, key);
             return state == 1; // GLFW_PRESS
         } catch (Throwable ignored) {}
         return false;
+    }
+
+    /** True while the given GLFW mouse button (MOUSE_LEFT/MOUSE_RIGHT) is held down. */
+    public static boolean mouseDown(int button) {
+        try {
+            long handle = window();
+            if (handle == 0L) return false;
+            if (glfwGetMouseButtonM == null) {
+                glfwGetMouseButtonM = glfw().getMethod("glfwGetMouseButton", long.class, int.class);
+            }
+            int state = (int) glfwGetMouseButtonM.invoke(null, handle, button);
+            return state == 1; // GLFW_PRESS
+        } catch (Throwable ignored) {}
+        return false;
+    }
+
+    private static Class<?> glfw() throws ClassNotFoundException {
+        if (glfwClass == null) {
+            glfwClass = Class.forName("org.lwjgl.glfw.GLFW", false,
+                    mcInstance != null ? mcInstance.getClass().getClassLoader()
+                                       : Thread.currentThread().getContextClassLoader());
+        }
+        return glfwClass;
     }
 
     /** Current FPS, or null if it can't be resolved. */
@@ -159,6 +188,100 @@ public final class McReflect {
             if (getFpsM != null) return (Integer) getFpsM.invoke(mcInstance);
         } catch (Throwable ignored) {}
         return null;
+    }
+
+    // ── Player state ──────────────────────────────────────────────────────────
+
+    private static Field  playerF;
+    private static Method getXM, getYM, getZM;
+
+    /** [x, y, z] of the local player, or null if unresolved. */
+    public static double[] playerPos() {
+        try {
+            Object player = player();
+            if (player == null) return null;
+            if (getXM == null) getXM = findMethod(player.getClass(), new String[]{"getX", "method_23317"});
+            if (getYM == null) getYM = findMethod(player.getClass(), new String[]{"getY", "method_23318"});
+            if (getZM == null) getZM = findMethod(player.getClass(), new String[]{"getZ", "method_23321"});
+            if (getXM != null && getYM != null && getZM != null) {
+                return new double[]{
+                        ((Number) getXM.invoke(player)).doubleValue(),
+                        ((Number) getYM.invoke(player)).doubleValue(),
+                        ((Number) getZM.invoke(player)).doubleValue()
+                };
+            }
+            // Old Forge MCP (pre-1.13) exposed raw fields instead of accessor methods.
+            Field xf = findField(player.getClass(), "posX");
+            Field yf = findField(player.getClass(), "posY");
+            Field zf = findField(player.getClass(), "posZ");
+            if (xf != null && yf != null && zf != null) {
+                return new double[]{ xf.getDouble(player), yf.getDouble(player), zf.getDouble(player) };
+            }
+        } catch (Throwable ignored) {}
+        return null;
+    }
+
+    private static Object player() {
+        if (mcInstance == null) return null;
+        try {
+            if (playerF == null) playerF = findField(mcInstance.getClass(), "player", "field_1724", "f_91074_");
+            return playerF != null ? playerF.get(mcInstance) : null;
+        } catch (Throwable ignored) { return null; }
+    }
+
+    // ── Game options (best effort — names vary most across versions here) ─────
+
+    private static Field gameOptionsF;
+    private static final Map<String, Field> optionFieldCache = new HashMap<>();
+
+    /** Brightness slider value (0.0-1.0 in vanilla), or null if unresolved. */
+    public static Double getGamma() { return getOptionValue("gamma"); }
+    public static void   setGamma(double v) { setOptionValue("gamma", v); }
+
+    /** Field of view value, or null if unresolved. */
+    public static Double getFov() { return getOptionValue("fov"); }
+    public static void   setFov(double v) { setOptionValue("fov", v); }
+
+    private static Object gameOptions() {
+        if (mcInstance == null) return null;
+        try {
+            if (gameOptionsF == null) gameOptionsF = findField(mcInstance.getClass(), "options", "field_1690", "f_91066_");
+            return gameOptionsF != null ? gameOptionsF.get(mcInstance) : null;
+        } catch (Throwable ignored) { return null; }
+    }
+
+    /** Reads a SimpleOption<Double>/OptionInstance<Double>-style settings field by name. */
+    private static Double getOptionValue(String fieldName) {
+        try {
+            Object options = gameOptions();
+            if (options == null) return null;
+            Field f = optionFieldCache.computeIfAbsent(fieldName, n -> findField(options.getClass(), n));
+            if (f == null) return null;
+            Object opt = f.get(options);
+            if (opt == null) return null;
+            for (String m : new String[]{"getValue", "get", "value"}) {
+                try {
+                    Object v = opt.getClass().getMethod(m).invoke(opt);
+                    if (v instanceof Number) return ((Number) v).doubleValue();
+                } catch (NoSuchMethodException ignored) {}
+            }
+        } catch (Throwable ignored) {}
+        return null;
+    }
+
+    private static void setOptionValue(String fieldName, double value) {
+        try {
+            Object options = gameOptions();
+            if (options == null) return;
+            Field f = optionFieldCache.computeIfAbsent(fieldName, n -> findField(options.getClass(), n));
+            if (f == null) return;
+            Object opt = f.get(options);
+            if (opt == null) return;
+            Method setter = findMethodByShape(opt.getClass(), new String[]{"setValue", "set"}, 1, Object.class);
+            if (setter == null) return;
+            try { setter.invoke(opt, value); return; } catch (Throwable ignored) {}
+            try { setter.invoke(opt, (int) Math.round(value)); } catch (Throwable ignored) {}
+        } catch (Throwable ignored) {}
     }
 
     // ── Internal resolution ───────────────────────────────────────────────────

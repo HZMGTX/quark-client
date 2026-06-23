@@ -8,30 +8,31 @@ import java.util.Map;
 /**
  * Self-contained Quark client that runs purely from the injected agent —
  * no Fabric mod, no mods folder. Provides a keyboard-driven ClickGUI plus
- * a HUD (watermark + module list), rendered with McReflect against the live
- * Minecraft DrawContext.
+ * a HUD (watermark, module list, keystrokes, coordinates) and persistent
+ * module config, rendered with McReflect against the live Minecraft
+ * DrawContext.
  *
  * Right-Shift toggles the menu. Arrow keys navigate, Enter toggles a module.
  *
- * Modules are Lunar/Feather-style quality-of-life and visual features. Combat
- * and movement entries are presentation toggles only — the agent does not ship
- * functional combat automation.
+ * Modules are Lunar/Feather-style quality-of-life and cosmetic features.
+ * Combat and movement entries are presentation toggles only — the agent
+ * does not ship functional combat automation. FullBright, Zoom, Keystrokes,
+ * Coordinates, the watermark and the module list are fully functional.
  */
 public final class StandaloneClient {
 
     private StandaloneClient() {}
 
     // ── Theme (ARGB) ──────────────────────────────────────────────────────────
-    private static final int ACCENT      = 0xFF8A5CF6;
-    private static final int ACCENT_DARK = 0xFF6D28D9;
-    private static final int BG          = 0xE6101019;
-    private static final int PANEL       = 0xF01A1A28;
-    private static final int HEADER      = 0xFF8A5CF6;
-    private static final int ROW         = 0xFF14141F;
-    private static final int ROW_SEL     = 0xFF24243A;
-    private static final int TEXT        = 0xFFFFFFFF;
-    private static final int TEXT_DIM    = 0xFF9090A0;
-    private static final int TEXT_ON     = 0xFFB794F6;
+    private static final int ACCENT      = 0xFF22D3EE;
+    private static final int ACCENT_DARK = 0xFF0E7490;
+    private static final int HEADER_BG   = 0xFF12161F;
+    private static final int PANEL       = 0xF00B0E14;
+    private static final int ROW         = 0xFF161B22;
+    private static final int ROW_SEL     = 0xFF1F2733;
+    private static final int TEXT        = 0xFFE6EDF3;
+    private static final int TEXT_DIM    = 0xFF7D8590;
+    private static final int TEXT_ON     = 0xFF67E8F9;
 
     // ── Module model ──────────────────────────────────────────────────────────
     public static final class Module {
@@ -44,13 +45,36 @@ public final class StandaloneClient {
     private static final Map<String, List<Module>> CATEGORIES = new LinkedHashMap<>();
     private static final List<String> CAT_NAMES = new ArrayList<>();
 
+    // Already have their own dedicated HUD widget, so they're left out of the generic module list.
+    private static final java.util.Set<String> SELF_RENDERING = java.util.Set.of(
+            "Watermark", "ModuleList", "FPS", "Keystrokes", "Coordinates");
+
     private static boolean guiOpen = false;
     private static int catIndex = 0;
     private static int modIndex = 0;
     private static boolean built = false;
 
-    // edge-detection state
     private static final Map<Integer, Boolean> prevKey = new LinkedHashMap<>();
+
+    private static float guiAnim = 0f;
+    private static long lastFrameNanos = 0L;
+    private static int leftHudY = 4;
+
+    private static Double savedGamma;
+    private static boolean prevFullBright = false;
+    private static Double savedFov;
+
+    private static boolean prevMouseLeft = false;
+    private static int cps = 0;
+    private static final List<Long> leftClickTimes = new ArrayList<>();
+
+    private static final class Toast {
+        final String text; final long start;
+        Toast(String t) { text = t; start = System.currentTimeMillis(); }
+    }
+    private static final List<Toast> TOASTS = new ArrayList<>();
+    private static final long TOAST_LIFETIME_MS = 2600;
+    private static final long TOAST_FADE_MS     = 500;
 
     // ── Init ──────────────────────────────────────────────────────────────────
 
@@ -59,9 +83,10 @@ public final class StandaloneClient {
         built = true;
         McReflect.bind(mc);
         buildModules();
+        applyConfig();
 
-        // Render every HUD frame.
         MinecraftHook.addRender2DListener(StandaloneClient::onRender);
+        toast("QUARK ready — Right-Shift to open");
         System.out.println("[Quark Client] Standalone client ready — press Right-Shift in game to open the menu.");
     }
 
@@ -79,8 +104,8 @@ public final class StandaloneClient {
         add("Movement", "Flight",        "Visual toggle");
         add("Movement", "Step",          "Visual toggle");
 
-        add("Render",   "FullBright",    "Visual toggle");
-        add("Render",   "Zoom",          "Hold to zoom");
+        add("Render",   "FullBright",    "Maxes out brightness while held on");
+        add("Render",   "Zoom",          "Hold C to zoom in");
         add("Render",   "MotionBlur",    "Visual toggle");
         add("Render",   "ViewModel",     "Visual toggle");
         add("Render",   "Ambiance",      "Visual toggle");
@@ -88,18 +113,39 @@ public final class StandaloneClient {
 
         add("HUD",      "Watermark",     "Quark logo + FPS", true);
         add("HUD",      "ModuleList",    "Active module list", true);
-        add("HUD",      "FPS",           "FPS counter");
-        add("HUD",      "Keystrokes",    "Visual toggle");
+        add("HUD",      "FPS",           "Standalone FPS counter");
+        add("HUD",      "Keystrokes",    "WASD + mouse click indicator");
+        add("HUD",      "Coordinates",   "Live player XYZ position");
         add("HUD",      "ArmorStatus",   "Visual toggle");
-        add("HUD",      "Coordinates",   "Visual toggle");
+        add("HUD",      "Ping",          "Visual toggle");
+        add("HUD",      "PotionEffects", "Visual toggle");
+        add("HUD",      "Scoreboard",    "Visual toggle");
+        add("HUD",      "TimeDisplay",   "Visual toggle");
 
         add("Player",   "AutoRespawn",   "Visual toggle");
         add("Player",   "FastUse",       "Visual toggle");
         add("Player",   "FreeLook",      "Visual toggle");
+        add("Player",   "InventoryPeek", "Visual toggle");
+        add("Player",   "AutoTool",      "Visual toggle");
 
         add("Misc",     "DiscordRPC",    "Visual toggle");
         add("Misc",     "FpsBoost",      "Visual toggle");
         add("Misc",     "ClickGui",      "This menu");
+        add("Misc",     "ConfigManager", "Autosaves your settings", true);
+        add("Misc",     "Notifications", "Toast pop-ups for toggles", true);
+        add("Misc",     "Cosmetics",     "Visual toggle");
+
+        add("Chat",     "AntiSpam",      "Visual toggle");
+        add("Chat",     "MessageFormatting", "Visual toggle");
+        add("Chat",     "ChatBackground", "Visual toggle");
+
+        add("Sound",    "MuteHurtSound", "Visual toggle");
+        add("Sound",    "MuteThunder",   "Visual toggle");
+        add("Sound",    "CustomMusic",   "Visual toggle");
+
+        add("Utility",  "AutoGG",        "Visual toggle");
+        add("Utility",  "ItemSwitcher",  "Visual toggle");
+        add("Utility",  "Macros",        "Visual toggle");
     }
 
     private static void add(String cat, String name, String desc) { add(cat, name, desc, false); }
@@ -112,17 +158,88 @@ public final class StandaloneClient {
 
     private static List<Module> current() { return CATEGORIES.get(CAT_NAMES.get(catIndex)); }
 
+    // ── Config persistence ───────────────────────────────────────────────────
+
+    private static void applyConfig() {
+        Map<String, Boolean> saved = QuarkConfig.load();
+        if (saved.isEmpty()) return;
+        for (Map.Entry<String, List<Module>> e : CATEGORIES.entrySet())
+            for (Module m : e.getValue()) {
+                Boolean v = saved.get(e.getKey() + "." + m.name);
+                if (v != null) m.enabled = v;
+            }
+    }
+
+    private static void persist() {
+        if (!isEnabled("Misc", "ConfigManager")) return;
+        Map<String, Boolean> states = new LinkedHashMap<>();
+        for (Map.Entry<String, List<Module>> e : CATEGORIES.entrySet())
+            for (Module m : e.getValue())
+                states.put(e.getKey() + "." + m.name, m.enabled);
+        QuarkConfig.save(states);
+    }
+
     // ── Per-frame ─────────────────────────────────────────────────────────────
 
     private static void onRender(Object ctx, float delta) {
         try {
+            long now = System.nanoTime();
+            float dt = lastFrameNanos == 0 ? 0.016f : Math.min(0.05f, (now - lastFrameNanos) / 1_000_000_000f);
+            lastFrameNanos = now;
+
             handleInput();
-            if (isEnabled("HUD", "Watermark"))   drawWatermark(ctx);
-            if (isEnabled("HUD", "ModuleList"))  drawModuleList(ctx);
-            if (guiOpen)                          drawGui(ctx);
+            updateFullBright();
+            updateZoom();
+
+            float target = guiOpen ? 1f : 0f;
+            guiAnim += (target - guiAnim) * Math.min(1f, dt * 12f);
+            if (Math.abs(target - guiAnim) < 0.002f) guiAnim = target;
+
+            leftHudY = 4;
+            if (isEnabled("HUD", "Watermark"))      drawWatermark(ctx);
+            else if (isEnabled("HUD", "FPS"))       drawFpsCounter(ctx);
+            if (isEnabled("HUD", "Coordinates"))    drawCoordinates(ctx);
+            if (isEnabled("HUD", "Keystrokes"))     drawKeystrokes(ctx);
+            if (isEnabled("HUD", "ModuleList"))     drawModuleList(ctx);
+            drawToasts(ctx);
+            if (guiAnim > 0.01f) drawGui(ctx, guiAnim);
         } catch (Throwable t) {
             // Never crash the render thread.
         }
+    }
+
+    // ── Functional modules ───────────────────────────────────────────────────
+
+    private static void updateFullBright() {
+        boolean on = isEnabled("Render", "FullBright");
+        if (on && !prevFullBright) {
+            Double g = McReflect.getGamma();
+            if (g != null) { savedGamma = g; McReflect.setGamma(1.0); }
+        } else if (!on && prevFullBright && savedGamma != null) {
+            McReflect.setGamma(savedGamma);
+            savedGamma = null;
+        }
+        prevFullBright = on;
+    }
+
+    private static void updateZoom() {
+        boolean holding = isEnabled("Render", "Zoom") && McReflect.keyDown(McReflect.KEY_C);
+        if (holding && savedFov == null) {
+            Double f = McReflect.getFov();
+            if (f != null) { savedFov = f; McReflect.setFov(Math.max(10, f / 4)); }
+        } else if (!holding && savedFov != null) {
+            McReflect.setFov(savedFov);
+            savedFov = null;
+        }
+    }
+
+    private static void updateCps() {
+        boolean down = McReflect.mouseDown(McReflect.MOUSE_LEFT);
+        long now = System.currentTimeMillis();
+        if (down && !prevMouseLeft) leftClickTimes.add(now);
+        prevMouseLeft = down;
+        leftClickTimes.removeIf(t -> now - t > 1000);
+        cps = leftClickTimes.size();
     }
 
     // ── Input (rising-edge detection on GLFW key state) ───────────────────────
@@ -147,6 +264,8 @@ public final class StandaloneClient {
             Module m = current().get(modIndex);
             m.enabled = !m.enabled;
             System.out.println("[Quark Client] " + m.name + " -> " + (m.enabled ? "ON" : "OFF"));
+            toast(m.name + (m.enabled ? " enabled" : " disabled"));
+            persist();
         }
     }
 
@@ -160,21 +279,73 @@ public final class StandaloneClient {
 
     // ── HUD ───────────────────────────────────────────────────────────────────
 
+    private static int nextLeftSlot(int height) {
+        int y = leftHudY;
+        leftHudY += height + 2;
+        return y;
+    }
+
     private static void drawWatermark(Object ctx) {
-        String label = "Quark";
+        String label = "QUARK";
         String fps = fpsString();
-        int x = 4, y = 4;
-        McReflect.fill(ctx, x, y, x + 6 + McReflect.textWidth(label) + (fps.isEmpty() ? 0 : McReflect.textWidth(fps) + 8) + 6, y + 14, BG);
-        McReflect.fill(ctx, x, y, x + 2, y + 14, ACCENT);
+        int x = 4, y = nextLeftSlot(14);
+        int w = McReflect.textWidth(label) + (fps.isEmpty() ? 0 : McReflect.textWidth(fps) + 8) + 12;
+        McReflect.fill(ctx, x, y, x + w, y + 14, PANEL);
+        float pulse = 0.6f + 0.4f * (float) Math.sin(System.currentTimeMillis() / 600.0);
+        McReflect.fill(ctx, x, y, x + 2, y + 14, withAlpha(ACCENT, pulse));
         McReflect.text(ctx, label, x + 6, y + 3, ACCENT);
         if (!fps.isEmpty()) McReflect.text(ctx, fps, x + 6 + McReflect.textWidth(label) + 8, y + 3, TEXT_DIM);
+    }
+
+    private static void drawFpsCounter(Object ctx) {
+        String fps = fpsString();
+        if (fps.isEmpty()) return;
+        int x = 4, y = nextLeftSlot(12);
+        McReflect.fill(ctx, x, y, x + McReflect.textWidth(fps) + 8, y + 12, PANEL);
+        McReflect.text(ctx, fps, x + 4, y + 2, ACCENT);
+    }
+
+    private static void drawCoordinates(Object ctx) {
+        double[] pos = McReflect.playerPos();
+        if (pos == null) return;
+        String s = String.format("%.1f, %.1f, %.1f", pos[0], pos[1], pos[2]);
+        int x = 4, y = nextLeftSlot(12);
+        McReflect.fill(ctx, x, y, x + McReflect.textWidth(s) + 8, y + 12, PANEL);
+        McReflect.text(ctx, s, x + 4, y + 2, TEXT);
+    }
+
+    private static void drawKeystrokes(Object ctx) {
+        updateCps();
+        int sw = McReflect.screenWidth(ctx);
+        int sh = McReflect.screenHeight(ctx);
+        int cell = 18, gap = 2;
+        int cx = sw / 2;
+        int baseY = sh - 84;
+
+        String cpsText = cps + " CPS";
+        McReflect.text(ctx, cpsText, cx - McReflect.textWidth(cpsText) / 2, baseY - 12, TEXT_DIM);
+
+        drawKey(ctx, cx - cell - gap, baseY, cell, "W", McReflect.keyDown(87));
+        drawKey(ctx, cx - cell - gap, baseY + cell + gap, cell, "A", McReflect.keyDown(65));
+        drawKey(ctx, cx, baseY + cell + gap, cell, "S", McReflect.keyDown(83));
+        drawKey(ctx, cx + cell + gap, baseY + cell + gap, cell, "D", McReflect.keyDown(68));
+
+        int mx = cx + 2 * (cell + gap) + 8;
+        drawKey(ctx, mx, baseY, cell, "L", McReflect.mouseDown(McReflect.MOUSE_LEFT));
+        drawKey(ctx, mx, baseY + cell + gap, cell, "R", McReflect.mouseDown(McReflect.MOUSE_RIGHT));
+    }
+
+    private static void drawKey(Object ctx, int x, int y, int size, String label, boolean down) {
+        McReflect.fill(ctx, x, y, x + size, y + size, down ? ACCENT_DARK : PANEL);
+        McReflect.outline(ctx, x, y, x + size, y + size, down ? ACCENT : ROW);
+        McReflect.text(ctx, label, x + size / 2 - McReflect.textWidth(label) / 2, y + size / 2 - 4, down ? TEXT : TEXT_DIM);
     }
 
     private static void drawModuleList(Object ctx) {
         List<String> active = new ArrayList<>();
         for (List<Module> mods : CATEGORIES.values())
             for (Module m : mods)
-                if (m.enabled && !m.name.equals("Watermark") && !m.name.equals("ModuleList")) active.add(m.name);
+                if (m.enabled && !SELF_RENDERING.contains(m.name)) active.add(m.name);
         active.sort((a, b) -> McReflect.textWidth(b) - McReflect.textWidth(a));
 
         int sw = McReflect.screenWidth(ctx);
@@ -182,74 +353,115 @@ public final class StandaloneClient {
         for (String name : active) {
             int w = McReflect.textWidth(name);
             int x = sw - w - 6;
-            McReflect.fill(ctx, x - 2, y, sw, y + 11, BG);
+            McReflect.fill(ctx, x - 2, y, sw, y + 11, PANEL);
             McReflect.fill(ctx, sw - 1, y, sw, y + 11, ACCENT);
             McReflect.text(ctx, name, x, y + 2, TEXT);
             y += 12;
         }
     }
 
-    // ── ClickGUI ──────────────────────────────────────────────────────────────
+    private static void drawToasts(Object ctx) {
+        if (TOASTS.isEmpty()) return;
+        long now = System.currentTimeMillis();
+        TOASTS.removeIf(t -> now - t.start > TOAST_LIFETIME_MS);
 
-    private static void drawGui(Object ctx) {
+        int sh = McReflect.screenHeight(ctx);
+        int y = sh - 24;
+        for (int i = TOASTS.size() - 1; i >= 0; i--) {
+            Toast t = TOASTS.get(i);
+            long age = now - t.start;
+            float alpha = age > TOAST_LIFETIME_MS - TOAST_FADE_MS
+                    ? (TOAST_LIFETIME_MS - age) / (float) TOAST_FADE_MS : 1f;
+            alpha = clamp01(alpha);
+            int w = McReflect.textWidth(t.text) + 16;
+            int x = 6;
+            McReflect.fill(ctx, x, y, x + w, y + 14, withAlpha(PANEL, alpha));
+            McReflect.fill(ctx, x, y, x + 2, y + 14, withAlpha(ACCENT, alpha));
+            McReflect.text(ctx, t.text, x + 8, y + 3, withAlpha(TEXT, alpha));
+            y -= 16;
+        }
+    }
+
+    private static void toast(String text) {
+        if (!isEnabled("Misc", "Notifications")) return;
+        TOASTS.add(new Toast(text));
+        while (TOASTS.size() > 5) TOASTS.remove(0);
+    }
+
+    // ── ClickGUI (sidebar layout) ────────────────────────────────────────────
+
+    private static void drawGui(Object ctx, float anim) {
         int sw = McReflect.screenWidth(ctx);
         int sh = McReflect.screenHeight(ctx);
 
-        int panelW = 320;
-        int panelH = 230;
+        int panelW = 380, panelH = 264;
         int px = (sw - panelW) / 2;
-        int py = (sh - panelH) / 2;
+        int py = (sh - panelH) / 2 + (int) ((1f - anim) * 18f);
 
-        // dim background
-        McReflect.fill(ctx, 0, 0, sw, sh, 0x70000000);
+        McReflect.fill(ctx, 0, 0, sw, sh, withAlpha(0x99000000, anim));
+        McReflect.fill(ctx, px, py, px + panelW, py + panelH, withAlpha(PANEL, anim));
+        McReflect.outline(ctx, px, py, px + panelW, py + panelH, withAlpha(ACCENT_DARK, anim));
 
-        // panel
-        McReflect.fill(ctx, px, py, px + panelW, py + panelH, BG);
-        McReflect.outline(ctx, px, py, px + panelW, py + panelH, ACCENT);
+        int headerH = 22;
+        McReflect.fill(ctx, px, py, px + panelW, py + headerH, withAlpha(HEADER_BG, anim));
+        McReflect.text(ctx, "QUARK", px + 10, py + 7, withAlpha(ACCENT, anim));
+        String tag = "CLIENT";
+        McReflect.text(ctx, tag, px + 10 + McReflect.textWidth("QUARK") + 6, py + 7, withAlpha(TEXT_DIM, anim));
+        String fps = fpsString();
+        if (!fps.isEmpty()) McReflect.text(ctx, fps, px + panelW - McReflect.textWidth(fps) - 10, py + 7, withAlpha(TEXT_DIM, anim));
+        McReflect.fill(ctx, px, py + headerH, px + panelW, py + headerH + 1, withAlpha(ACCENT_DARK, anim));
 
-        // title bar
-        McReflect.fill(ctx, px, py, px + panelW, py + 20, PANEL);
-        McReflect.text(ctx, "QUARK  ·  Ghost Client", px + 8, py + 6, ACCENT);
-        String hint = "←→ category   ↑↓ module   ⏎ toggle   RShift close";
-        McReflect.text(ctx, hint, px + panelW - McReflect.textWidth(hint) - 8, py + 6, TEXT_DIM);
+        int sidebarW = 108;
+        int footerH = 32;
+        int bodyY = py + headerH + 1;
+        int bodyH = panelH - headerH - 1 - footerH;
 
-        // category tabs
-        int tabY = py + 22;
-        int tabX = px + 4;
+        int catY = bodyY + 4;
+        int catRowH = 18;
         for (int i = 0; i < CAT_NAMES.size(); i++) {
             String c = CAT_NAMES.get(i);
-            int w = McReflect.textWidth(c) + 12;
             boolean sel = i == catIndex;
-            McReflect.fill(ctx, tabX, tabY, tabX + w, tabY + 16, sel ? ACCENT_DARK : ROW);
-            if (sel) McReflect.fill(ctx, tabX, tabY + 15, tabX + w, tabY + 16, ACCENT);
-            McReflect.text(ctx, c, tabX + 6, tabY + 4, sel ? TEXT : TEXT_DIM);
-            tabX += w + 3;
+            if (sel) {
+                McReflect.fill(ctx, px + 2, catY, px + 4, catY + catRowH, withAlpha(ACCENT, anim));
+                McReflect.fill(ctx, px + 4, catY, px + sidebarW, catY + catRowH, withAlpha(ROW_SEL, anim));
+            }
+            McReflect.text(ctx, c, px + 10, catY + 5, withAlpha(sel ? TEXT : TEXT_DIM, anim));
+            int count = countEnabled(c);
+            if (count > 0) {
+                String badge = String.valueOf(count);
+                McReflect.text(ctx, badge, px + sidebarW - McReflect.textWidth(badge) - 6, catY + 5,
+                        withAlpha(sel ? ACCENT : TEXT_DIM, anim));
+            }
+            catY += catRowH;
         }
 
-        // module rows
+        McReflect.fill(ctx, px + sidebarW, bodyY, px + sidebarW + 1, bodyY + bodyH, withAlpha(ACCENT_DARK, anim));
+
         List<Module> mods = current();
-        int rowY = tabY + 22;
+        int colX = px + sidebarW + 6;
+        int colW = panelW - sidebarW - 10;
         int rowH = 16;
-        int maxRows = (py + panelH - rowY - 6) / rowH;
+        int maxRows = bodyH / rowH;
         int start = Math.max(0, Math.min(modIndex - maxRows / 2, Math.max(0, mods.size() - maxRows)));
 
         for (int i = start; i < mods.size() && i < start + maxRows; i++) {
             Module m = mods.get(i);
-            int ry = rowY + (i - start) * rowH;
+            int ry = bodyY + (i - start) * rowH;
             boolean sel = i == modIndex;
-            McReflect.fill(ctx, px + 4, ry, px + panelW - 4, ry + rowH - 2, sel ? ROW_SEL : ROW);
-            if (sel) McReflect.fill(ctx, px + 4, ry, px + 6, ry + rowH - 2, ACCENT);
-            McReflect.text(ctx, m.name, px + 12, ry + 4, m.enabled ? TEXT_ON : TEXT);
-
+            McReflect.fill(ctx, colX, ry + 1, colX + colW, ry + rowH - 1, withAlpha(sel ? ROW_SEL : ROW, anim));
+            if (sel) McReflect.fill(ctx, colX, ry + 1, colX + 2, ry + rowH - 1, withAlpha(ACCENT, anim));
+            McReflect.text(ctx, m.name, colX + 8, ry + 4, withAlpha(m.enabled ? TEXT_ON : TEXT, anim));
             String state = m.enabled ? "ON" : "OFF";
-            int stateColor = m.enabled ? ACCENT : TEXT_DIM;
-            McReflect.text(ctx, state, px + panelW - McReflect.textWidth(state) - 12, ry + 4, stateColor);
+            McReflect.text(ctx, state, colX + colW - McReflect.textWidth(state) - 8, ry + 4,
+                    withAlpha(m.enabled ? ACCENT : TEXT_DIM, anim));
         }
 
-        // footer: selected module description
+        int footerY = py + panelH - footerH;
+        McReflect.fill(ctx, px, footerY, px + panelW, py + panelH, withAlpha(HEADER_BG, anim));
         Module selMod = mods.get(modIndex);
-        McReflect.fill(ctx, px, py + panelH - 14, px + panelW, py + panelH, PANEL);
-        McReflect.text(ctx, selMod.name + " — " + selMod.description, px + 8, py + panelH - 11, TEXT_DIM);
+        McReflect.text(ctx, selMod.name + " — " + selMod.description, px + 10, footerY + 5, withAlpha(TEXT_DIM, anim));
+        String hint = "←→ Cat   ↑↓ Mod   Enter Toggle   Shift Close";
+        McReflect.text(ctx, hint, px + 10, footerY + 17, withAlpha(TEXT_DIM, anim));
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
@@ -261,8 +473,21 @@ public final class StandaloneClient {
         return false;
     }
 
+    private static int countEnabled(String cat) {
+        int n = 0;
+        for (Module m : CATEGORIES.get(cat)) if (m.enabled) n++;
+        return n;
+    }
+
     private static String fpsString() {
         Integer fps = McReflect.fps();
         return fps == null ? "" : (fps + " FPS");
     }
+
+    private static int withAlpha(int argb, float alpha) {
+        int a = (int) (((argb >>> 24) & 0xFF) * clamp01(alpha));
+        return (a << 24) | (argb & 0x00FFFFFF);
+    }
+
+    private static float clamp01(float v) { return v < 0 ? 0 : (v > 1 ? 1 : v); }
 }
