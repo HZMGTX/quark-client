@@ -1,24 +1,34 @@
 'use strict';
 
 // The real injected-client module catalog — mirrors launcher/agent/StandaloneClient.java.
+// Boolean values reflect each module's actual default-enabled state from buildModules().
 const MODULES = {
-  Render: ['FullBright', 'Zoom'],
-  HUD: ['Watermark', 'ModuleList', 'FPS', 'FpsGraph', 'Keystrokes', 'CPS', 'Coordinates',
-        'ArmorStatus', 'Ping', 'Direction', 'Clock', 'Health', 'Hunger',
-        'Speed', 'HeldItem', 'ServerIP', 'GameTime', 'Memory', 'SessionInfo'],
-  Misc: ['ClickGui', 'ConfigManager', 'Notifications'],
+  Render: { FullBright: false, Zoom: false },
+  HUD: {
+    Watermark: true, ModuleList: true, FPS: false, FpsGraph: false, Keystrokes: true,
+    CPS: false, Coordinates: true, ArmorStatus: false, Ping: false, Direction: false,
+    Clock: false, Health: false, Hunger: false, Speed: false, HeldItem: false,
+    ServerIP: false, GameTime: false, Memory: false, SessionInfo: false,
+  },
+  Misc: { ClickGui: true, ConfigManager: true, Notifications: true },
 };
 
 function renderModules() {
   const host = document.getElementById('module-cols');
   if (!host) return;
-  host.innerHTML = Object.entries(MODULES).map(([cat, mods]) => `
-    <div class="module-col">
-      <h3>${cat} · ${mods.length}</h3>
-      <div class="chips">
-        ${mods.map(m => `<span class="chip">${m}</span>`).join('')}
-      </div>
-    </div>`).join('');
+  host.innerHTML = Object.entries(MODULES).map(([cat, mods]) => {
+    const names = Object.keys(mods);
+    const rows = names.map(name => `
+      <div class="module-row">
+        <span>${name}</span>
+        <span class="toggle ${mods[name] ? 'on' : ''}" title="${mods[name] ? 'On by default' : 'Off by default'}"></span>
+      </div>`).join('');
+    return `
+      <div class="module-col">
+        <h3>${cat}<span>${names.length}</span></h3>
+        ${rows}
+      </div>`;
+  }).join('');
 }
 
 function onScroll() {
