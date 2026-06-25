@@ -3,7 +3,7 @@
 // The real injected-client module catalog — mirrors launcher/agent/StandaloneClient.java.
 const MODULES = {
   Render: ['FullBright', 'Zoom'],
-  HUD: ['Watermark', 'ModuleList', 'FPS', 'Keystrokes', 'CPS', 'Coordinates',
+  HUD: ['Watermark', 'ModuleList', 'FPS', 'FpsGraph', 'Keystrokes', 'CPS', 'Coordinates',
         'ArmorStatus', 'Ping', 'Direction', 'Clock', 'Health', 'Hunger',
         'Speed', 'HeldItem', 'ServerIP', 'GameTime', 'Memory', 'SessionInfo'],
   Misc: ['ClickGui', 'ConfigManager', 'Notifications'],

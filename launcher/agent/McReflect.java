@@ -182,6 +182,7 @@ public final class McReflect {
     public static final int KEY_ENTER       = 257;
     public static final int KEY_ESCAPE      = 256;
     public static final int KEY_C           = 67;
+    public static final int KEY_T           = 84;
     public static final int KEY_LEFT_BRACKET  = 91;
     public static final int KEY_RIGHT_BRACKET = 93;
 
