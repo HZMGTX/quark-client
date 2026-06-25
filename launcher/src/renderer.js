@@ -15,6 +15,9 @@ let activeAlt    = null;   // name of the account selected for the next launch
 let profiles     = [];
 let servers      = [];
 let keybinds     = {};
+let sponsorAds   = [];     // user-managed ad inventory (Settings → Sponsors & Ads)
+let adStats      = {};     // { adId: { impressions, clicks } } — local only
+let adRotation   = 0;
 let pageCleanup  = null;
 let sessionStats = {
     injectCount   : 0,
@@ -68,6 +71,85 @@ const CLIENT_CONTROLS = {
     'Resize the UI': '[ / ]',
     'Hold to zoom': 'C',
 };
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Sponsors / Ads
+//
+// A simple, honest ad slot. The launcher owner fills their own inventory in
+// Settings → Sponsors & Ads (or sells the slot to a sponsor). Each banner is
+// clearly labelled "Sponsored", links open in the system browser, and local
+// impression/click counts are kept so the owner has real numbers to bill on.
+// No tracking pixels, popups, redirects or third-party scripts.
+// ─────────────────────────────────────────────────────────────────────────────
+
+// Shown when no sponsor is configured — a house ad that points at the editor.
+const HOUSE_AD = {
+    id: '__house', sponsored: false,
+    title: 'Advertise here',
+    body: 'This slot is yours. Add a sponsor in Settings → Sponsors & Ads to monetise the launcher.',
+    cta: 'Set up', url: '', img: '',
+};
+
+function activeAds() {
+    return sponsorAds.filter(a => a && a.title);
+}
+
+function pickAd() {
+    const ads = activeAds();
+    if (!ads.length) return HOUSE_AD;
+    const ad = ads[adRotation % ads.length];
+    adRotation++;
+    return ad;
+}
+
+function recordAd(field, ad) {
+    if (!ad || ad.id === '__house') return;
+    const s = adStats[ad.id] || { impressions: 0, clicks: 0 };
+    s[field] = (s[field] || 0) + 1;
+    adStats[ad.id] = s;
+    quark.settingsSet('adStats', adStats);
+}
+
+// Renders one ad banner into the element with the given id (call after innerHTML).
+function mountAd(containerId) {
+    const host = document.getElementById(containerId);
+    if (!host) return;
+    const ad = pickAd();
+    const sponsored = ad.id !== '__house';
+    const safeUrl = typeof ad.url === 'string' && /^https:\/\//i.test(ad.url) ? ad.url : '';
+    host.innerHTML = `
+      <div class="ad-banner${safeUrl ? ' clickable' : ''}">
+        <span class="ad-tag">${sponsored ? 'Sponsored' : 'Ad'}</span>
+        ${ad.img && /^https:\/\//i.test(ad.img)
+            ? `<img class="ad-img" src="${escapeHtml(ad.img)}" alt="" onerror="this.style.display='none'">` : ''}
+        <div class="ad-body">
+          <div class="ad-title">${escapeHtml(ad.title || '')}</div>
+          ${ad.body ? `<div class="ad-text">${escapeHtml(ad.body)}</div>` : ''}
+        </div>
+        ${ad.cta ? `<button class="btn btn-primary btn-sm ad-cta">${escapeHtml(ad.cta)}</button>` : ''}
+      </div>`;
+    recordAd('impressions', ad);
+
+    const go = () => {
+        if (ad.id === '__house') { navigateTo('settings'); return; }
+        if (!safeUrl) return;
+        recordAd('clicks', ad);
+        quark.openExternal(safeUrl);
+    };
+    const banner = host.querySelector('.ad-banner');
+    const cta = host.querySelector('.ad-cta');
+    if (cta) cta.addEventListener('click', e => { e.stopPropagation(); go(); });
+    if (banner && (safeUrl || ad.id === '__house')) banner.addEventListener('click', go);
+}
+
+function adStatsSummary() {
+    const ids = Object.keys(adStats);
+    if (!ids.length) return 'No ad activity yet.';
+    let imp = 0, clk = 0;
+    for (const id of ids) { imp += adStats[id].impressions || 0; clk += adStats[id].clicks || 0; }
+    const ctr = imp ? ((clk / imp) * 100).toFixed(1) : '0.0';
+    return `Lifetime: ${imp.toLocaleString()} impressions · ${clk.toLocaleString()} clicks · ${ctr}% CTR`;
+}
 
 function getRole(user) {
     if (!user || user.guest) return 'User';
@@ -126,6 +208,8 @@ window.addEventListener('DOMContentLoaded', async () => {
     profiles      = (await quark.settingsGet('profiles')) || defaultProfiles();
     servers       = (await quark.settingsGet('servers'))  || defaultServers();
     keybinds      = (await quark.settingsGet('keybinds')) || {};
+    sponsorAds    = (await quark.settingsGet('ads'))      || [];
+    adStats       = (await quark.settingsGet('adStats'))  || {};
     sessionStats  = (await quark.settingsGet('stats'))    || sessionStats;
     sessionStats.sessionStart = Date.now();
 
@@ -381,6 +465,8 @@ function home() {
         <p>Quark — pure JVM injection, ${TOTAL_MODULES} real modules, no files installed</p>
       </div>
 
+      <div id="home-ad" style="margin-bottom:16px"></div>
+
       <div class="grid-4" style="margin-bottom:16px">
         <div class="stat-card">
           <div class="stat-label">Total Modules</div>
@@ -452,6 +538,8 @@ function home() {
         </div>
       </div>`;
 
+    mountAd('home-ad');
+
     document.querySelectorAll('[data-nav]').forEach(btn => {
         btn.addEventListener('click', () => navigateTo(btn.dataset.nav));
     });
@@ -506,10 +594,10 @@ function news() {
             desc: `${TOTAL_MODULES} real modules that all run in game via pure JVM agent injection — FullBright, Zoom and a full live HUD (coordinates, armour, ping, speed, health, hunger, held item, server IP, in-game time, memory and more). No files installed, no mods folder.`,
         },
         {
-            icon: '📊', tags: ['feature'],
-            title: 'Live Stats Dashboard',
+            icon: '💾', tags: ['feature'],
+            title: 'Config Backup & Profiles',
             date: 'June 2025',
-            desc: 'An optional, opt-in telemetry dashboard (the website/ folder) tracks real launcher and in-game activity — module toggles, sessions and injects — with no usernames, tokens or IPs ever sent. Point it at your own server URL in Settings → Stats & Analytics.',
+            desc: 'Export and import your full setup — settings, profiles, alts and saved servers — to a single JSON file, and switch between profiles for different servers. Everything is stored locally on your machine.',
         },
         {
             icon: '⚡', tags: ['feature'],
@@ -1318,7 +1406,6 @@ function renderAlts() {
             const sub = document.getElementById('alt-active-sub');
             if (sub) sub.textContent = 'Active account: ' + activeAlt;
             notify(`"${a.name}" set as active account for next launch`, 'success');
-            quark.statsReport('alt_switch', {});
         });
     });
     list.querySelectorAll('[data-alt-del]').forEach(b => {
@@ -1396,7 +1483,6 @@ async function chat() {
                 case 'welcome':
                     setChatStatus(`● ${m.online} online`, 'var(--success)');
                     addChatMsg('System', 'Connected to Quark Global Chat. Be respectful.', true);
-                    quark.statsReport('chat_connect', {});
                     break;
                 case 'presence':
                     setChatStatus(`● ${m.online} online`, 'var(--success)');
@@ -1487,7 +1573,6 @@ function changelog() {
             { text: `${TOTAL_MODULES} real modules — every one runs in game`, fix: false },
             { text: 'Expanded in-game HUD: speed, health, hunger, held item, server IP, game time, memory, session info', fix: false },
             { text: 'Pure JVM agent injection — no JAR/mods needed', fix: false },
-            { text: 'Optional opt-in stats dashboard (website/) — no usernames, tokens or IPs sent', fix: false },
             { text: 'System tray, auto-inject, live process monitoring', fix: false },
             { text: 'Server manager with live MC ping protocol', fix: false },
             { text: 'Replaced the fake keybind editor with an honest Controls reference', fix: true },
@@ -1711,13 +1796,21 @@ async function settings() {
           </div>
 
           <div class="card">
-            <div class="card-title">Stats &amp; Analytics</div>
-            <div class="form-row">
-              <div class="form-label">Stats Server URL</div>
-              <input class="form-input" id="cfg-stats-url" placeholder="http://localhost:8788" value="${escapeHtml(cfg.statsServerUrl || '')}" autocomplete="off">
-              <div class="form-hint">Host the dashboard in <strong>website/server</strong> (see its README). Reports anonymous launch/inject/module events under a random id — no usernames or IPs. Leave blank to disable.</div>
+            <div class="card-title">Sponsors &amp; Ads</div>
+            <p style="font-size:11px;color:var(--muted);margin-bottom:8px">
+              Fill the ad slot on the Home page with your own sponsors and earn from them. One JSON
+              object per ad: <code>title</code> (required), optional <code>body</code>, <code>cta</code>,
+              <code>url</code> and <code>img</code> (both must be <code>https://</code>). Leave empty to
+              show a house placeholder.
+            </p>
+            <textarea class="form-input" id="cfg-ads" rows="7" spellcheck="false"
+              style="font-family:monospace;font-size:11px;resize:vertical"
+              placeholder='[{"title":"My Sponsor","body":"Great gaming gear","cta":"Shop","url":"https://example.com","img":"https://example.com/banner.png"}]'>${escapeHtml(JSON.stringify(sponsorAds, null, 2))}</textarea>
+            <div id="ads-stat-summary" style="font-size:10px;color:var(--muted);margin:8px 0">${adStatsSummary()}</div>
+            <div style="display:flex;gap:8px">
+              <button class="btn btn-primary btn-sm" id="btn-save-ads">Save Ads</button>
+              <button class="btn btn-secondary btn-sm" id="btn-reset-adstats">Reset Stats</button>
             </div>
-            <button class="btn btn-secondary btn-sm" id="btn-save-stats">Save Stats Config</button>
           </div>
 
           <div class="card">
@@ -1814,14 +1907,49 @@ async function settings() {
         notify(url ? 'Chat relay saved — reopen Global Chat to connect' : 'Global Chat disabled', 'success');
     });
 
-    document.getElementById('btn-save-stats')?.addEventListener('click', async () => {
-        let url = document.getElementById('cfg-stats-url').value.trim();
-        if (url && !/^https?:\/\//i.test(url)) {
-            notify('Stats Server URL must start with http:// or https://', 'warn');
-            return;
+    document.getElementById('btn-save-ads')?.addEventListener('click', async () => {
+        const raw = document.getElementById('cfg-ads').value.trim();
+        let parsed;
+        if (!raw) { parsed = []; }
+        else {
+            try { parsed = JSON.parse(raw); }
+            catch (_) { notify('Ads must be valid JSON (an array of ad objects)', 'error'); return; }
         }
-        await quark.settingsSet('statsServerUrl', url);
-        notify(url ? 'Stats reporting enabled' : 'Stats reporting disabled', 'success');
+        if (!Array.isArray(parsed)) { notify('Ads JSON must be an array', 'error'); return; }
+
+        const clean = [];
+        for (const a of parsed) {
+            if (!a || typeof a !== 'object' || !a.title) {
+                notify('Every ad needs at least a "title"', 'warn'); return;
+            }
+            if (a.url && !/^https:\/\//i.test(a.url)) {
+                notify(`Ad "${a.title}": url must start with https://`, 'warn'); return;
+            }
+            if (a.img && !/^https:\/\//i.test(a.img)) {
+                notify(`Ad "${a.title}": img must start with https://`, 'warn'); return;
+            }
+            clean.push({
+                id   : String(a.id || a.title).slice(0, 64),
+                title: String(a.title).slice(0, 80),
+                body : a.body ? String(a.body).slice(0, 200) : '',
+                cta  : a.cta  ? String(a.cta).slice(0, 24)  : '',
+                url  : a.url  || '',
+                img  : a.img  || '',
+                sponsored: true,
+            });
+        }
+        sponsorAds = clean;
+        adRotation = 0;
+        await quark.settingsSet('ads', sponsorAds);
+        notify(clean.length ? `${clean.length} ad${clean.length === 1 ? '' : 's'} saved` : 'Ads cleared — showing house placeholder', 'success');
+    });
+
+    document.getElementById('btn-reset-adstats')?.addEventListener('click', async () => {
+        adStats = {};
+        await quark.settingsSet('adStats', adStats);
+        const summary = document.getElementById('ads-stat-summary');
+        if (summary) summary.textContent = adStatsSummary();
+        notify('Ad stats reset', 'info');
     });
 
     document.getElementById('btn-export-config')?.addEventListener('click', async () => {
