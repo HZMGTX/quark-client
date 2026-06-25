@@ -447,6 +447,144 @@ public final class McReflect {
         return null;
     }
 
+    // ── More live read-only state (additional HUD widgets) ─────────────────────
+
+    private static Method getHealthM, getMaxHealthM;
+
+    /** Local player health (half-hearts; 20.0 = full), or null if unresolved. */
+    public static Float getHealth() {
+        try {
+            Object player = player();
+            if (player == null) return null;
+            if (getHealthM == null) getHealthM = findMethod(player.getClass(), new String[]{"getHealth", "method_6032", "m_21223_"});
+            if (getHealthM != null) {
+                Object v = getHealthM.invoke(player);
+                if (v instanceof Number) return ((Number) v).floatValue();
+            }
+        } catch (Throwable ignored) {}
+        return null;
+    }
+
+    /** Local player max health, or null if unresolved. */
+    public static Float getMaxHealth() {
+        try {
+            Object player = player();
+            if (player == null) return null;
+            if (getMaxHealthM == null) getMaxHealthM = findMethod(player.getClass(), new String[]{"getMaxHealth", "method_6063", "m_21233_"});
+            if (getMaxHealthM != null) {
+                Object v = getMaxHealthM.invoke(player);
+                if (v instanceof Number) return ((Number) v).floatValue();
+            }
+        } catch (Throwable ignored) {}
+        return null;
+    }
+
+    private static Method getHungerManagerM, getFoodLevelM;
+
+    /** Local player food level (0-20), or null if unresolved. */
+    public static Integer getFood() {
+        try {
+            Object player = player();
+            if (player == null) return null;
+            if (getHungerManagerM == null)
+                getHungerManagerM = findMethod(player.getClass(), new String[]{"getHungerManager", "method_7344", "m_36324_"});
+            Object hunger = getHungerManagerM != null ? getHungerManagerM.invoke(player) : null;
+            if (hunger == null) return null;
+            if (getFoodLevelM == null)
+                getFoodLevelM = findMethod(hunger.getClass(), new String[]{"getFoodLevel", "method_7586", "m_38702_"});
+            if (getFoodLevelM != null) {
+                Object v = getFoodLevelM.invoke(hunger);
+                if (v instanceof Number) return ((Number) v).intValue();
+            }
+        } catch (Throwable ignored) {}
+        return null;
+    }
+
+    private static Method getMainHandStackM, getCountM;
+
+    /** Held main-hand item as "Name xN" (durability omitted), or null if empty/unresolved. */
+    public static String getHeldItem() {
+        try {
+            Object player = player();
+            if (player == null) return null;
+            if (getMainHandStackM == null)
+                getMainHandStackM = findMethod(player.getClass(), new String[]{"getMainHandStack", "method_6047", "m_21205_"});
+            Object stack = getMainHandStackM != null ? getMainHandStackM.invoke(player) : null;
+            if (stack == null) return null;
+            if (isEmptyM == null)
+                isEmptyM = findMethod(stack.getClass(), new String[]{"isEmpty", "method_7960", "m_41619_"});
+            if (isEmptyM != null && Boolean.TRUE.equals(isEmptyM.invoke(stack))) return null;
+            String name = stackName(stack);
+            if (name == null) return null;
+            if (getCountM == null)
+                getCountM = findMethod(stack.getClass(), new String[]{"getCount", "method_7947", "m_41613_"});
+            int count = getCountM != null ? ((Number) getCountM.invoke(stack)).intValue() : 1;
+            return count > 1 ? name + " x" + count : name;
+        } catch (Throwable ignored) {}
+        return null;
+    }
+
+    private static Method getCurrentServerEntryM;
+    private static Field serverAddressF;
+
+    /** Address of the server the player is connected to, or null if singleplayer/unresolved. */
+    public static String getServerAddress() {
+        try {
+            if (mcInstance == null) return null;
+            if (getCurrentServerEntryM == null)
+                getCurrentServerEntryM = findMethod(mcInstance.getClass(), new String[]{"getCurrentServerEntry", "method_1558", "m_91089_"});
+            Object entry = getCurrentServerEntryM != null ? getCurrentServerEntryM.invoke(mcInstance) : null;
+            if (entry == null) return null;
+            if (serverAddressF == null)
+                serverAddressF = findField(entry.getClass(), "address", "field_3761", "f_44890_");
+            if (serverAddressF != null) {
+                Object v = serverAddressF.get(entry);
+                if (v != null) return v.toString();
+            }
+        } catch (Throwable ignored) {}
+        return null;
+    }
+
+    private static Field worldF;
+    private static Method getTimeOfDayM;
+
+    /** In-game time of day (0-23999 within the current day), or null if no world. */
+    public static Long getTimeOfDay() {
+        try {
+            if (mcInstance == null) return null;
+            if (worldF == null) worldF = findField(mcInstance.getClass(), "world", "field_1687", "f_91073_");
+            Object world = worldF != null ? worldF.get(mcInstance) : null;
+            if (world == null) return null;
+            if (getTimeOfDayM == null)
+                getTimeOfDayM = findMethod(world.getClass(), new String[]{"getTimeOfDay", "method_8532", "m_46468_"});
+            if (getTimeOfDayM != null) {
+                Object v = getTimeOfDayM.invoke(world);
+                if (v instanceof Number) return ((Number) v).longValue();
+            }
+        } catch (Throwable ignored) {}
+        return null;
+    }
+
+    private static Method getSessionM, getUsernameM;
+
+    /** Local player's own username (from the game session), or null if unresolved. */
+    public static String getUsername() {
+        try {
+            if (mcInstance == null) return null;
+            if (getSessionM == null)
+                getSessionM = findMethod(mcInstance.getClass(), new String[]{"getSession", "method_1548", "m_91094_"});
+            Object session = getSessionM != null ? getSessionM.invoke(mcInstance) : null;
+            if (session == null) return null;
+            if (getUsernameM == null)
+                getUsernameM = findMethod(session.getClass(), new String[]{"getUsername", "method_1676", "m_92546_"});
+            if (getUsernameM != null) {
+                Object v = getUsernameM.invoke(session);
+                if (v != null) return v.toString();
+            }
+        } catch (Throwable ignored) {}
+        return null;
+    }
+
     // ── Internal resolution ───────────────────────────────────────────────────
 
     private static Object textRenderer() {

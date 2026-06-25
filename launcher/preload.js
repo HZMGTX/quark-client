@@ -43,9 +43,6 @@ contextBridge.exposeInMainWorld('quark', {
     configExport    : ()          => ipcRenderer.invoke('config:export'),
     configImport    : ()          => ipcRenderer.invoke('config:import'),
 
-    // Stats / telemetry (opt-in — no-op unless a Stats Server URL is configured)
-    statsReport     : (type, payload) => ipcRenderer.invoke('stats:report', type, payload),
-
     // Push events from main → renderer
     onInjectLog      : (cb)  => ipcRenderer.on('inject:log',         (_e, d)    => cb(d)),
     onAutoDetected   : (cb)  => ipcRenderer.on('inject:autoDetected',(_e, proc) => cb(proc)),

@@ -6,7 +6,6 @@ const https   = require('https');
 const net     = require('net');
 const fs      = require('fs');
 const os      = require('os');
-const crypto  = require('crypto');
 const { exec, execFile, spawn } = require('child_process');
 const Store   = require('./store');
 
@@ -23,52 +22,6 @@ const store = new Store('config');
 const REDIRECT_URI   = 'http://localhost:3847/callback';
 const DISCORD_SCOPES = 'identify';
 const APP_VERSION    = app.getVersion();
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Stats / telemetry — opt-in, off unless a Stats Server URL is configured.
-// ─────────────────────────────────────────────────────────────────────────────
-
-const QUARK_DIR          = path.join(os.homedir(), '.quark');
-const STATS_CONFIG_FILE  = path.join(QUARK_DIR, 'stats.properties');
-
-function statsClientId() {
-    let id = store.get('statsClientId', '');
-    if (!id) {
-        id = crypto.randomUUID();
-        store.set('statsClientId', id);
-    }
-    return id;
-}
-
-// Mirrors the launcher's Stats Server URL into a tiny properties file the
-// Java agent can read on its own, so module-toggle telemetry from in-game
-// reaches the same dashboard under the same anonymous client id.
-function syncStatsConfigFile() {
-    const url = (store.get('statsServerUrl', '') || '').trim();
-    try {
-        if (!url) {
-            if (fs.existsSync(STATS_CONFIG_FILE)) fs.unlinkSync(STATS_CONFIG_FILE);
-            return;
-        }
-        fs.mkdirSync(QUARK_DIR, { recursive: true });
-        fs.writeFileSync(STATS_CONFIG_FILE, `url=${url}\nclientId=${statsClientId()}\n`, 'utf8');
-    } catch (_) {}
-}
-
-async function reportEvent(type, payload) {
-    const url = (store.get('statsServerUrl', '') || '').trim();
-    if (!url) return;
-    try {
-        await fetch(url.replace(/\/+$/, '') + '/api/event', {
-            method : 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body   : JSON.stringify({ source: 'launcher', type, clientId: statsClientId(), payload: payload || null }),
-            signal : AbortSignal.timeout(4000),
-        });
-    } catch (_) {
-        // Best-effort only — telemetry must never affect the launcher's own behaviour.
-    }
-}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Window
@@ -156,8 +109,6 @@ function createTray() {
 app.whenReady().then(() => {
     createWindow();
     try { createTray(); } catch (_) {}
-    syncStatsConfigFile();
-    reportEvent('launcher_start', { version: APP_VERSION, platform: process.platform });
     app.on('activate', () => {
         if (BrowserWindow.getAllWindows().length === 0) createWindow();
     });
@@ -185,12 +136,7 @@ ipcMain.handle('app:version',     () => APP_VERSION);
 // ─────────────────────────────────────────────────────────────────────────────
 
 ipcMain.handle('settings:get',    (_e, key)      => store.get(key));
-ipcMain.handle('settings:set',    (_e, key, val) => {
-    store.set(key, val);
-    if (key === 'statsServerUrl') syncStatsConfigFile();
-    return true;
-});
-ipcMain.handle('stats:report',    (_e, type, payload) => { reportEvent(type, payload); return true; });
+ipcMain.handle('settings:set',    (_e, key, val) => { store.set(key, val); return true; });
 ipcMain.handle('settings:getAll', ()             => store.store);
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -205,7 +151,6 @@ ipcMain.handle('config:export', async () => {
     });
     if (!filePath) return false;
     fs.writeFileSync(filePath, JSON.stringify(store.store, null, 2), 'utf8');
-    reportEvent('config_export', {});
     return true;
 });
 
@@ -219,7 +164,6 @@ ipcMain.handle('config:import', async () => {
     try {
         const data = JSON.parse(fs.readFileSync(filePaths[0], 'utf8'));
         for (const [k, v] of Object.entries(data)) store.set(k, v);
-        reportEvent('config_import', {});
         return true;
     } catch (_) { return false; }
 });
@@ -286,7 +230,6 @@ ipcMain.handle('discord:login', async () => {
                 res.writeHead(200);
                 res.end(callbackHtml('Logged in!', `Welcome, <strong>${user.username}</strong>. You can close this tab.`, '#A855F7'));
                 clearTimeout(timeout); server.close();
-                reportEvent('discord_login', {});
                 resolve(user);
             } catch (err) {
                 clearTimeout(timeout); try { server.close(); } catch (_) {}
@@ -300,7 +243,6 @@ ipcMain.handle('discord:login', async () => {
 
 ipcMain.handle('discord:logout', () => {
     store.delete('user'); store.delete('accessToken');
-    reportEvent('discord_logout', {});
     return true;
 });
 
@@ -507,7 +449,6 @@ ipcMain.handle('inject:run', async (_e, pid) => {
         proc.on('close', code => {
             if (code === 0 || stdout.includes('[SUCCESS]')) {
                 autoInjectedPids.add(pid);
-                reportEvent('inject_success', { method: 'jvm-attach' });
                 resolve({ success: true, pid, method: 'jvm-attach' });
             } else {
                 tryJattach(pid, agentJar, resolve, reject, stderr);
@@ -538,7 +479,6 @@ function tryJattach(pid, agentJar, resolve, reject, prevErr) {
             if (!err) {
                 autoInjectedPids.add(pid);
                 sendLog('[jattach] Attach successful');
-                reportEvent('inject_success', { method: 'jattach' });
                 resolve({ success: true, pid, method: 'jattach' });
             } else {
                 tryNext(i + 1);
@@ -557,7 +497,6 @@ function fallbackModsInstall(resolve, reject, prevErr) {
         const modJar = resolveModJar();
         if (!modJar) {
             sendLog('[Quark] No Fabric mod JAR found in build/libs. Build it with ./gradlew build first.', 'error');
-            reportEvent('inject_failure', { stage: 'mods-install', reason: 'no-mod-jar' });
             reject(new Error('All injection methods failed. Details: ' + prevErr.slice(0, 300)));
             return;
         }
@@ -567,14 +506,12 @@ function fallbackModsInstall(resolve, reject, prevErr) {
             const dest = path.join(modsDir, path.basename(modJar));
             fs.copyFileSync(modJar, dest);
             sendLog('[Quark] Mod JAR copied to mods folder. Restart Minecraft.', 'warn');
-            reportEvent('inject_success', { method: 'mods-install' });
             resolve({ success: true, pid: 0, method: 'mods-install', requiresRestart: true });
             return;
         }
     } catch (e) {
         sendLog('[Quark] Mods install failed: ' + e.message, 'error');
     }
-    reportEvent('inject_failure', { stage: 'mods-install', reason: 'no-mods-folder' });
     reject(new Error('All injection methods failed. Details: ' + prevErr.slice(0, 300)));
 }
 
@@ -681,7 +618,7 @@ ipcMain.handle('java:list', async () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 ipcMain.handle('server:ping', (_e, host, port = 25565) => {
-    const pinged = new Promise(resolve => {
+    return new Promise(resolve => {
         const start  = Date.now();
         const socket = new net.Socket();
         let   data   = Buffer.alloc(0);
@@ -726,10 +663,6 @@ ipcMain.handle('server:ping', (_e, host, port = 25565) => {
                 });
             } catch (_) {}
         });
-    });
-    return pinged.then(result => {
-        reportEvent('server_ping', { online: result.online });
-        return result;
     });
 });
 
