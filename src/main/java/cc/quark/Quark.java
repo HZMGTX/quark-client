@@ -114,9 +114,23 @@ public class Quark implements ModInitializer, ClientModInitializer {
     // GUI
     // -------------------------------------------------------------------------
 
+    private static boolean authenticated = false;
+
+    public static void setAuthenticated(boolean auth) {
+        authenticated = auth;
+    }
+
+    public static boolean isAuthenticated() {
+        return authenticated;
+    }
+
     private void openGui(MinecraftClient mc) {
         if (mc.currentScreen == null) {
-            mc.setScreen(new cc.quark.gui.ClickGUI());
+            if (!authenticated) {
+                mc.setScreen(new cc.quark.gui.DiscordLoginScreen());
+            } else {
+                mc.setScreen(new cc.quark.gui.ClickGUI());
+            }
         } else {
             mc.setScreen(null);
         }

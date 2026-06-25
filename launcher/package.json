@@ -1,0 +1,101 @@
+{
+  "name": "quark-launcher",
+  "version": "2.0.0",
+  "description": "Quark Ghost Client launcher — pure JVM injection for all Minecraft launchers",
+  "main": "main.js",
+  "homepage": "https://github.com/HZMGTX/quark-client",
+  "author": {
+    "name": "Quark.cc",
+    "email": "support@quark.cc"
+  },
+  "license": "MIT",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder",
+    "build": "electron-builder",
+    "build:win": "electron-builder --win",
+    "build:win:portable": "electron-builder --win portable",
+    "build:win:nsis": "electron-builder --win nsis",
+    "build:linux": "electron-builder --linux",
+    "build:mac": "electron-builder --mac",
+    "pack": "electron-builder --dir"
+  },
+  "devDependencies": {
+    "electron": "^28.3.3",
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "beforeBuild": "./scripts/build-agent.js",
+    "appId": "cc.quark.launcher",
+    "productName": "Quark Launcher",
+    "copyright": "Copyright © 2025 Quark.cc",
+    "directories": {
+      "output": "dist",
+      "buildResources": "assets"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "store.js",
+      "src/**/*",
+      "assets/**/*",
+      "!**/*.map"
+    ],
+    "extraResources": [
+      {
+        "from": "agent",
+        "to": "agent",
+        "filter": [
+          "**/*.jar",
+          "**/*.sh",
+          "**/*.bat"
+        ]
+      }
+    ],
+    "win": {
+      "icon": "assets/icon.ico",
+      "artifactName": "${productName}-${version}-${arch}.${ext}",
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Quark Launcher",
+      "installerIcon": "assets/icon.ico",
+      "uninstallerIcon": "assets/icon.ico",
+      "installerHeaderIcon": "assets/icon.ico"
+    },
+    "portable": {
+      "artifactName": "${productName}-${version}-portable.exe"
+    },
+    "linux": {
+      "icon": "assets/icon.png",
+      "category": "Game",
+      "target": [
+        "AppImage",
+        "deb"
+      ]
+    },
+    "mac": {
+      "icon": "assets/icon.png",
+      "category": "public.app-category.games",
+      "target": "dmg"
+    }
+  }
+}

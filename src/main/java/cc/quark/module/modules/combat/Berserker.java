@@ -25,7 +25,7 @@ public class Berserker extends Module {
     public Berserker() {
         super("Berserker", "Increases attack speed as your health decreases", Category.COMBAT);
         try {
-            for (Field f : PlayerEntity.class.getDeclaredFields()) {
+            for (Field f : net.minecraft.entity.player.PlayerEntity.class.getDeclaredFields()) {
                 f.setAccessible(true);
                 if (f.getType() == int.class) {
                     lastAttackedTicksField = f;
@@ -33,7 +33,7 @@ public class Berserker extends Module {
             }
         } catch (Exception ignored) {}
         try {
-            Field f = PlayerEntity.class.getDeclaredField("lastAttackedTicks");
+            Field f = net.minecraft.entity.player.PlayerEntity.class.getDeclaredField("lastAttackedTicks");
             f.setAccessible(true);
             lastAttackedTicksField = f;
         } catch (NoSuchFieldException ignored) {}
@@ -80,7 +80,7 @@ public class Berserker extends Module {
         for (Entity entity : mc.world.getEntities()) {
             if (entity == mc.player) continue;
             if (!(entity instanceof LivingEntity living)) continue;
-            if (living.isDead() || living.getHealth() <= 0f) continue;
+            if (living.isRemoved() || living.getHealth() <= 0f) continue;
             double dist = mc.player.distanceTo(entity);
             if (dist > range.get()) continue;
             if (dist < bestDist) {

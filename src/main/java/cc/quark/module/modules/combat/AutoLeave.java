@@ -49,7 +49,7 @@ public class AutoLeave extends Module {
             }
             case "Pause" -> mc.setScreen(new net.minecraft.client.gui.screen.GameMenuScreen(true));
             case "Respawn" -> {
-                if (mc.player.isDead() && mc.getNetworkHandler() != null) {
+                if (mc.player.isRemoved() && mc.getNetworkHandler() != null) {
                     mc.getNetworkHandler().sendPacket(new net.minecraft.network.packet.c2s.play.ClientStatusC2SPacket(
                             net.minecraft.network.packet.c2s.play.ClientStatusC2SPacket.Mode.PERFORM_RESPAWN));
                 }

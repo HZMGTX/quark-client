@@ -1,0 +1,8 @@
+-source
+21
+-target
+21
+--class-path
+/dev/null
+-proc:none
+/home/user/Minecraft-Hack-Client/src/main/java/cc/quark/module/modules/misc/GlobalChat.java

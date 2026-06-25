@@ -73,7 +73,7 @@ public class AutoCrystal extends Module {
 
     @Override
     public String getSuffix() {
-        if (cachedTarget != null && !cachedTarget.isDead() && cachedTarget.getHealth() > 0) {
+        if (cachedTarget != null && !cachedTarget.isRemoved() && cachedTarget.getHealth() > 0) {
             return "[" + cachedTarget.getGameProfile().getName() + "]";
         }
         return "";
@@ -324,7 +324,7 @@ public class AutoCrystal extends Module {
         for (Entity e : mc.world.getEntities()) {
             if (!(e instanceof PlayerEntity p)) continue;
             if (p == mc.player) continue;
-            if (p.isDead() || p.getHealth() <= 0) continue;
+            if (p.isRemoved() || p.getHealth() <= 0) continue;
 
             double d = EntityUtil.distanceTo(p);
             if (d > placeRange.get() + 4) continue;

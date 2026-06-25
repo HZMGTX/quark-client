@@ -48,7 +48,7 @@ public class GapAura extends Module {
         for (net.minecraft.entity.Entity e : mc.world.getEntities()) {
             if (e == mc.player) continue;
             if (!(e instanceof LivingEntity living)) continue;
-            if (living.isDead()) continue;
+            if (living.isRemoved()) continue;
             if (living instanceof PlayerEntity) continue;
             if (mc.player.distanceTo(e) <= 6.0) {
                 enemyNearby = true;

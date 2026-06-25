@@ -27,11 +27,11 @@ public class AntiVelocity2 extends Module {
     public void onPacketReceive(EventPacketReceive event) {
         if (mc.player == null) return;
         if (!(event.getPacket() instanceof EntityVelocityUpdateS2CPacket packet)) return;
-        if (packet.getId() != mc.player.getId()) return;
+        if (packet.getEntityId() != mc.player.getId()) return;
 
         // Retrieve the velocity values from the packet via reflection since they are final
         // We cancel the packet and manually apply scaled velocity instead
-        event.setCancelled(true);
+        event.cancel();
 
         double vx = (packet.getVelocityX() / 8000.0) * horizontalFactor.get();
         double vy = (packet.getVelocityY() / 8000.0) * verticalFactor.get();

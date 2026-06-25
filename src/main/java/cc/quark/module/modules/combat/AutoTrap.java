@@ -108,7 +108,7 @@ public class AutoTrap extends Module {
             if (entity == mc.player) continue;
             if (!(entity instanceof PlayerEntity)) continue;
             if (entity instanceof LivingEntity living) {
-                if (living.isDead() || living.getHealth() <= 0) continue;
+                if (living.isRemoved() || living.getHealth() <= 0) continue;
                 double dist = mc.player.distanceTo(living);
                 if (dist <= maxRange && dist < closestDist) {
                     closestDist = dist;

@@ -154,7 +154,7 @@ public class AnchorAura extends Module {
         for (net.minecraft.entity.Entity entity : mc.world.getEntities()) {
             if (!(entity instanceof PlayerEntity player)) continue;
             if (player == mc.player) continue;
-            if (player.isDead() || player.getHealth() <= 0) continue;
+            if (player.isRemoved() || player.getHealth() <= 0) continue;
             double dist = mc.player.distanceTo(player);
             if (dist <= range.get() && dist < nearestDist) {
                 nearestDist = dist;

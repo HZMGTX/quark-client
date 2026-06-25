@@ -85,9 +85,9 @@ public class AutoCook extends Module {
     }
 
     private boolean isRawFood(Item item) {
-        return item == Items.RAW_BEEF || item == Items.RAW_CHICKEN || item == Items.RAW_PORKCHOP
-                || item == Items.RAW_MUTTON || item == Items.RAW_RABBIT
-                || item == Items.RAW_SALMON || item == Items.RAW_COD || item == Items.POTATO;
+        return item == Items.BEEF || item == Items.CHICKEN || item == Items.PORKCHOP
+                || item == Items.MUTTON || item == Items.RABBIT
+                || item == Items.SALMON || item == Items.COD || item == Items.POTATO;
     }
 
     private boolean isFuel(Item item) {

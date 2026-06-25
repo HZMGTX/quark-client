@@ -11,7 +11,7 @@ import cc.quark.util.DamageUtil;
 import cc.quark.util.TimerUtil;
 import net.minecraft.block.BedBlock;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.BedItem;
+import net.minecraft.item.BlockItem;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.Hand;
 import net.minecraft.util.hit.BlockHitResult;
@@ -129,7 +129,7 @@ public class BedAura extends Module {
         for (net.minecraft.entity.Entity entity : mc.world.getEntities()) {
             if (!(entity instanceof PlayerEntity player)) continue;
             if (player == mc.player) continue;
-            if (player.isDead() || player.getHealth() <= 0) continue;
+            if (player.isRemoved() || player.getHealth() <= 0) continue;
             double dist = mc.player.distanceTo(player);
             if (dist <= range.get() && dist < nearestDist) {
                 nearestDist = dist;
@@ -143,7 +143,7 @@ public class BedAura extends Module {
         if (mc.player == null) return -1;
         for (int i = 0; i < 9; i++) {
             ItemStack stack = mc.player.getInventory().getStack(i);
-            if (stack.getItem() instanceof BedItem) return i;
+            if (stack.getItem() instanceof BlockItem __bi && __bi.getBlock() instanceof BedBlock) return i;
         }
         return -1;
     }

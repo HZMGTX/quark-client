@@ -84,7 +84,7 @@ public class CrossbowAimbot extends Module {
         for (Entity entity : mc.world.getEntities()) {
             if (!(entity instanceof PlayerEntity p)) continue;
             if (p == mc.player) continue;
-            if (p.isDead() || p.getHealth() <= 0f) continue;
+            if (p.isRemoved() || p.getHealth() <= 0f) continue;
             if (Quark.getInstance() != null
                     && Quark.getInstance().getFriendManager().isFriend(p.getGameProfile().getName())) continue;
             double d = mc.player.distanceTo(p);

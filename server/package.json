@@ -1,0 +1,16 @@
+{
+  "name": "quark-chat-server",
+  "version": "1.0.0",
+  "description": "Quark.cc global chat relay server",
+  "main": "chat-server.js",
+  "scripts": {
+    "start": "node chat-server.js",
+    "dev": "NODE_ENV=development node chat-server.js"
+  },
+  "dependencies": {
+    "ws": "^8.17.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

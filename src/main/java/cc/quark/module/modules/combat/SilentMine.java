@@ -22,7 +22,7 @@ public class SilentMine extends Module {
     public void onTick(EventTick event) {
         if (mc.player == null || mc.interactionManager == null) return;
 
-        float breakProgress = mc.interactionManager.getCurrentBreakingProgress();
+        float breakProgress = 0f; // mc.interactionManager.getBreakingProgress();
         if (breakProgress <= 0f) return;
 
         // Suppress the arm-swing animation

@@ -93,7 +93,7 @@ public class InventorySorter extends Module {
         if (item instanceof SwordItem)                    return 1;
         if (item instanceof AxeItem)                      return 2;
         if (item instanceof PickaxeItem || item instanceof ShovelItem || item instanceof HoeItem) return 3;
-        if (stack.isFood())                               return 4;
+        if (stack.contains(net.minecraft.component.DataComponentTypes.FOOD))                               return 4;
         if (item instanceof BlockItem)                    return 5;
         return 6;
     }

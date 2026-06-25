@@ -46,7 +46,7 @@ public class BlastProof extends Module {
             event.cancel();
             if (notifyExplosion.isEnabled()) {
                 mc.player.sendMessage(net.minecraft.text.Text.literal(
-                        "[BlastProof] Blocked explosion (radius: "
+                        "[BlastProof] Blocked explosion (power: "
                                 + String.format("%.1f", explosion.getRadius()) + ")"), false);
             }
             return;

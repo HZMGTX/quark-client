@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Quark Stats — Live Dashboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-dot"></span>
+      <span class="brand-name">Quark</span>
+      <span class="brand-sub">Stats</span>
+    </div>
+    <nav class="nav">
+      <a href="/" class="active">Dashboard</a>
+      <a href="/modules.html">Modules</a>
+    </nav>
+    <div class="status" id="conn-status">
+      <span class="dot" id="conn-dot"></span>
+      <span id="conn-text">Connecting…</span>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section class="cards">
+      <div class="card">
+        <div class="card-label">Online now</div>
+        <div class="card-value" id="stat-online">—</div>
+        <div class="card-sub">clients seen in the last 2 min</div>
+      </div>
+      <div class="card">
+        <div class="card-label">Total events</div>
+        <div class="card-value" id="stat-total">—</div>
+        <div class="card-sub">since this server started</div>
+      </div>
+      <div class="card">
+        <div class="card-label">Unique clients</div>
+        <div class="card-value" id="stat-clients">—</div>
+        <div class="card-sub">launcher + in-game installs</div>
+      </div>
+      <div class="card">
+        <div class="card-label">Server uptime</div>
+        <div class="card-value" id="stat-uptime">—</div>
+        <div class="card-sub">since last restart</div>
+      </div>
+    </section>
+
+    <section class="grid">
+      <div class="panel panel-wide">
+        <div class="panel-head">
+          <h2>Activity (last 60 min)</h2>
+        </div>
+        <canvas id="chart" width="900" height="220"></canvas>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head"><h2>By source</h2></div>
+        <div id="by-source" class="kv-list"></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head"><h2>Top modules used</h2></div>
+        <div id="top-modules" class="kv-list empty">No module activity reported yet</div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head"><h2>Event types</h2></div>
+        <div id="by-type" class="kv-list"></div>
+      </div>
+
+      <div class="panel panel-wide">
+        <div class="panel-head"><h2>Recent activity</h2></div>
+        <div id="recent-feed" class="feed empty">No events yet</div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    Real data only — every number above comes from <code>/api/event</code> calls made by the
+    actual launcher and client. Nothing here is simulated.
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

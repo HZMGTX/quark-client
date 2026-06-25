@@ -39,7 +39,7 @@ public class FloodPlacement extends Module {
     public void onTick(EventTick event) {
         if (mc.player == null || mc.world == null || mc.interactionManager == null) return;
         if (blocksPlaced >= maxBlocks.get()) {
-            setEnabled(false);
+            toggle();
             return;
         }
 

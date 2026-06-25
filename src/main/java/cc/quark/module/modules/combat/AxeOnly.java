@@ -52,7 +52,7 @@ public class AxeOnly extends Module {
         if (!holdingAxe) return;
 
         for (Entity entity : mc.world.getEntities()) {
-            if (entity == mc.player || !(entity instanceof LivingEntity living) || living.isDead()) continue;
+            if (entity == mc.player || !(entity instanceof LivingEntity living) || living.isRemoved()) continue;
             if (mc.player.distanceTo(entity) > range.get()) continue;
             mc.interactionManager.attackEntity(mc.player, living);
             mc.player.swingHand(Hand.MAIN_HAND);

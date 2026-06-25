@@ -52,7 +52,7 @@ public class DamageIndicator extends Module {
             if (entity == mc.player) continue;
             if (!(entity instanceof LivingEntity living)) continue;
             if (onlyPlayers.isEnabled() && !(entity instanceof PlayerEntity)) continue;
-            if (living.isDead() || living.getHealth() <= 0) continue;
+            if (living.isRemoved() || living.getHealth() <= 0) continue;
 
             UUID id = entity.getUuid();
             float currentHealth = living.getHealth();
@@ -77,10 +77,10 @@ public class DamageIndicator extends Module {
 
         // Remove dead entities from healthMap
         healthMap.keySet().removeIf(id -> {
-            Entity e = mc.world.getEntities().stream()
+            Entity e = java.util.stream.StreamSupport.stream(mc.world.getEntities().spliterator(), false)
                     .filter(en -> en.getUuid().equals(id))
                     .findFirst().orElse(null);
-            return e == null || (e instanceof LivingEntity le && le.isDead());
+            return e == null || (e instanceof LivingEntity le && le.isRemoved());
         });
     }
 

@@ -110,7 +110,7 @@ public class AntiSurround extends Module {
         for (net.minecraft.entity.Entity entity : mc.world.getEntities()) {
             if (!(entity instanceof PlayerEntity player)) continue;
             if (player == mc.player) continue;
-            if (player.isDead() || player.getHealth() <= 0) continue;
+            if (player.isRemoved() || player.getHealth() <= 0) continue;
             double dist = mc.player.distanceTo(player);
             if (dist <= range.get() && dist < nearestDist) {
                 nearestDist = dist;
@@ -130,11 +130,11 @@ public class AntiSurround extends Module {
             if (stack.isEmpty()) continue;
             float speed = 0f;
             if (stack.getItem() instanceof PickaxeItem pick) {
-                speed = pick.getMaterial().getMiningSpeedMultiplier();
+                speed = pick.getMaterial().value().speed();
                 // Pickaxes are best for obsidian
                 speed += 5f;
             } else if (stack.getItem() instanceof AxeItem axe) {
-                speed = axe.getMaterial().getMiningSpeedMultiplier();
+                speed = axe.getMaterial().value().speed();
             }
             if (speed > bestSpeed) {
                 bestSpeed = speed;

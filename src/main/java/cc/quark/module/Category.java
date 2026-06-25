@@ -10,7 +10,8 @@ public enum Category {
     PLAYER("Player"),
     WORLD("World"),
     EXPLOIT("Exploit"),
-    MISC("Misc");
+    MISC("Misc"),
+    STAFF("Staff");
 
     private final String displayName;
 

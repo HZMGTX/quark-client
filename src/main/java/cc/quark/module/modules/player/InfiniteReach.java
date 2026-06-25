@@ -39,7 +39,7 @@ public class InfiniteReach extends Module {
         double extra = extraReach.get();
 
         if (doBlock) {
-            var attr = mc.player.getAttributeInstance(EntityAttributes.BLOCK_INTERACTION_RANGE);
+            var attr = mc.player.getAttributeInstance(EntityAttributes.PLAYER_BLOCK_INTERACTION_RANGE);
             if (attr != null) {
                 attr.removeModifier(BLOCK_MOD_ID);
                 attr.addTemporaryModifier(new EntityAttributeModifier(
@@ -48,7 +48,7 @@ public class InfiniteReach extends Module {
         }
 
         if (doEntity) {
-            var attr = mc.player.getAttributeInstance(EntityAttributes.ENTITY_INTERACTION_RANGE);
+            var attr = mc.player.getAttributeInstance(EntityAttributes.PLAYER_ENTITY_INTERACTION_RANGE);
             if (attr != null) {
                 attr.removeModifier(ENTITY_MOD_ID);
                 attr.addTemporaryModifier(new EntityAttributeModifier(
@@ -59,9 +59,9 @@ public class InfiniteReach extends Module {
 
     private void removeModifiers() {
         if (mc.player == null) return;
-        var blockAttr = mc.player.getAttributeInstance(EntityAttributes.BLOCK_INTERACTION_RANGE);
+        var blockAttr = mc.player.getAttributeInstance(EntityAttributes.PLAYER_BLOCK_INTERACTION_RANGE);
         if (blockAttr != null) blockAttr.removeModifier(BLOCK_MOD_ID);
-        var entityAttr = mc.player.getAttributeInstance(EntityAttributes.ENTITY_INTERACTION_RANGE);
+        var entityAttr = mc.player.getAttributeInstance(EntityAttributes.PLAYER_ENTITY_INTERACTION_RANGE);
         if (entityAttr != null) entityAttr.removeModifier(ENTITY_MOD_ID);
     }
 

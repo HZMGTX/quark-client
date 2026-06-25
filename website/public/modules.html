@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Quark Stats — Modules</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-dot"></span>
+      <span class="brand-name">Quark</span>
+      <span class="brand-sub">Stats</span>
+    </div>
+    <nav class="nav">
+      <a href="/">Dashboard</a>
+      <a href="/modules.html" class="active">Modules</a>
+    </nav>
+    <div class="status" id="conn-status">
+      <span class="dot" id="conn-dot"></span>
+      <span id="conn-text">Connecting…</span>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section class="cards">
+      <div class="card">
+        <div class="card-label">Modules shipped</div>
+        <div class="card-value" id="stat-modcount">—</div>
+        <div class="card-sub">the real catalog in StandaloneClient.java</div>
+      </div>
+      <div class="card">
+        <div class="card-label">Toggles recorded</div>
+        <div class="card-value" id="stat-toggles">—</div>
+        <div class="card-sub">module_toggle events, all time</div>
+      </div>
+    </section>
+
+    <section id="module-groups" class="module-groups"></section>
+  </main>
+
+  <footer class="footer">
+    Real data only — this is the actual module list shipped in the client. Usage counts come
+    from <code>module_toggle</code> events the client reports when you toggle one in the ClickGUI.
+  </footer>
+
+  <script src="modules.js"></script>
+</body>
+</html>

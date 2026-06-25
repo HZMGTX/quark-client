@@ -5,6 +5,7 @@ import cc.quark.gui.components.CategoryPanel;
 import cc.quark.module.Category;
 import cc.quark.module.ModuleManager;
 import cc.quark.util.ColorUtil;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.text.Text;
@@ -17,11 +18,26 @@ public class ClickGUI extends Screen {
     private static final List<CategoryPanel> panels = new ArrayList<>();
     private String searchQuery = "";
     private float alpha = 0f;
-    private static final int PANEL_WIDTH = 130;
     private float currentScale = 1.0f;
     private static cc.quark.module.modules.render.ClickGuiModule cachedClickGuiModule;
 
-    // Global accent color — resolves from ClickGuiModule, falls back to ThemeManager
+    // Tab bar
+    private static final int TAB_H = 22;
+    private Category activeTab = Category.COMBAT; // default to first tab
+
+    // Category display metadata
+    private static final String[] CAT_ICONS = { "⚔", "🏃", "☻", "✦", "⛏", "⚡", "⚙", "🛡" };
+    private static final int[] CAT_COLORS = {
+        0xFFFF5555, // COMBAT
+        0xFF55FF55, // MOVEMENT
+        0xFFFFFF55, // PLAYER
+        0xFF5599FF, // RENDER
+        0xFFFF9944, // WORLD
+        0xFFFF55FF, // EXPLOIT
+        0xFFAAAAAA, // MISC
+        0xFFFF3333, // STAFF
+    };
+
     public static int getAccentColor() {
         if (cachedClickGuiModule == null) {
             cc.quark.module.Module mod = Quark.getInstance().getModuleManager().getModule("ClickGUI");
@@ -29,19 +45,12 @@ public class ClickGUI extends Screen {
                 cachedClickGuiModule = cgm;
             }
         }
-        if (cachedClickGuiModule != null) {
-            return cachedClickGuiModule.getAccentColor();
-        }
+        if (cachedClickGuiModule != null) return cachedClickGuiModule.getAccentColor();
         return ThemeManager.INSTANCE.getAccentColor();
     }
 
-    public static int getBackgroundColor() {
-        return ThemeManager.INSTANCE.getBackgroundColor();
-    }
-
-    public static int getPanelColor() {
-        return ThemeManager.INSTANCE.getPanelColor();
-    }
+    public static int getBackgroundColor() { return ThemeManager.INSTANCE.getBackgroundColor(); }
+    public static int getPanelColor()      { return ThemeManager.INSTANCE.getPanelColor(); }
 
     public ClickGUI() {
         super(Text.literal("Quark.cc"));
@@ -49,161 +58,175 @@ public class ClickGUI extends Screen {
 
     @Override
     protected void init() {
-        if (!panels.isEmpty()) return; // Already initialized, keep positions
-
+        panels.clear();
         ModuleManager mm = Quark.getInstance().getModuleManager();
-        
-        // Center panels roughly on screen
-        int totalWidth = Category.values().length * (PANEL_WIDTH + 10) - 10;
-        int startX = Math.max(10, (this.width - totalWidth) / 2);
-        
-        int x = startX;
+        // Single-panel layout: all panels at same position, only active one shown
+        // Panel width = 40% of screen, capped 160–260px
+        int panelW = Math.max(160, Math.min(260, (int)(this.width * 0.25f)));
+        int panelX = 10;
+        int panelY = TAB_H + 4;
         for (Category cat : Category.values()) {
-            panels.add(new CategoryPanel(cat, mm.getModulesForCategory(cat), x, 50, PANEL_WIDTH));
-            x += PANEL_WIDTH + 10;
+            panels.add(new CategoryPanel(cat, mm.getModulesForCategory(cat), panelX, panelY, panelW));
         }
     }
 
-    public static List<CategoryPanel> getPanels() {
-        return panels;
-    }
+    public static List<CategoryPanel> getPanels() { return panels; }
 
     @Override
     public void renderBackground(DrawContext context, int mouseX, int mouseY, float delta) {
-        // Disable Minecraft 1.21 native background blur to fix massive lag
+        // Suppress default blur/dim — we draw our own
     }
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
         super.render(context, mouseX, mouseY, delta);
-        
-        alpha = Math.min(1f, alpha + delta * 0.15f);
+        alpha = Math.min(1f, alpha + delta * 0.2f);
 
         int screenW = context.getScaledWindowWidth();
         int screenH = context.getScaledWindowHeight();
 
-        // Dark dim backdrop
-        context.fill(0, 0, screenW, screenH, ColorUtil.withAlpha(0x050505, (int)(180 * alpha)));
+        // ── Subtle dark backdrop ──────────────────────────────────────────────
+        context.fill(0, 0, screenW, screenH, ColorUtil.withAlpha(0x080808, (int)(160 * alpha)));
 
-        // --- Scale-In Animation Matrix ---
-        float ease = alpha == 1.0f ? 1.0f : 1.0f - (float)Math.pow(2, -10 * alpha);
-        float baseScale = 0.8f + (0.2f * ease);
-
-        // Remove the automatic fitScale which makes the UI weird and microscopic
-        currentScale = baseScale;
-
+        currentScale = 1.0f; // no zoom — 1:1 with screen
         context.getMatrices().push();
-        
-        // Pivot around the center of the screen
-        int centerX = screenW / 2;
-        int centerY = screenH / 2;
-        context.getMatrices().translate(centerX, centerY, 0);
-        context.getMatrices().scale(currentScale, currentScale, 1.0f);
-        // Translate back
-        context.getMatrices().translate(-centerX, -centerY, 0);
 
-        // Modern flat search bar
-        int sbWidth = 250;
-        int sbX = centerX - (sbWidth / 2);
-        int sbY = 20; // Above the panels
+        // ── Tab bar ──────────────────────────────────────────────────────────
+        // Background strip
+        context.fill(0, 0, screenW, TAB_H, ColorUtil.withAlpha(0x101010, (int)(255 * alpha)));
+        // Bottom border line
+        context.fill(0, TAB_H - 1, screenW, TAB_H, ColorUtil.withAlpha(0x222222, (int)(255 * alpha)));
 
-        context.fill(sbX, sbY, sbX + sbWidth, sbY + 18, ColorUtil.withAlpha(0x101010, 255));
-        context.fill(sbX, sbY + 17, sbX + sbWidth, sbY + 18, getAccentColor()); // Accent underline
+        // Client name on left
+        cc.quark.util.RenderUtil.drawCustomText(context, "QUARK", 8, 8, getAccentColor());
 
-        // Clear button [×] on right side
-        int clearBtnX = sbX + sbWidth - 14;
-        boolean clearHovered = mouseX >= clearBtnX && mouseX <= clearBtnX + 12
-                && mouseY >= sbY + 2 && mouseY <= sbY + 16;
-        context.fill(clearBtnX - 1, sbY + 2, clearBtnX + 12, sbY + 16,
-                     ColorUtil.withAlpha(clearHovered ? 0x333333 : 0x1A1A1A, 255));
-        cc.quark.util.RenderUtil.drawCustomText(context, "×", clearBtnX + 1, sbY + 5, 0xFF888888);
+        // Category tabs
+        Category[] cats = Category.values();
+        int tabX = screenW / 2 - getTabsWidth(cats) / 2;
 
-        // Blinking cursor
-        long nowMs = System.currentTimeMillis();
-        boolean showCursor = !searchQuery.isEmpty() && ((nowMs / 500) % 2 == 0);
-        String displayText = searchQuery.isEmpty() ? "Search modules..." : searchQuery + (showCursor ? "|" : "");
-        int searchColor = searchQuery.isEmpty() ? 0xFF888888 : 0xFFFFFFFF;
-        cc.quark.util.RenderUtil.drawCustomText(context, displayText, sbX + 6, sbY + 5, searchColor);
+        for (int i = 0; i < cats.length; i++) {
+            Category cat = cats[i];
+            boolean active = cat == activeTab;
+            int catColor = CAT_COLORS[i];
+            String label  = cat.name().charAt(0) + cat.name().substring(1).toLowerCase();
+            int labelW    = MinecraftClient.getInstance().textRenderer.getWidth(label);
+            int tabW      = labelW + 16;
 
-        // Match count below search bar
-        if (!searchQuery.isEmpty()) {
-            int matchCount = 0;
-            for (cc.quark.gui.components.CategoryPanel panel : panels) {
-                matchCount += (int) panel.getVisibleModules(searchQuery).stream().count();
+            int tabTextColor = active ? 0xFFFFFFFF : ColorUtil.withAlpha(0xFFFFFF, (int)(160 * alpha));
+
+            if (active) {
+                // Highlighted background
+                context.fill(tabX, 0, tabX + tabW, TAB_H, ColorUtil.withAlpha(0x1A1A1A, (int)(255 * alpha)));
+                // Bottom accent line
+                context.fill(tabX, TAB_H - 2, tabX + tabW, TAB_H, ColorUtil.withAlpha(catColor & 0x00FFFFFF, (int)(255 * alpha)));
+            } else {
+                boolean hovered = mouseX >= tabX && mouseX <= tabX + tabW
+                        && mouseY >= 0 && mouseY <= TAB_H;
+                if (hovered) {
+                    context.fill(tabX, 0, tabX + tabW, TAB_H, ColorUtil.withAlpha(0x151515, (int)(200 * alpha)));
+                }
             }
-            String foundStr = "Found: " + matchCount;
-            cc.quark.util.RenderUtil.drawCustomText(context, foundStr, sbX + 6, sbY + 20, 0xFF888888);
+
+            // Left color stripe
+            context.fill(tabX, 4, tabX + 2, TAB_H - 4, ColorUtil.withAlpha(catColor & 0x00FFFFFF, (int)(220 * alpha)));
+
+            cc.quark.util.RenderUtil.drawCustomText(context, label, tabX + 6, 8, tabTextColor);
+
+            tabX += tabW + 4;
         }
 
-        // Render category panels
-        for (CategoryPanel panel : panels) {
-            panel.render(context, mouseX, mouseY, delta, searchQuery, alpha);
+        // Search bar (right side of tab bar)
+        int sbW = 130;
+        int sbX = screenW - sbW - 8;
+        int sbY = 4;
+        context.fill(sbX, sbY, sbX + sbW, sbY + 16, ColorUtil.withAlpha(0x1A1A1A, (int)(200 * alpha)));
+        context.fill(sbX, sbY + 15, sbX + sbW, sbY + 16, ColorUtil.withAlpha(getAccentColor() & 0x00FFFFFF, (int)(200 * alpha)));
+        long nowMs = System.currentTimeMillis();
+        boolean showCursor = (nowMs / 500) % 2 == 0;
+        String displayText = searchQuery.isEmpty() ? "Search..." : searchQuery + (showCursor ? "|" : "");
+        int searchColor = searchQuery.isEmpty() ? 0xFF555555 : 0xFFFFFFFF;
+        cc.quark.util.RenderUtil.drawCustomText(context, displayText, sbX + 5, sbY + 5, searchColor);
+
+        // ── Category panels ──────────────────────────────────────────────────
+        for (int i = 0; i < panels.size(); i++) {
+            CategoryPanel panel = panels.get(i);
+            // If a tab is active, only show that category's panel; else show all
+            if (activeTab == null || cats[i] == activeTab) {
+                panel.render(context, mouseX, mouseY, delta, searchQuery, alpha);
+            }
         }
 
-        // --- Watermark: "Quark.cc" in accent color, bottom-right ---
-        String watermark = "Quark.cc";
-        int wmX = screenW - 60;
-        int wmY = screenH - 20;
-        context.fill(wmX - 4, wmY - 3, wmX + 52, wmY + 11, ColorUtil.withAlpha(0x0A0A0A, (int)(200 * alpha)));
-        cc.quark.util.RenderUtil.drawCustomText(context, watermark, wmX, wmY, getAccentColor());
+        // ── Watermark ────────────────────────────────────────────────────────
+        String watermark = "Quark.cc | " + Quark.VERSION;
+        int wmW = MinecraftClient.getInstance().textRenderer.getWidth(watermark) + 10;
+        context.fill(screenW - wmW - 2, screenH - 14, screenW, screenH, ColorUtil.withAlpha(0x0A0A0A, (int)(180 * alpha)));
+        cc.quark.util.RenderUtil.drawCustomText(context, watermark, screenW - wmW, screenH - 11, getAccentColor());
 
         context.getMatrices().pop();
     }
 
-    private double unscaleX(double mouseX) {
-        if (currentScale == 1.0f) return mouseX;
-        int centerX = this.width / 2;
-        return (mouseX - centerX) / currentScale + centerX;
+    private int getTabsWidth(Category[] cats) {
+        int total = 0;
+        for (Category cat : cats) {
+            String label = cat.name().charAt(0) + cat.name().substring(1).toLowerCase();
+            total += MinecraftClient.getInstance().textRenderer.getWidth(label) + 16 + 4;
+        }
+        return total - 4;
     }
 
-    private double unscaleY(double mouseY) {
-        if (currentScale == 1.0f) return mouseY;
-        int centerY = this.height / 2;
-        return (mouseY - centerY) / currentScale + centerY;
-    }
+    private double unscaleX(double mx) { return mx; }
+    private double unscaleY(double my) { return my; }
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        double unscaledX = unscaleX(mouseX);
-        double unscaledY = unscaleY(mouseY);
+        double ux = unscaleX(mouseX);
+        double uy = unscaleY(mouseY);
 
-        // Check clear button click on search bar
-        if (button == 0) {
-            int centerX = this.width / 2;
-            int sbWidth = 250;
-            int sbX = centerX - (sbWidth / 2);
-            int sbY = 20;
-            int clearBtnX = sbX + sbWidth - 14;
-            if (unscaledX >= clearBtnX - 1 && unscaledX <= clearBtnX + 12
-                    && unscaledY >= sbY + 2 && unscaledY <= sbY + 16) {
-                searchQuery = "";
-                return true;
+        // Tab bar click
+        if (button == 0 && uy >= 0 && uy <= TAB_H) {
+            Category[] cats = Category.values();
+            int tabX = width / 2 - getTabsWidth(cats) / 2;
+            for (int i = 0; i < cats.length; i++) {
+                String label = cats[i].name().charAt(0) + cats[i].name().substring(1).toLowerCase();
+                int tabW = MinecraftClient.getInstance().textRenderer.getWidth(label) + 16;
+                if (ux >= tabX && ux <= tabX + tabW) {
+                    activeTab = cats[i]; // always select, never deselect to null
+                    return true;
+                }
+                tabX += tabW + 4;
             }
         }
 
-        // Dismiss any open context menus on ALL panels before processing the click.
-        // This ensures right-click menus from other panels are closed whenever the
-        // user clicks anywhere on screen, not just within the panel that owns the menu.
-        for (CategoryPanel panel : panels) {
-            panel.dismissContextMenu();
+        // Search bar clear
+        if (button == 0) {
+            int sbW = 130;
+            int sbX = width - sbW - 8;
+            if (ux >= sbX && ux <= sbX + sbW && uy >= 4 && uy <= 20) {
+                if (!searchQuery.isEmpty()) {
+                    // single click focuses; handled by charTyped
+                }
+            }
         }
 
-        for (CategoryPanel panel : panels) {
-            if (panel.mouseClicked((int)unscaledX, (int)unscaledY, button)) return true;
+        for (CategoryPanel panel : panels) panel.dismissContextMenu();
+
+        Category[] cats = Category.values();
+        for (int i = 0; i < panels.size(); i++) {
+            if (activeTab == null || cats[i] == activeTab) {
+                if (panels.get(i).mouseClicked((int)ux, (int)uy, button)) return true;
+            }
         }
         return super.mouseClicked(mouseX, mouseY, button);
     }
 
     @Override
     public boolean mouseDragged(double mouseX, double mouseY, int button, double deltaX, double deltaY) {
-        double unscaledX = unscaleX(mouseX);
-        double unscaledY = unscaleY(mouseY);
-        // We scale deltaX/deltaY to match the unscaled coordinates so dragging distance is consistent
-        double unscaledDeltaX = deltaX / currentScale;
-        double unscaledDeltaY = deltaY / currentScale;
-        
+        double ux = unscaleX(mouseX);
+        double uy = unscaleY(mouseY);
+        double udx = deltaX / currentScale;
+        double udy = deltaY / currentScale;
         for (CategoryPanel panel : panels) {
-            if (panel.mouseDragged((int)unscaledX, (int)unscaledY, button, (int)unscaledDeltaX, (int)unscaledDeltaY)) return true;
+            if (panel.mouseDragged((int)ux, (int)uy, button, (int)udx, (int)udy)) return true;
         }
         return super.mouseDragged(mouseX, mouseY, button, deltaX, deltaY);
     }
@@ -221,47 +244,34 @@ public class ClickGUI extends Screen {
     }
 
     @Override
-    public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
-        double unscaledX = unscaleX(mouseX);
-        double unscaledY = unscaleY(mouseY);
-        
+    public boolean mouseScrolled(double mouseX, double mouseY, double hAmount, double vAmount) {
+        double ux = unscaleX(mouseX);
+        double uy = unscaleY(mouseY);
         for (CategoryPanel panel : panels) {
-            if (panel.mouseScrolled((int)unscaledX, (int)unscaledY, verticalAmount)) return true;
+            if (panel.mouseScrolled((int)ux, (int)uy, vAmount)) return true;
         }
-        return super.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount);
+        return super.mouseScrolled(mouseX, mouseY, hAmount, vAmount);
     }
 
-    // Index of the currently "focused" panel for TAB cycling
     private int tabFocusIndex = 0;
 
     @Override
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-        if (keyCode == 256) { // ESC
-            close();
-            return true;
-        }
-        if (keyCode == 259) { // Backspace
+        if (keyCode == 256) { close(); return true; }
+        if (keyCode == 259) {
             if (!searchQuery.isEmpty()) searchQuery = searchQuery.substring(0, searchQuery.length() - 1);
             return true;
         }
-        // CTRL+A: clear search
         if (keyCode == 65 && (modifiers & org.lwjgl.glfw.GLFW.GLFW_MOD_CONTROL) != 0) {
-            searchQuery = "";
-            return true;
+            searchQuery = ""; return true;
         }
-        // TAB: cycle focus to next panel (shift its position to screen center-ish)
-        if (keyCode == 258) { // GLFW_KEY_TAB
+        if (keyCode == 258) {
             if (!panels.isEmpty()) {
-                boolean reverse = (modifiers & org.lwjgl.glfw.GLFW.GLFW_MOD_SHIFT) != 0;
-                if (reverse) {
-                    tabFocusIndex = (tabFocusIndex - 1 + panels.size()) % panels.size();
-                } else {
-                    tabFocusIndex = (tabFocusIndex + 1) % panels.size();
-                }
-                // Scroll the focused panel into a visible horizontal position
+                boolean rev = (modifiers & org.lwjgl.glfw.GLFW.GLFW_MOD_SHIFT) != 0;
+                tabFocusIndex = rev ? (tabFocusIndex - 1 + panels.size()) % panels.size()
+                                    : (tabFocusIndex + 1) % panels.size();
                 CategoryPanel focused = panels.get(tabFocusIndex);
-                int targetX = (this.width - PANEL_WIDTH) / 2;
-                focused.setX(targetX);
+                focused.setX((this.width - focused.getWidth()) / 2);
             }
             return true;
         }
@@ -270,16 +280,10 @@ public class ClickGUI extends Screen {
 
     @Override
     public boolean charTyped(char chr, int modifiers) {
-        // Only accept printable characters
-        if (chr >= 32 && chr <= 126) {
-            searchQuery += chr;
-            return true;
-        }
+        if (chr >= 32 && chr <= 126) { searchQuery += chr; return true; }
         return super.charTyped(chr, modifiers);
     }
 
     @Override
-    public boolean shouldPause() {
-        return false;
-    }
+    public boolean shouldPause() { return false; }
 }

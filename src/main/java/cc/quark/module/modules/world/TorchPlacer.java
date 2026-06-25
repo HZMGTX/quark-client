@@ -48,7 +48,7 @@ public class TorchPlacer extends Module {
         int torchSlot = -1;
         for (int i = 0; i < 9; i++) {
             var item = mc.player.getInventory().getStack(i).getItem();
-            if (item == Items.TORCH || item == Items.WALL_TORCH) {
+            if (item == Items.TORCH ) {
                 torchSlot = i;
                 break;
             }

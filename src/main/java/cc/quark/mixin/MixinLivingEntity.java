@@ -53,9 +53,9 @@ public abstract class MixinLivingEntity {
         if (event.isCancelled()) ci.cancel();
     }
 
-    @Inject(method = "damage(Lnet/minecraft/server/world/ServerWorld;Lnet/minecraft/entity/damage/DamageSource;F)Z",
+    @Inject(method = "damage(Lnet/minecraft/entity/damage/DamageSource;F)Z",
             at = @At("HEAD"), cancellable = true)
-    private void onDamage(ServerWorld world, DamageSource source, float amount, CallbackInfoReturnable<Boolean> cir) {
+    private void onDamage(DamageSource source, float amount, CallbackInfoReturnable<Boolean> cir) {
         if (Quark.getInstance() == null) return;
         if (!((LivingEntity)(Object)this).equals(net.minecraft.client.MinecraftClient.getInstance().player)) return;
         EventDamage event = new EventDamage(amount, source);

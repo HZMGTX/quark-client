@@ -1,0 +1,1212 @@
+﻿Running Stonecutter 0.8
+NOTICE: Limited Groovy DSL support for Stonecutter
+
+While functional, the plugin's features are limited 
+by the Groovy syntax and it has reduced IDE support.
+For the best experience, including enhanced syntax, autocompletion, 
+documentation lookup and debugging, it's recommended to use Kotlin DSL.
+
+For more information see: 
+- https://stonecutter.codeberg.page/wiki/faq#groovy-support
+
+> Configure project :1.21.1
+Fabric Loom: 1.9.2
+
+> Task :1.21.1:compileJava
+.\gradlew.bat : C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\config\ConfigManager.java:304: 
+error: cannot find symbol
+At line:1 char:1
++ .\gradlew.bat build > build_errors.txt 2>&1 ; Get-Content build_error ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (C:\Users\liamh\...not find symbol:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+        Object val = setting.value();
+                            ^
+  symbol:   method value()
+  location: variable setting of type Setting<?>
+C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\Module.java:143: error: cannot find symbol
+                return (T) s.value();
+                            ^
+  symbol:   method value()
+  location: variable s of type Setting<?>
+C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\command\commands\SetCommand.java:67: error: cannot 
+find symbol
+            reply("┬ºa" + module.getName() + " ┬ºf> ┬ºb" + setting.getName() + " ┬ºf= ┬ºe" + setting.value());
+                                                                                               ^
+  symbol:   method value()
+  location: variable setting of type Setting<?>
+C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\gui\ClickGUI.java:120: error: cannot find symbol
+            int labelW    = MinecraftClient.getInstance().textRenderer.getWidth(label);
+                            ^
+  symbol:   variable MinecraftClient
+  location: class ClickGUI
+C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\gui\ClickGUI.java:169: error: cannot find symbol
+        int wmW = MinecraftClient.getInstance().textRenderer.getWidth(watermark) + 10;
+                  ^
+  symbol:   variable MinecraftClient
+  location: class ClickGUI
+C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\gui\ClickGUI.java:180: error: cannot find symbol
+            total += MinecraftClient.getInstance().textRenderer.getWidth(label) + 16 + 4;
+                     ^
+  symbol:   variable MinecraftClient
+  location: class ClickGUI
+C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\gui\ClickGUI.java:206: error: cannot find symbol
+                int tabW = MinecraftClient.getInstance().textRenderer.getWidth(label) + 16;
+                           ^
+  symbol:   variable MinecraftClient
+  location: class ClickGUI
+C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\gui\components\CategoryPanel.java:301: error: 
+cannot find symbol
+            boolean val  = bs.value();
+                             ^
+  symbol:   method value()
+  location: variable bs of type BoolSetting
+C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\gui\components\CategoryPanel.java:313: error: 
+cannot find symbol
+            double pct = (ds.value() - ds.getMin()) / (ds.getMax() - ds.getMin());
+                            ^
+  symbol:   method value()
+  location: variable ds of type DoubleSetting
+C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\gui\components\CategoryPanel.java:317: error: 
+cannot find symbol
+            String valStr = String.format("%.2f", ds.value());
+                                                    ^
+  symbol:   method value()
+  location: variable ds of type DoubleSetting
+C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\gui\components\CategoryPanel.java:326: error: 
+cannot find symbol
+            double pct = (double)(is.value() - is.getMin()) / (is.getMax() - is.getMin());
+                                    ^
+  symbol:   method value()
+  location: variable is of type IntSetting
+C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\gui\components\CategoryPanel.java:330: error: 
+cannot find symbol
+            String valStr = String.valueOf(is.value());
+                                             ^
+  symbol:   method value()
+  location: variable is of type IntSetting
+C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\gui\components\CategoryPanel.java:335: error: 
+cannot find symbol
+            String val = ms.value();
+                           ^
+  symbol:   method value()
+  location: variable ms of type ModeSetting
+C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\gui\components\CategoryPanel.java:449: error: 
+cannot find symbol
+            if (relX >= w - 24) bs.setValue(!bs.value());
+                                               ^
+  symbol:   method value()
+  location: variable bs of type BoolSetting
+C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\gui\EditHudScreen.java:33: error: cannot find 
+symbol
+            int wmX = hudModule.wmX.value();
+                                   ^
+  symbol:   method value()
+  location: variable wmX of type IntSetting
+C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\gui\EditHudScreen.java:34: error: cannot find 
+symbol
+            int wmY = hudModule.wmY.value();
+                                   ^
+  symbol:   method value()
+  location: variable wmY of type IntSetting
+C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\gui\EditHudScreen.java:40: error: cannot find 
+symbol
+            int coordsX = hudModule.coordsX.value();
+                                           ^
+  symbol:   method value()
+  location: variable coordsX of type IntSetting
+C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\gui\EditHudScreen.java:41: error: cannot find 
+symbol
+            int coordsY = height - hudModule.coordsY.value();
+                                                    ^
+  symbol:   method value()
+  location: variable coordsY of type IntSetting
+C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\gui\EditHudScreen.java:47: error: cannot find 
+symbol
+            int listX = width - hudModule.listX.value() - 80; // approximate width
+                                               ^
+  symbol:   method value()
+  location: variable listX of type IntSetting
+C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\gui\EditHudScreen.java:48: error: cannot find 
+symbol
+            int listY = hudModule.listY.value();
+                                       ^
+  symbol:   method value()
+  location: variable listY of type IntSetting
+C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\gui\EditHudScreen.java:56: error: cannot find 
+symbol
+                int thX = thud.x.value();
+                                ^
+  symbol:   method value()
+  location: variable x of type IntSetting
+C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\gui\EditHudScreen.java:57: error: cannot find 
+symbol
+                int thY = thud.y.value();
+                                ^
+  symbol:   method value()
+  location: variable y of type IntSetting
+C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\gui\EditHudScreen.java:84: error: cannot find 
+symbol
+        int wmX = hudModule.wmX.value();
+                               ^
+  symbol:   method value()
+  location: variable wmX of type IntSetting
+C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\gui\EditHudScreen.java:85: error: cannot find 
+symbol
+        int wmY = hudModule.wmY.value();
+                               ^
+  symbol:   method value()
+  location: variable wmY of type IntSetting
+C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\gui\EditHudScreen.java:96: error: cannot find 
+symbol
+        int coordsX = hudModule.coordsX.value();
+                                       ^
+  symbol:   method value()
+  location: variable coordsX of type IntSetting
+C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\gui\EditHudScreen.java:97: error: cannot find 
+symbol
+        int coordsY = height - hudModule.coordsY.value();
+                                                ^
+  symbol:   method value()
+  location: variable coordsY of type IntSetting
+C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\gui\EditHudScreen.java:106: error: cannot find 
+symbol
+        int listX = width - hudModule.listX.value() - 80;
+                                           ^
+  symbol:   method value()
+  location: variable listX of type IntSetting
+C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\gui\EditHudScreen.java:107: error: cannot find 
+symbol
+        int listY = hudModule.listY.value();
+                                   ^
+  symbol:   method value()
+  location: variable listY of type IntSetting
+C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\gui\EditHudScreen.java:118: error: cannot find 
+symbol
+            int thX = thud.x.value();
+                            ^
+  symbol:   method value()
+  location: variable x of type IntSetting
+C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\gui\EditHudScreen.java:119: error: cannot find 
+symbol
+            int thY = thud.y.value();
+                            ^
+  symbol:   method value()
+  location: variable y of type IntSetting
+C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\combat\AntiCombatLog.java:61: 
+error: cannot find symbol
+                ConnectScreen.connect(mc.currentScreen, mc, mc.getCurrentServerEntry().address, 
+mc.getCurrentServerEntry(), false);
+                ^
+  symbol:   variable ConnectScreen
+  location: class AntiCombatLog
+C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\combat\AntiSpeedHack.java:64: 
+error: cannot find symbol
+                            cc.quark.util.ChatUtil.sendMessage("[AntiSpeedHack] " + name +
+                                                  ^
+  symbol:   method sendMessage(String)
+  location: class ChatUtil
+C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\combat\AntiVelocity2.java:30: 
+error: cannot find symbol
+        if (packet.getId() != mc.player.getId()) return;
+                  ^
+  symbol:   method getId()
+  location: variable packet of type EntityVelocityUpdateS2CPacket
+C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\combat\AutoArmor.java:65: error: 
+incompatible types: Map<Type,Integer> cannot be converted to int
+        int base = armor.getMaterial().value().defense();
+                                                      ^
+C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\combat\AutoSwitch2.java:58: error: 
+cannot find symbol
+                    if (key.isPresent() && key.get().value().getPath().contains("bane_of_arthropods")) {
+                                                    ^
+  symbol:   method value()
+  location: class RegistryKey<Enchantment>
+C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\combat\AutoSwitch2.java:66: error: 
+cannot find symbol
+                    if (key.isPresent() && key.get().value().getPath().contains("smite")) {
+                                                    ^
+  symbol:   method value()
+  location: class RegistryKey<Enchantment>
+C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\combat\DamageIndicator.java:74: 
+error: cannot find symbol
+            entry.value()[1]--;
+                 ^
+  symbol:   method value()
+  location: variable entry of type Entry<UUID,float[]>
+C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\combat\DamageIndicator.java:75: 
+error: cannot find symbol
+            return entry.value()[1] <= 0;
+                        ^
+  symbol:   method value()
+  location: variable entry of type Entry<UUID,float[]>
+C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\combat\DamageTag.java:74: error: 
+cannot find symbol
+            if (now - (long) entry.value()[1] > FADE_MS) it.remove();
+                                  ^
+  symbol:   method value()
+  location: variable entry of type Entry<Integer,float[]>
+C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\combat\GappleAlert.java:76: error: 
+cannot find symbol
+                        cc.quark.util.ChatUtil.sendMessage("[GappleAlert] " + name + " is eating a " + gappleType + 
+"!");
+                                              ^
+  symbol:   method sendMessage(String)
+  location: class ChatUtil
+C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\combat\SilentMine.java:25: error: 
+cannot find symbol
+        float breakProgress = mc.interactionManager.getBreakingProgress();
+                                                   ^
+  symbol:   method getBreakingProgress()
+  location: variable interactionManager of type ClientPlayerInteractionManager
+C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\combat\TotemPop.java:59: error: 
+cannot find symbol
+            String text = entry.getKey() + ": " + entry.value() + " pops";
+                                                       ^
+  symbol:   method value()
+  location: variable entry of type Entry<String,Integer>
+C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\exploit\AntiCheatBypass.java:51: 
+error: constructor OnGroundOnly in class OnGroundOnly cannot be applied to given types;
+                    mc.getNetworkHandler().sendPacket(new PlayerMoveC2SPacket.OnGroundOnly(
+                                                      ^
+  required: boolean
+  found:    boolean,boolean
+  reason: actual and formal argument lists differ in length
+C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\exploit\AntiCrash.java:51: error: 
+cannot find symbol
+            if (pkt.count() > (int) maxParticles.get()) {
+                   ^
+  symbol:   method count()
+  location: variable pkt of type ParticleS2CPacket
+C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\exploit\AntiDesync.java:54: error: 
+constructor PositionAndOnGround in class PositionAndOnGround cannot be applied to given types;
+            packet = new PlayerMoveC2SPacket.PositionAndOnGround(x);
+                     ^
+  required: double,double,double,boolean
+  found:    double
+  reason: actual and formal argument lists differ in length
+C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\exploit\AntiSpectator.java:29: 
+error: cannot find symbol
+        if (pkt.value() == (float) 3) {
+               ^
+  symbol:   method value()
+  location: variable pkt of type GameStateChangeS2CPacket
+C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\exploit\AutoReconnect.java:47: 
+error: no suitable method found for connect(Screen,MinecraftClient,ServerAddress,ServerInfo,boolean)
+                    ConnectScreen.connect(mc.currentScreen, mc, addr, lastServer, false);
+                                 ^
+    method ConnectScreen.connect(Screen,MinecraftClient,ServerAddress,ServerInfo,boolean,CookieStorage) is not 
+applicable
+      (actual and formal argument lists differ in length)
+    method ConnectScreen.connect(MinecraftClient,ServerAddress,ServerInfo,CookieStorage) is not applicable
+      (actual and formal argument lists differ in length)
+C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\exploit\InstaPlace.java:29: error: 
+itemUseTimeLeft has protected access in LivingEntity
+        mc.player.itemUseTimeLeft = 0;
+                 ^
+C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\exploit\PortalGod.java:35: error: 
+cannot find symbol
+        if (pkt.reason() == GameStateChangeS2CPacket.GAME_WON) {
+               ^
+  symbol:   method reason()
+  location: variable pkt of type GameStateChangeS2CPacket
+C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\misc\PopupCounter.java:91: error: 
+cannot find symbol
+                "┬º7" + rank + ". " + selfMark + entry.getKey() + " ┬ºc" + entry.value() + "x",
+                                                                              ^
+  symbol:   method value()
+  location: variable entry of type Entry<String,Integer>
+C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\misc\ScoreboardHUD.java:51: error: 
+cannot find symbol
+        sorted.sort((a, b) -> Integer.compare(b.value().getScore(), a.value().getScore()));
+              ^
+  symbol:   method sort((a,b)->Int[...]re()))
+  location: variable sorted of type Collection<ScoreboardEntry>
+C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\misc\ScoreboardHUD.java:54: error: 
+incompatible types: ScoreboardEntry cannot be converted to Entry<ScoreHolder,ScoreboardScore>
+        for (Map.Entry<ScoreHolder, ScoreboardScore> entry : sorted) {
+                                                             ^
+C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\misc\ScoreboardHUD.java:56: error: 
+cannot find symbol
+            String name = entry.getNameForScoreboard();
+                               ^
+  symbol:   method getNameForScoreboard()
+  location: variable entry of type Entry<ScoreHolder,ScoreboardScore>
+C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\misc\ScoreboardHUD.java:57: error: 
+cannot find symbol
+            int score = entry.value();
+                             ^
+  symbol:   method value()
+  location: variable entry of type Entry<ScoreHolder,ScoreboardScore>
+C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\player\AntiCurse.java:58: error: 
+cannot find symbol
+            String key = entry.getKey().map(k -> k.value().toString()).orElse("");
+                                                  ^
+  symbol:   method value()
+  location: variable k of type RegistryKey<Enchantment>
+C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\player\AntiCurse.java:58: error: 
+incompatible types: Object cannot be converted to String
+            String key = entry.getKey().map(k -> k.value().toString()).orElse("");
+                                                                             ^
+C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\player\AntiItemLoss.java:64: error: 
+cannot find symbol
+                savedInventory.add(i + ": " + stack.getName().getString() + " x" + stack.count());
+                                                                                        ^
+  symbol:   method count()
+  location: variable stack of type ItemStack
+C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\player\AntiWobble.java:25: error: 
+incompatible types: possible lossy conversion from float to int
+            mc.player.hurtTime = 0f;
+                                 ^
+C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\player\ArrowRefill.java:32: error: 
+cannot find symbol
+                hotbarArrows += s.count();
+                                 ^
+  symbol:   method count()
+  location: variable s of type ItemStack
+C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\player\AutoArmorEquip.java:84: 
+error: incompatible types: Map<Type,Integer> cannot be converted to int
+        int base = armor.getMaterial().value().defense();
+                                                      ^
+C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\player\AutoFletch.java:59: error: 
+cannot find symbol
+            if (s.getItem() == item) total += s.count();
+                                               ^
+  symbol:   method count()
+  location: variable s of type ItemStack
+C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\player\AutoLog.java:41: error: 
+cannot find symbol
+            ChatUtil.sendMessage("AutoLog: disconnecting (HP: " + String.format("%.1f", health) + ")");
+                    ^
+  symbol:   method sendMessage(String)
+  location: class ChatUtil
+C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\player\AutoSmelt2.java:47: error: 
+cannot find symbol
+        if (furnace.getSlot(0).getStack().count() < 64) {
+                                         ^
+  symbol:   method count()
+  location: class ItemStack
+C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\player\AutoStack.java:33: error: 
+cannot find symbol
+            if (a.isEmpty() || a.count() >= a.getMaxCount()) continue;
+                                ^
+  symbol:   method count()
+  location: variable a of type ItemStack
+C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\player\ChatBot.java:62: error: 
+cannot find symbol
+            ChatUtil.send(entry.value());
+                               ^
+  symbol:   method value()
+  location: variable entry of type Entry<String,String>
+C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\player\HotbarReplenish.java:33: 
+error: cannot find symbol
+            if (hotbarStack.isEmpty() || hotbarStack.count() >= minCount.get()) continue;
+                                                    ^
+  symbol:   method count()
+  location: variable hotbarStack of type ItemStack
+C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\player\HotbarReplenish.java:56: 
+error: cannot find symbol
+            if (!s.isEmpty() && s.count() < minCount.get()) low++;
+                                 ^
+  symbol:   method count()
+  location: variable s of type ItemStack
+C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\player\InventoryManager.java:116: 
+error: cannot find symbol
+            if (a.isEmpty() || a.count() >= a.getMaxCount()) continue;
+                                ^
+  symbol:   method count()
+  location: variable a of type ItemStack
+C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\player\InventoryManager.java:122: 
+error: cannot find symbol
+                if (a.count() >= a.getMaxCount()) break;
+                     ^
+  symbol:   method count()
+  location: variable a of type ItemStack
+C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\player\InventoryManager.java:150: 
+error: cannot find symbol
+            if (hotbarStack.count() > 1) continue;
+                           ^
+  symbol:   method count()
+  location: variable hotbarStack of type ItemStack
+C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\player\InventoryManager.java:199: 
+error: bad operand types for binary operator '+'
+        if (stack.getItem() instanceof ArmorItem a) return 700 + a.getMaterial().value().defense();
+                                                               ^
+  first type:  int
+  second type: Map<Type,Integer>
+C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\player\InventoryManager.java:204: 
+error: cannot find symbol
+        return stack.count();
+                    ^
+  symbol:   method count()
+  location: variable stack of type ItemStack
+C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\player\InventoryRefill2.java:99: 
+error: incompatible types: Map<Type,Integer> cannot be converted to int
+        return armor.getMaterial().value().defense();
+                                                  ^
+C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\player\ItemProtect.java:38: error: 
+cannot find symbol
+                if (stack.count() == 0) {
+                         ^
+  symbol:   method count()
+  location: variable stack of type ItemStack
+C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\player\ItemRefill.java:44: error: 
+cannot find symbol
+            if (hotbarStack.count() > 1) continue; // Only refill when down to 1
+                           ^
+  symbol:   method count()
+  location: variable hotbarStack of type ItemStack
+C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\player\ItemTracker.java:47: error: 
+cannot find symbol
+                current.put(i, stack.count() + "x " + stack.getItem().toString());
+                                    ^
+  symbol:   method count()
+  location: variable stack of type ItemStack
+C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\player\ItemTracker.java:55: error: 
+cannot find symbol
+                if (!entry.value().equals(prev)) {
+                          ^
+  symbol:   method value()
+  location: variable entry of type Entry<Integer,String>
+C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\player\ItemTracker.java:57: error: 
+cannot find symbol
+                        ChatUtil.info("[ItemTracker] Added: " + entry.value() + " (slot " + entry.getKey() + ")");
+                                                                     ^
+  symbol:   method value()
+  location: variable entry of type Entry<Integer,String>
+C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\player\ItemTracker.java:59: error: 
+cannot find symbol
+                        ChatUtil.info("[ItemTracker] Changed slot " + entry.getKey() + ": " + prev + " -> " + 
+entry.value());
+                                                                                                                   ^
+  symbol:   method value()
+  location: variable entry of type Entry<Integer,String>
+C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\player\ItemTracker.java:66: error: 
+cannot find symbol
+                    ChatUtil.info("[ItemTracker] Removed: " + entry.value() + " (slot " + entry.getKey() + ")");
+                                                                   ^
+  symbol:   method value()
+  location: variable entry of type Entry<Integer,String>
+C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\player\ItemTracker.java:79: error: 
+cannot find symbol
+                previousInventory.put(i, stack.count() + "x " + stack.getItem().toString());
+                                              ^
+  symbol:   method count()
+  location: variable stack of type ItemStack
+C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\player\LootSorter.java:66: error: 
+cannot find symbol
+            case "Weight" -> Comparator.comparingInt(ie -> -ie.getStack().count());
+                                                                         ^
+  symbol:   method count()
+  location: class ItemStack
+C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\player\NoDeathScreen.java:29: 
+error: cannot find symbol
+        if (pkt.reason() == GameStateChangeS2CPacket.GAME_WON) {
+               ^
+  symbol:   method reason()
+  location: variable pkt of type GameStateChangeS2CPacket
+C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\player\NoFatigue.java:29: error: 
+incompatible types: RegistryEntry<StatusEffect> cannot be converted to int
+        int effectId = pkt.getEffectId();
+                                      ^
+C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\player\PearlRefill.java:33: error: 
+cannot find symbol
+                hotbarPearls += s.count();
+                                 ^
+  symbol:   method count()
+  location: variable s of type ItemStack
+C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\player\PickupDelay.java:29: error: 
+pickupDelay has private access in ItemEntity
+            if (itemEnt.pickupDelay < delayTicks) {
+                       ^
+C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\player\PickupDelay.java:30: error: 
+pickupDelay has private access in ItemEntity
+                itemEnt.pickupDelay = delayTicks;
+                       ^
+C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\player\Replenish.java:34: error: 
+cannot find symbol
+            if (stack.isEmpty() || stack.count() > minCount.get()) continue;
+                                        ^
+  symbol:   method count()
+  location: variable stack of type ItemStack
+C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\player\Replenish.java:53: error: 
+cannot find symbol
+            if (!s.isEmpty() && s.count() < minCount.get()) low++;
+                                 ^
+  symbol:   method count()
+  location: variable s of type ItemStack
+C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\player\Scaffold.java:181: error: 
+cannot find symbol
+                    if (stack.count() > bestCount) {
+                             ^
+  symbol:   method count()
+  location: variable stack of type ItemStack
+C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\player\Scaffold.java:182: error: 
+cannot find symbol
+                        bestCount = stack.count();
+                                         ^
+  symbol:   method count()
+  location: variable stack of type ItemStack
+C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\player\StorageOrganizer.java:51: 
+error: cannot find symbol
+            if (a.isEmpty() || a.count() >= a.getMaxCount()) continue;
+                                ^
+  symbol:   method count()
+  location: variable a of type ItemStack
+C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\player\StorageOrganizer.java:86: 
+error: bad operand types for binary operator '+'
+        if (stack.getItem() instanceof ArmorItem a) return 700 + a.getMaterial().value().defense();
+                                                               ^
+  first type:  int
+  second type: Map<Type,Integer>
+C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\player\StorageOrganizer.java:90: 
+error: cannot find symbol
+        return stack.count();
+                    ^
+  symbol:   method count()
+  location: variable stack of type ItemStack
+C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\player\TridentReturn.java:37: 
+error: cannot find symbol
+                t -> t.getOwner() == mc.player && t.isDealtDamage());
+                                                   ^
+  symbol:   method isDealtDamage()
+  location: variable t of type TridentEntity
+C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\render\Ambiance.java:40: error: 
+cannot find symbol
+        if (mc.options != null) savedGamma = mc.options.getGamma().value();
+                                                                  ^
+  symbol:   method value()
+  location: class SimpleOption<Double>
+C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\render\ArmorHUD.java:82: error: 
+cannot find symbol
+                    int lvl = entry.value();
+                                   ^
+  symbol:   method value()
+  location: variable entry of type Entry<RegistryEntry<Enchantment>,Integer>
+C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\render\ArmourESP.java:91: error: 
+cannot find symbol
+            double fov = Math.toRadians(mc.options.getFov().value());
+                                                           ^
+  symbol:   method value()
+  location: class SimpleOption<Integer>
+C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\render\ArrowCounter.java:31: error: 
+cannot find symbol
+                arrowCount += stack.count();
+                                   ^
+  symbol:   method count()
+  location: variable stack of type ItemStack
+C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\render\BlockESP2.java:88: error: 
+cannot find symbol
+        double fov = Math.toRadians(mc.options.getFov().value());
+                                                       ^
+  symbol:   method value()
+  location: class SimpleOption<Integer>
+Note: Some input files use or override a deprecated API.
+Note: Recompile with -Xlint:deprecation for details.
+Note: Some messages have been simplified; recompile with -Xdiags:verbose to get full output
+100 errors
+
+> Task :1.21.1:compileJava FAILED
+
+[Incubating] Problems report is available at: file:///C:/Users/liamh/Documents/GitHub/quark-client/build/reports/problems/problems-report.html
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':1.21.1:compileJava'.
+> Compilation failed; see the compiler output below.
+  C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\exploit\AntiCheatBypass.java:51: 
+error: constructor OnGroundOnly in class OnGroundOnly cannot be applied to given types;
+                      mc.getNetworkHandler().sendPacket(new PlayerMoveC2SPacket.OnGroundOnly(
+                                                        ^
+    required: boolean
+    found:    boolean,boolean
+    reason: actual and formal argument lists differ in length
+  C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\exploit\AntiDesync.java:54: 
+error: constructor PositionAndOnGround in class PositionAndOnGround cannot be applied to given types;
+              packet = new PlayerMoveC2SPacket.PositionAndOnGround(x);
+                       ^
+    required: double,double,double,boolean
+    found:    double
+    reason: actual and formal argument lists differ in length
+  C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\exploit\AutoReconnect.java:47: 
+error: no suitable method found for connect(Screen,MinecraftClient,ServerAddress,ServerInfo,boolean)
+                      ConnectScreen.connect(mc.currentScreen, mc, addr, lastServer, false);
+                                   ^
+      method ConnectScreen.connect(Screen,MinecraftClient,ServerAddress,ServerInfo,boolean,CookieStorage) is not 
+applicable
+        (actual and formal argument lists differ in length)
+      method ConnectScreen.connect(MinecraftClient,ServerAddress,ServerInfo,CookieStorage) is not applicable
+        (actual and formal argument lists differ in length)
+  Note: Recompile with -Xlint:deprecation for details.
+  C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\combat\AutoArmor.java:65: error: 
+incompatible types: Map<Type,Integer> cannot be converted to int
+          int base = armor.getMaterial().value().defense();
+                                                        ^
+  C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\misc\ScoreboardHUD.java:54: 
+error: incompatible types: ScoreboardEntry cannot be converted to Entry<ScoreHolder,ScoreboardScore>
+          for (Map.Entry<ScoreHolder, ScoreboardScore> entry : sorted) {
+                                                               ^
+  C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\player\AntiCurse.java:58: error: 
+incompatible types: Object cannot be converted to String
+              String key = entry.getKey().map(k -> k.value().toString()).orElse("");
+                                                                               ^
+  C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\player\AntiWobble.java:25: error: 
+incompatible types: possible lossy conversion from float to int
+              mc.player.hurtTime = 0f;
+                                   ^
+  C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\player\AutoArmorEquip.java:84: 
+error: incompatible types: Map<Type,Integer> cannot be converted to int
+          int base = armor.getMaterial().value().defense();
+                                                        ^
+  C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\player\InventoryRefill2.java:99: 
+error: incompatible types: Map<Type,Integer> cannot be converted to int
+          return armor.getMaterial().value().defense();
+                                                    ^
+  C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\player\NoFatigue.java:29: error: 
+incompatible types: RegistryEntry<StatusEffect> cannot be converted to int
+          int effectId = pkt.getEffectId();
+                                        ^
+  C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\gui\ClickGUI.java:120: error: cannot find symbol
+              int labelW    = MinecraftClient.getInstance().textRenderer.getWidth(label);
+                              ^
+    symbol:   variable MinecraftClient
+    location: class ClickGUI
+  C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\gui\ClickGUI.java:169: error: cannot find symbol
+          int wmW = MinecraftClient.getInstance().textRenderer.getWidth(watermark) + 10;
+                    ^
+    symbol:   variable MinecraftClient
+    location: class ClickGUI
+  C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\gui\ClickGUI.java:180: error: cannot find symbol
+              total += MinecraftClient.getInstance().textRenderer.getWidth(label) + 16 + 4;
+                       ^
+    symbol:   variable MinecraftClient
+    location: class ClickGUI
+  C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\gui\ClickGUI.java:206: error: cannot find symbol
+                  int tabW = MinecraftClient.getInstance().textRenderer.getWidth(label) + 16;
+                             ^
+    symbol:   variable MinecraftClient
+    location: class ClickGUI
+  C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\combat\AntiCombatLog.java:61: 
+error: cannot find symbol
+                  ConnectScreen.connect(mc.currentScreen, mc, mc.getCurrentServerEntry().address, 
+mc.getCurrentServerEntry(), false);
+                  ^
+    symbol:   variable ConnectScreen
+    location: class AntiCombatLog
+  C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\exploit\InstaPlace.java:29: 
+error: itemUseTimeLeft has protected access in LivingEntity
+          mc.player.itemUseTimeLeft = 0;
+                   ^
+  C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\player\PickupDelay.java:29: 
+error: pickupDelay has private access in ItemEntity
+              if (itemEnt.pickupDelay < delayTicks) {
+                         ^
+  C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\player\PickupDelay.java:30: 
+error: pickupDelay has private access in ItemEntity
+                  itemEnt.pickupDelay = delayTicks;
+                         ^
+  Note: Some input files use or override a deprecated API.
+  C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\player\InventoryManager.java:199: 
+error: bad operand types for binary operator '+'
+          if (stack.getItem() instanceof ArmorItem a) return 700 + a.getMaterial().value().defense();
+                                                                 ^
+    first type:  int
+    second type: Map<Type,Integer>
+  C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\player\StorageOrganizer.java:86: 
+error: bad operand types for binary operator '+'
+          if (stack.getItem() instanceof ArmorItem a) return 700 + a.getMaterial().value().defense();
+                                                                 ^
+    first type:  int
+    second type: Map<Type,Integer>
+  Note: Some messages have been simplified; recompile with -Xdiags:verbose to get full output
+  C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\config\ConfigManager.java:304: error: cannot 
+find symbol
+          Object val = setting.value();
+                              ^
+    symbol:   method value()
+    location: variable setting of type Setting<?>
+  C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\Module.java:143: error: cannot find symbol
+                  return (T) s.value();
+                              ^
+    symbol:   method value()
+    location: variable s of type Setting<?>
+  C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\command\commands\SetCommand.java:67: error: 
+cannot find symbol
+              reply("┬ºa" + module.getName() + " ┬ºf> ┬ºb" + setting.getName() + " ┬ºf= ┬ºe" + setting.value());
+                                                                                                 ^
+    symbol:   method value()
+    location: variable setting of type Setting<?>
+  C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\gui\components\CategoryPanel.java:301: error: 
+cannot find symbol
+              boolean val  = bs.value();
+                               ^
+    symbol:   method value()
+    location: variable bs of type BoolSetting
+  C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\gui\components\CategoryPanel.java:313: error: 
+cannot find symbol
+              double pct = (ds.value() - ds.getMin()) / (ds.getMax() - ds.getMin());
+                              ^
+    symbol:   method value()
+    location: variable ds of type DoubleSetting
+  C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\gui\components\CategoryPanel.java:317: error: 
+cannot find symbol
+              String valStr = String.format("%.2f", ds.value());
+                                                      ^
+    symbol:   method value()
+    location: variable ds of type DoubleSetting
+  C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\gui\components\CategoryPanel.java:326: error: 
+cannot find symbol
+              double pct = (double)(is.value() - is.getMin()) / (is.getMax() - is.getMin());
+                                      ^
+    symbol:   method value()
+    location: variable is of type IntSetting
+  C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\gui\components\CategoryPanel.java:330: error: 
+cannot find symbol
+              String valStr = String.valueOf(is.value());
+                                               ^
+    symbol:   method value()
+    location: variable is of type IntSetting
+  C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\gui\components\CategoryPanel.java:335: error: 
+cannot find symbol
+              String val = ms.value();
+                             ^
+    symbol:   method value()
+    location: variable ms of type ModeSetting
+  C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\gui\components\CategoryPanel.java:449: error: 
+cannot find symbol
+              if (relX >= w - 24) bs.setValue(!bs.value());
+                                                 ^
+    symbol:   method value()
+    location: variable bs of type BoolSetting
+  C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\gui\EditHudScreen.java:33: error: cannot find 
+symbol
+              int wmX = hudModule.wmX.value();
+                                     ^
+    symbol:   method value()
+    location: variable wmX of type IntSetting
+  C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\gui\EditHudScreen.java:34: error: cannot find 
+symbol
+              int wmY = hudModule.wmY.value();
+                                     ^
+    symbol:   method value()
+    location: variable wmY of type IntSetting
+  C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\gui\EditHudScreen.java:40: error: cannot find 
+symbol
+              int coordsX = hudModule.coordsX.value();
+                                             ^
+    symbol:   method value()
+    location: variable coordsX of type IntSetting
+  C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\gui\EditHudScreen.java:41: error: cannot find 
+symbol
+              int coordsY = height - hudModule.coordsY.value();
+                                                      ^
+    symbol:   method value()
+    location: variable coordsY of type IntSetting
+  C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\gui\EditHudScreen.java:47: error: cannot find 
+symbol
+              int listX = width - hudModule.listX.value() - 80; // approximate width
+                                                 ^
+    symbol:   method value()
+    location: variable listX of type IntSetting
+  C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\gui\EditHudScreen.java:48: error: cannot find 
+symbol
+              int listY = hudModule.listY.value();
+                                         ^
+    symbol:   method value()
+    location: variable listY of type IntSetting
+  C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\gui\EditHudScreen.java:56: error: cannot find 
+symbol
+                  int thX = thud.x.value();
+                                  ^
+    symbol:   method value()
+    location: variable x of type IntSetting
+  C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\gui\EditHudScreen.java:57: error: cannot find 
+symbol
+                  int thY = thud.y.value();
+                                  ^
+    symbol:   method value()
+    location: variable y of type IntSetting
+  C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\gui\EditHudScreen.java:84: error: cannot find 
+symbol
+          int wmX = hudModule.wmX.value();
+                                 ^
+    symbol:   method value()
+    location: variable wmX of type IntSetting
+  C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\gui\EditHudScreen.java:85: error: cannot find 
+symbol
+          int wmY = hudModule.wmY.value();
+                                 ^
+    symbol:   method value()
+    location: variable wmY of type IntSetting
+  C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\gui\EditHudScreen.java:96: error: cannot find 
+symbol
+          int coordsX = hudModule.coordsX.value();
+                                         ^
+    symbol:   method value()
+    location: variable coordsX of type IntSetting
+  C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\gui\EditHudScreen.java:97: error: cannot find 
+symbol
+          int coordsY = height - hudModule.coordsY.value();
+                                                  ^
+    symbol:   method value()
+    location: variable coordsY of type IntSetting
+  C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\gui\EditHudScreen.java:106: error: cannot find 
+symbol
+          int listX = width - hudModule.listX.value() - 80;
+                                             ^
+    symbol:   method value()
+    location: variable listX of type IntSetting
+  C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\gui\EditHudScreen.java:107: error: cannot find 
+symbol
+          int listY = hudModule.listY.value();
+                                     ^
+    symbol:   method value()
+    location: variable listY of type IntSetting
+  C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\gui\EditHudScreen.java:118: error: cannot find 
+symbol
+              int thX = thud.x.value();
+                              ^
+    symbol:   method value()
+    location: variable x of type IntSetting
+  C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\gui\EditHudScreen.java:119: error: cannot find 
+symbol
+              int thY = thud.y.value();
+                              ^
+    symbol:   method value()
+    location: variable y of type IntSetting
+  C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\combat\AntiSpeedHack.java:64: 
+error: cannot find symbol
+                              cc.quark.util.ChatUtil.sendMessage("[AntiSpeedHack] " + name +
+                                                    ^
+    symbol:   method sendMessage(String)
+    location: class ChatUtil
+  C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\combat\AntiVelocity2.java:30: 
+error: cannot find symbol
+          if (packet.getId() != mc.player.getId()) return;
+                    ^
+    symbol:   method getId()
+    location: variable packet of type EntityVelocityUpdateS2CPacket
+  C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\combat\AutoSwitch2.java:58: 
+error: cannot find symbol
+                      if (key.isPresent() && key.get().value().getPath().contains("bane_of_arthropods")) {
+                                                      ^
+    symbol:   method value()
+    location: class RegistryKey<Enchantment>
+  C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\combat\AutoSwitch2.java:66: 
+error: cannot find symbol
+                      if (key.isPresent() && key.get().value().getPath().contains("smite")) {
+                                                      ^
+    symbol:   method value()
+    location: class RegistryKey<Enchantment>
+  C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\combat\DamageIndicator.java:74: 
+error: cannot find symbol
+              entry.value()[1]--;
+                   ^
+    symbol:   method value()
+    location: variable entry of type Entry<UUID,float[]>
+  C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\combat\DamageIndicator.java:75: 
+error: cannot find symbol
+              return entry.value()[1] <= 0;
+                          ^
+    symbol:   method value()
+    location: variable entry of type Entry<UUID,float[]>
+  C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\combat\DamageTag.java:74: error: 
+cannot find symbol
+              if (now - (long) entry.value()[1] > FADE_MS) it.remove();
+                                    ^
+    symbol:   method value()
+    location: variable entry of type Entry<Integer,float[]>
+  C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\combat\GappleAlert.java:76: 
+error: cannot find symbol
+                          cc.quark.util.ChatUtil.sendMessage("[GappleAlert] " + name + " is eating a " + gappleType + 
+"!");
+                                                ^
+    symbol:   method sendMessage(String)
+    location: class ChatUtil
+  C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\combat\SilentMine.java:25: error: 
+cannot find symbol
+          float breakProgress = mc.interactionManager.getBreakingProgress();
+                                                     ^
+    symbol:   method getBreakingProgress()
+    location: variable interactionManager of type ClientPlayerInteractionManager
+  C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\combat\TotemPop.java:59: error: 
+cannot find symbol
+              String text = entry.getKey() + ": " + entry.value() + " pops";
+                                                         ^
+    symbol:   method value()
+    location: variable entry of type Entry<String,Integer>
+  C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\exploit\AntiCrash.java:51: error: 
+cannot find symbol
+              if (pkt.count() > (int) maxParticles.get()) {
+                     ^
+    symbol:   method count()
+    location: variable pkt of type ParticleS2CPacket
+  C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\exploit\AntiSpectator.java:29: 
+error: cannot find symbol
+          if (pkt.value() == (float) 3) {
+                 ^
+    symbol:   method value()
+    location: variable pkt of type GameStateChangeS2CPacket
+  C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\exploit\PortalGod.java:35: error: 
+cannot find symbol
+          if (pkt.reason() == GameStateChangeS2CPacket.GAME_WON) {
+                 ^
+    symbol:   method reason()
+    location: variable pkt of type GameStateChangeS2CPacket
+  C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\misc\PopupCounter.java:91: error: 
+cannot find symbol
+                  "┬º7" + rank + ". " + selfMark + entry.getKey() + " ┬ºc" + entry.value() + "x",
+                                                                                ^
+    symbol:   method value()
+    location: variable entry of type Entry<String,Integer>
+  C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\misc\ScoreboardHUD.java:51: 
+error: cannot find symbol
+          sorted.sort((a, b) -> Integer.compare(b.value().getScore(), a.value().getScore()));
+                ^
+    symbol:   method sort((a,b)->Int[...]re()))
+    location: variable sorted of type Collection<ScoreboardEntry>
+  C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\misc\ScoreboardHUD.java:56: 
+error: cannot find symbol
+              String name = entry.getNameForScoreboard();
+                                 ^
+    symbol:   method getNameForScoreboard()
+    location: variable entry of type Entry<ScoreHolder,ScoreboardScore>
+  C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\misc\ScoreboardHUD.java:57: 
+error: cannot find symbol
+              int score = entry.value();
+                               ^
+    symbol:   method value()
+    location: variable entry of type Entry<ScoreHolder,ScoreboardScore>
+  C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\player\AntiCurse.java:58: error: 
+cannot find symbol
+              String key = entry.getKey().map(k -> k.value().toString()).orElse("");
+                                                    ^
+    symbol:   method value()
+    location: variable k of type RegistryKey<Enchantment>
+  C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\player\AntiItemLoss.java:64: 
+error: cannot find symbol
+                  savedInventory.add(i + ": " + stack.getName().getString() + " x" + stack.count());
+                                                                                          ^
+    symbol:   method count()
+    location: variable stack of type ItemStack
+  C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\player\ArrowRefill.java:32: 
+error: cannot find symbol
+                  hotbarArrows += s.count();
+                                   ^
+    symbol:   method count()
+    location: variable s of type ItemStack
+  C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\player\AutoFletch.java:59: error: 
+cannot find symbol
+              if (s.getItem() == item) total += s.count();
+                                                 ^
+    symbol:   method count()
+    location: variable s of type ItemStack
+  C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\player\AutoLog.java:41: error: 
+cannot find symbol
+              ChatUtil.sendMessage("AutoLog: disconnecting (HP: " + String.format("%.1f", health) + ")");
+                      ^
+    symbol:   method sendMessage(String)
+    location: class ChatUtil
+  C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\player\AutoSmelt2.java:47: error: 
+cannot find symbol
+          if (furnace.getSlot(0).getStack().count() < 64) {
+                                           ^
+    symbol:   method count()
+    location: class ItemStack
+  C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\player\AutoStack.java:33: error: 
+cannot find symbol
+              if (a.isEmpty() || a.count() >= a.getMaxCount()) continue;
+                                  ^
+    symbol:   method count()
+    location: variable a of type ItemStack
+  C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\player\ChatBot.java:62: error: 
+cannot find symbol
+              ChatUtil.send(entry.value());
+                                 ^
+    symbol:   method value()
+    location: variable entry of type Entry<String,String>
+  C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\player\HotbarReplenish.java:33: 
+error: cannot find symbol
+              if (hotbarStack.isEmpty() || hotbarStack.count() >= minCount.get()) continue;
+                                                      ^
+    symbol:   method count()
+    location: variable hotbarStack of type ItemStack
+  C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\player\HotbarReplenish.java:56: 
+error: cannot find symbol
+              if (!s.isEmpty() && s.count() < minCount.get()) low++;
+                                   ^
+    symbol:   method count()
+    location: variable s of type ItemStack
+  C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\player\InventoryManager.java:116: 
+error: cannot find symbol
+              if (a.isEmpty() || a.count() >= a.getMaxCount()) continue;
+                                  ^
+    symbol:   method count()
+    location: variable a of type ItemStack
+  C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\player\InventoryManager.java:122: 
+error: cannot find symbol
+                  if (a.count() >= a.getMaxCount()) break;
+                       ^
+    symbol:   method count()
+    location: variable a of type ItemStack
+  C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\player\InventoryManager.java:150: 
+error: cannot find symbol
+              if (hotbarStack.count() > 1) continue;
+                             ^
+    symbol:   method count()
+    location: variable hotbarStack of type ItemStack
+  C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\player\InventoryManager.java:204: 
+error: cannot find symbol
+          return stack.count();
+                      ^
+    symbol:   method count()
+    location: variable stack of type ItemStack
+  C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\player\ItemProtect.java:38: 
+error: cannot find symbol
+                  if (stack.count() == 0) {
+                           ^
+    symbol:   method count()
+    location: variable stack of type ItemStack
+  C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\player\ItemRefill.java:44: error: 
+cannot find symbol
+              if (hotbarStack.count() > 1) continue; // Only refill when down to 1
+                             ^
+    symbol:   method count()
+    location: variable hotbarStack of type ItemStack
+  C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\player\ItemTracker.java:47: 
+error: cannot find symbol
+                  current.put(i, stack.count() + "x " + stack.getItem().toString());
+                                      ^
+    symbol:   method count()
+    location: variable stack of type ItemStack
+  C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\player\ItemTracker.java:55: 
+error: cannot find symbol
+                  if (!entry.value().equals(prev)) {
+                            ^
+    symbol:   method value()
+    location: variable entry of type Entry<Integer,String>
+  C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\player\ItemTracker.java:57: 
+error: cannot find symbol
+                          ChatUtil.info("[ItemTracker] Added: " + entry.value() + " (slot " + entry.getKey() + ")");
+                                                                       ^
+    symbol:   method value()
+    location: variable entry of type Entry<Integer,String>
+  C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\player\ItemTracker.java:59: 
+error: cannot find symbol
+1 actionable task: 1 executed
+                          ChatUtil.info("[ItemTracker] Changed slot " + entry.getKey() + ": " + prev + " -> " + 
+entry.value());
+                                                                                                                     ^
+    symbol:   method value()
+    location: variable entry of type Entry<Integer,String>
+  C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\player\ItemTracker.java:66: 
+error: cannot find symbol
+                      ChatUtil.info("[ItemTracker] Removed: " + entry.value() + " (slot " + entry.getKey() + ")");
+                                                                     ^
+    symbol:   method value()
+    location: variable entry of type Entry<Integer,String>
+  C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\player\ItemTracker.java:79: 
+error: cannot find symbol
+                  previousInventory.put(i, stack.count() + "x " + stack.getItem().toString());
+                                                ^
+    symbol:   method count()
+    location: variable stack of type ItemStack
+  C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\player\LootSorter.java:66: error: 
+cannot find symbol
+              case "Weight" -> Comparator.comparingInt(ie -> -ie.getStack().count());
+                                                                           ^
+    symbol:   method count()
+    location: class ItemStack
+  C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\player\NoDeathScreen.java:29: 
+error: cannot find symbol
+          if (pkt.reason() == GameStateChangeS2CPacket.GAME_WON) {
+                 ^
+    symbol:   method reason()
+    location: variable pkt of type GameStateChangeS2CPacket
+  C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\player\PearlRefill.java:33: 
+error: cannot find symbol
+                  hotbarPearls += s.count();
+                                   ^
+    symbol:   method count()
+    location: variable s of type ItemStack
+  C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\player\Replenish.java:34: error: 
+cannot find symbol
+              if (stack.isEmpty() || stack.count() > minCount.get()) continue;
+                                          ^
+    symbol:   method count()
+    location: variable stack of type ItemStack
+  C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\player\Replenish.java:53: error: 
+cannot find symbol
+              if (!s.isEmpty() && s.count() < minCount.get()) low++;
+                                   ^
+    symbol:   method count()
+    location: variable s of type ItemStack
+  C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\player\Scaffold.java:181: error: 
+cannot find symbol
+                      if (stack.count() > bestCount) {
+                               ^
+    symbol:   method count()
+    location: variable stack of type ItemStack
+  C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\player\Scaffold.java:182: error: 
+cannot find symbol
+                          bestCount = stack.count();
+                                           ^
+    symbol:   method count()
+    location: variable stack of type ItemStack
+  C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\player\StorageOrganizer.java:51: 
+error: cannot find symbol
+              if (a.isEmpty() || a.count() >= a.getMaxCount()) continue;
+                                  ^
+    symbol:   method count()
+    location: variable a of type ItemStack
+  C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\player\StorageOrganizer.java:90: 
+error: cannot find symbol
+          return stack.count();
+                      ^
+    symbol:   method count()
+    location: variable stack of type ItemStack
+  C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\player\TridentReturn.java:37: 
+error: cannot find symbol
+                  t -> t.getOwner() == mc.player && t.isDealtDamage());
+                                                     ^
+    symbol:   method isDealtDamage()
+    location: variable t of type TridentEntity
+  C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\render\Ambiance.java:40: error: 
+cannot find symbol
+          if (mc.options != null) savedGamma = mc.options.getGamma().value();
+                                                                    ^
+    symbol:   method value()
+    location: class SimpleOption<Double>
+  C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\render\ArmorHUD.java:82: error: 
+cannot find symbol
+                      int lvl = entry.value();
+                                     ^
+    symbol:   method value()
+    location: variable entry of type Entry<RegistryEntry<Enchantment>,Integer>
+  C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\render\ArmourESP.java:91: error: 
+cannot find symbol
+              double fov = Math.toRadians(mc.options.getFov().value());
+                                                             ^
+    symbol:   method value()
+    location: class SimpleOption<Integer>
+  C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\render\ArrowCounter.java:31: 
+error: cannot find symbol
+                  arrowCount += stack.count();
+                                     ^
+    symbol:   method count()
+    location: variable stack of type ItemStack
+  C:\Users\liamh\Documents\GitHub\quark-client\src\main\java\cc\quark\module\modules\render\BlockESP2.java:88: error: 
+cannot find symbol
+          double fov = Math.toRadians(mc.options.getFov().value());
+                                                         ^
+    symbol:   method value()
+    location: class SimpleOption<Integer>
+  100 errors
+
+* Try:
+> Check your code and dependencies to fix the compilation error(s)
+> Run with --scan to generate a Build Scan (Powered by Develocity).
+
+BUILD FAILED in 3s

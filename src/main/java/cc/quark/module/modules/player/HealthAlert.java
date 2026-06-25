@@ -54,7 +54,7 @@ public class HealthAlert extends Module {
             }
             if (playSound.isEnabled() && mc.getSoundManager() != null) {
                 mc.getSoundManager().play(
-                        PositionedSoundInstance.master(SoundEvents.BLOCK_NOTE_BLOCK_PLING, 1.5f, 1.0f));
+                        PositionedSoundInstance.master(SoundEvents.BLOCK_NOTE_BLOCK_PLING.value(), 1.5f, 1.0f));
             }
             if (screenTitle.isEnabled()) {
                 mc.inGameHud.setTitle(net.minecraft.text.Text.literal(

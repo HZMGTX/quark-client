@@ -68,7 +68,7 @@ public class TriggerBot extends Module {
         Entity target = entityHit.getEntity();
 
         if (!(target instanceof LivingEntity living)) return;
-        if (living.isDead() || living.getHealth() <= 0f) return;
+        if (living.isRemoved() || living.getHealth() <= 0f) return;
         if (target == mc.player) return;
 
         boolean isPlayer = target instanceof PlayerEntity;

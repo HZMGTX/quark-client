@@ -33,7 +33,7 @@ public class AutoRespawn extends Module {
     public void onTick(EventTick event) {
         if (mc.player == null) return;
 
-        boolean dead = mc.player.isDead()
+        boolean dead = mc.player.isRemoved()
                 || mc.player.getHealth() <= 0f
                 || mc.currentScreen instanceof DeathScreen;
 

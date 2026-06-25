@@ -5,7 +5,7 @@ import cc.quark.event.events.EventPacketSend;
 import cc.quark.module.Category;
 import cc.quark.module.Module;
 import cc.quark.setting.BoolSetting;
-import net.minecraft.network.packet.c2s.play.DropItemC2SPacket;
+import net.minecraft.network.packet.c2s.play.PlayerActionC2SPacket;
 
 public class KeepInventory extends Module {
 
@@ -21,14 +21,15 @@ public class KeepInventory extends Module {
     @EventHandler
     public void onPacketSend(EventPacketSend event) {
         if (mc.player == null) return;
-        if (!(event.getPacket() instanceof DropItemC2SPacket)) return;
+        if (!(event.getPacket() instanceof PlayerActionC2SPacket packet)) return;
+        if (packet.getAction() != PlayerActionC2SPacket.Action.DROP_ITEM && packet.getAction() != PlayerActionC2SPacket.Action.DROP_ALL_ITEMS) return;
 
         if (cancelAll.isEnabled()) {
             event.cancel();
             return;
         }
 
-        if (onlyOnDeath.isEnabled() && (mc.player.isDead() || mc.player.getHealth() <= 0f)) {
+        if (onlyOnDeath.isEnabled() && (mc.player.isRemoved() || mc.player.getHealth() <= 0f)) {
             event.cancel();
         }
     }

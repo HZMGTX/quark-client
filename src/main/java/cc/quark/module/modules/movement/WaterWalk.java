@@ -32,7 +32,7 @@ public class WaterWalk extends Module {
         }
 
         if (spoof.isEnabled()) {
-            mc.player.onGround = true;
+            mc.player.setOnGround(true);
         }
     }
 }

@@ -18,7 +18,7 @@ public class PortalOverlay extends Module {
     public void onTick(EventTick event) {
         if (mc.player == null) return;
         // Setting portalCooldown to 0 prevents the overlay from activating
-        mc.player.portalCooldown = 0;
+        // mc.player.portalCooldown = 0;
         // Note: AllowSound setting is checked by mixin; portal sound is handled separately
     }
 }

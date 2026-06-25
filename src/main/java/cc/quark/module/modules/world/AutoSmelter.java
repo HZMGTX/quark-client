@@ -144,9 +144,9 @@ public class AutoSmelter extends Module {
                 || item == Items.DEEPSLATE_IRON_ORE || item == Items.DEEPSLATE_GOLD_ORE
                 || item == Items.DEEPSLATE_COPPER_ORE
                 || item == Items.SAND || item == Items.COBBLESTONE || item == Items.STONE
-                || item == Items.RAW_CHICKEN || item == Items.RAW_BEEF || item == Items.RAW_PORKCHOP
-                || item == Items.RAW_MUTTON || item == Items.RAW_RABBIT || item == Items.RAW_SALMON
-                || item == Items.RAW_COD || item == Items.POTATO;
+                || item == Items.CHICKEN || item == Items.BEEF || item == Items.PORKCHOP
+                || item == Items.MUTTON || item == Items.RABBIT || item == Items.SALMON
+                || item == Items.COD || item == Items.POTATO;
     }
 
     private boolean hasSmeltable() {

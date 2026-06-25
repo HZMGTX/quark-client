@@ -64,7 +64,7 @@ public class CrystalSwitch extends Module {
             ItemStack stack = mc.player.getInventory().getStack(i);
             if (stack.isEmpty()) continue;
             if (!(stack.getItem() instanceof SwordItem sword)) continue;
-            int dmg = (int) sword.getMaterial().getAttackDamage();
+            int dmg = (int) sword.getMaterial().value().attackDamageBonus();
             if (dmg > bestDamage) {
                 bestDamage = dmg;
                 bestSlot = i;

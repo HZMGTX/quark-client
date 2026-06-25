@@ -46,9 +46,11 @@ public class PacketSpammer extends Module {
                 }
                 case "Swing" ->
                     mc.getNetworkHandler().sendPacket(new HandSwingC2SPacket(Hand.MAIN_HAND));
-                case "Use" ->
-                    mc.interactionManager != null
-                            && (mc.interactionManager.interactItem(mc.player, Hand.MAIN_HAND) != null);
+                case "Use" -> {
+                    if (mc.interactionManager != null) {
+                        mc.interactionManager.interactItem(mc.player, Hand.MAIN_HAND);
+                    }
+                }
             }
         }
     }

@@ -1,68 +1,43 @@
 package cc.quark.module.modules.player;
 
+import cc.quark.Quark;
 import cc.quark.event.EventHandler;
 import cc.quark.event.events.EventTick;
 import cc.quark.module.Category;
 import cc.quark.module.Module;
 import cc.quark.setting.BoolSetting;
-import cc.quark.setting.DoubleSetting;
-import cc.quark.util.InventoryUtil;
 import net.minecraft.entity.LivingEntity;
+import net.minecraft.item.SwordItem;
+import net.minecraft.item.AxeItem;
 
 public class AutoSword extends Module {
 
-    private final DoubleSetting range = register(new DoubleSetting(
-            "Range", "Switch to sword when enemy within this range", 5.0, 2.0, 12.0));
-    private final BoolSetting switchBack = register(new BoolSetting(
-            "Switch Back", "Restore previous slot when enemies leave", true));
-
-    private int prevSlot = -1;
-    private boolean hadEnemy = false;
+    private final BoolSetting allowAxe = register(new BoolSetting("AllowAxe", "AllowAxe", true));
 
     public AutoSword() {
-        super("AutoSword", "Auto-switches to best sword when enemies are nearby", Category.PLAYER);
+        super("AutoSword", "Automatically switches to sword/axe when a mob is nearby", Category.PLAYER);
     }
 
-    @Override
-    public void onEnable() {
-        prevSlot = -1;
-        hadEnemy = false;
-    }
-
-    @Override
-    public void onDisable() {
-        if (switchBack.isEnabled() && prevSlot >= 0 && mc.player != null) {
-            mc.player.getInventory().selectedSlot = prevSlot;
-            prevSlot = -1;
-        }
-    }
 
     @EventHandler
     public void onTick(EventTick event) {
-        if (mc.player == null || mc.world == null) return;
+        
+        if (mc == null || mc.player == null || mc.world == null) return;
 
-        boolean enemyNear = false;
-        for (var e : mc.world.getEntities()) {
-            if (e == mc.player) continue;
-            if (!(e instanceof LivingEntity le) || le.isDead()) continue;
-            if (mc.player.distanceTo(le) <= range.get()) {
-                enemyNear = true;
-                break;
-            }
-        }
+        boolean enemyNear = !mc.world.getEntitiesByClass(
+            LivingEntity.class,
+            mc.player.getBoundingBox().expand(5),
+            e -> !e.equals(mc.player) && e.isAlive()
+        ).isEmpty();
 
-        if (enemyNear && !hadEnemy) {
-            hadEnemy = true;
-            int swordSlot = InventoryUtil.findBestSword();
-            if (swordSlot >= 0 && swordSlot < 9) {
-                if (prevSlot < 0) prevSlot = mc.player.getInventory().selectedSlot;
-                mc.player.getInventory().selectedSlot = swordSlot;
-            }
-        } else if (!enemyNear && hadEnemy) {
-            hadEnemy = false;
-            if (switchBack.isEnabled() && prevSlot >= 0) {
-                mc.player.getInventory().selectedSlot = prevSlot;
-                prevSlot = -1;
+        if (!enemyNear) return;
+
+        var inv = mc.player.getInventory();
+        for (int i = 0; i < 9; i++) {
+            var item = inv.getStack(i).getItem();
+            if (item instanceof SwordItem || (allowAxe.isEnabled() && item instanceof AxeItem)) {
+                if (inv.selectedSlot != i) inv.selectedSlot = i;
+                return;
             }
         }
     }

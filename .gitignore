@@ -7,8 +7,16 @@ versions/*/run/
 *.class
 *.jar
 !gradle/wrapper/gradle-wrapper.jar
+!launcher/agent/lib/*.jar
 out/
 .idea/
 *.iml
 .DS_Store
 .claude/
+
+# Build error logs
+build_errors*.txt
+javac.*.args
+
+# VS Code
+.vscode/

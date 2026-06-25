@@ -132,7 +132,7 @@ public class KillAura2 extends Module {
         for (Entity entity : mc.world.getEntities()) {
             if (entity == mc.player) continue;
             if (!(entity instanceof LivingEntity living)) continue;
-            if (living.isDead() || living.getHealth() <= 0f) continue;
+            if (living.isRemoved() || living.getHealth() <= 0f) continue;
 
             boolean isPlayer = entity instanceof PlayerEntity;
             boolean isMob    = EntityUtil.isMob(entity);
