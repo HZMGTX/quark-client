@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quark — a clean Minecraft HUD client</title>
+<meta name="description" content="Quark is a lightweight Minecraft client that injects straight into a running game — no files installed. A fully customizable live HUD, FullBright, Zoom and a keyboard-driven ClickGUI.">
+<link rel="stylesheet" href="style.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23A855F7'/%3E%3Ctext x='16' y='23' font-size='20' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='bold'%3EQ%3C/text%3E%3C/svg%3E">
+</head>
+<body>
+
+<header class="nav" id="nav">
+  <div class="nav-inner">
+    <a class="brand" href="#top">
+      <span class="brand-mark">Q</span>
+      <span class="brand-name">Quark</span>
+    </a>
+    <nav class="nav-links">
+      <a href="#features">Features</a>
+      <a href="#modules">Modules</a>
+      <a href="#how">How it works</a>
+      <a href="#faq">FAQ</a>
+    </nav>
+    <a class="btn btn-primary nav-cta" href="#download">Download</a>
+  </div>
+</header>
+
+<main id="top">
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="hero-glow"></div>
+    <div class="hero-inner">
+      <div class="badge">Pure JVM injection · No files installed</div>
+      <h1>The clean Minecraft<br><span class="grad">HUD client.</span></h1>
+      <p class="lede">
+        Quark attaches straight into a running Minecraft and gives you a fully
+        customizable live HUD, FullBright, Zoom and a keyboard-driven ClickGUI —
+        without dropping a single file in your game folder.
+      </p>
+      <div class="hero-actions">
+        <a class="btn btn-primary btn-lg" href="#download">⚡ Download for free</a>
+        <a class="btn btn-ghost btn-lg" href="https://github.com/HZMGTX/quark-client" target="_blank" rel="noopener">View on GitHub</a>
+      </div>
+      <div class="hero-meta">Windows · macOS · Linux · works with every major launcher</div>
+
+      <div class="hero-window" aria-hidden="true">
+        <div class="hw-bar"><span></span><span></span><span></span></div>
+        <div class="hw-body">
+          <div class="hw-hud">
+            <div class="hw-tag">QUARK · 240 FPS</div>
+            <div class="hw-line">XYZ 128.4, 71.0, -402.9</div>
+            <div class="hw-line">Facing N (182°)</div>
+            <div class="hw-line good">Ping 24 ms</div>
+            <div class="hw-line">Speed 5.61 b/s</div>
+            <div class="hw-line good">HP 18.0 / 20</div>
+          </div>
+          <div class="hw-menu">
+            <div class="hw-menu-head">QUARK <span>CLIENT</span></div>
+            <div class="hw-row sel">FullBright <b>ON</b></div>
+            <div class="hw-row">Zoom <b class="off">OFF</b></div>
+            <div class="hw-row">Coordinates <b>ON</b></div>
+            <div class="hw-row">Keystrokes <b>ON</b></div>
+            <div class="hw-row">ArmorStatus <b class="off">OFF</b></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Stats -->
+  <section class="stats">
+    <div class="stat"><div class="stat-num">23</div><div class="stat-lbl">real modules</div></div>
+    <div class="stat"><div class="stat-num">0</div><div class="stat-lbl">files installed</div></div>
+    <div class="stat"><div class="stat-num">17+</div><div class="stat-lbl">launchers supported</div></div>
+    <div class="stat"><div class="stat-num">100%</div><div class="stat-lbl">open source</div></div>
+  </section>
+
+  <!-- Features -->
+  <section id="features" class="section">
+    <div class="section-head">
+      <h2>Everything you actually want.<br>Nothing you don't.</h2>
+      <p>Every feature in Quark does something real and runs live in your game.</p>
+    </div>
+    <div class="feature-grid">
+      <div class="feature">
+        <div class="feature-ic">⚡</div>
+        <h3>Pure JVM injection</h3>
+        <p>Attaches to a running Minecraft through the Java Attach API — no mods folder, no jar to install, no trace left behind in your game directory.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-ic">📊</div>
+        <h3>Fully live HUD</h3>
+        <p>Coordinates, direction, ping, speed, health, hunger, armour, held item, server IP, in-game time, memory and FPS — all read straight from the running client.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-ic">🔆</div>
+        <h3>FullBright &amp; Zoom</h3>
+        <p>Real game-option edits: max out brightness with a toggle, and hold a key to zoom the camera. Reverted cleanly the moment you turn them off.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-ic">🎛</div>
+        <h3>Keyboard ClickGUI</h3>
+        <p>Open the menu with Right-Shift and drive everything from the keyboard. Resize the whole UI with <code>[</code> and <code>]</code> — your scale is saved.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-ic">💾</div>
+        <h3>Autosaving config</h3>
+        <p>Enabled modules and your UI scale are written to disk automatically and restored the next time you inject. Export and import your whole setup as JSON.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-ic">🧩</div>
+        <h3>Works everywhere</h3>
+        <p>Official, Fabric, Forge, NeoForge, Lunar, Badlion, Feather, Prism, MultiMC, GDLauncher, CurseForge and more — Quark adapts to the running JVM.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Modules -->
+  <section id="modules" class="section section-alt">
+    <div class="section-head">
+      <h2>23 real modules</h2>
+      <p>Grouped exactly like the in-game menu. Every name here runs for real.</p>
+    </div>
+    <div class="module-cols" id="module-cols"></div>
+  </section>
+
+  <!-- How it works -->
+  <section id="how" class="section">
+    <div class="section-head">
+      <h2>Injected in three steps</h2>
+      <p>No setup, no game restart, no files.</p>
+    </div>
+    <div class="steps">
+      <div class="step">
+        <div class="step-n">1</div>
+        <h3>Launch Minecraft</h3>
+        <p>Start the game from any launcher and load into a world or server like you normally would.</p>
+      </div>
+      <div class="step">
+        <div class="step-n">2</div>
+        <h3>Inject with Quark</h3>
+        <p>Open the Quark launcher, hit <strong>Inject</strong>, and it attaches to the running game in a second.</p>
+      </div>
+      <div class="step">
+        <div class="step-n">3</div>
+        <h3>Press Right-Shift</h3>
+        <p>The ClickGUI opens in game. Toggle modules with Enter — your HUD lights up instantly.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Download -->
+  <section id="download" class="section section-cta">
+    <div class="cta-card">
+      <h2>Get Quark</h2>
+      <p>Free and open source. Grab the latest build and start customizing your HUD in minutes.</p>
+      <div class="hero-actions">
+        <a class="btn btn-primary btn-lg" href="https://github.com/HZMGTX/quark-client/releases" target="_blank" rel="noopener">⬇ Download latest</a>
+        <a class="btn btn-ghost btn-lg" href="https://github.com/HZMGTX/quark-client" target="_blank" rel="noopener">Source code</a>
+      </div>
+      <div class="hero-meta">Build it yourself from source, or grab a release. No account required to run it.</div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section id="faq" class="section section-alt">
+    <div class="section-head"><h2>Questions</h2></div>
+    <div class="faq">
+      <details>
+        <summary>Does Quark install anything in my game folder?</summary>
+        <p>No. Quark attaches to the running Java process through the Attach API. There's no mod jar, no mods folder, and nothing left behind when you close the game.</p>
+      </details>
+      <details>
+        <summary>What does Quark actually do?</summary>
+        <p>It's a HUD and quality-of-life client: a customizable live HUD, FullBright, Zoom and a keyboard ClickGUI. It does not include combat or movement automation — anything that couldn't be done honestly was left out rather than faked.</p>
+      </details>
+      <details>
+        <summary>Which Minecraft versions are supported?</summary>
+        <p>Quark targets the 1.21.x family and resolves game internals across multiple mappings, falling back gracefully so a mismatch hides a widget instead of crashing the game.</p>
+      </details>
+      <details>
+        <summary>Is it really free and open source?</summary>
+        <p>Yes. The full launcher and injected client are on GitHub. You can read every line, build it yourself, or contribute.</p>
+      </details>
+    </div>
+  </section>
+
+</main>
+
+<footer class="footer">
+  <div class="footer-inner">
+    <div class="brand">
+      <span class="brand-mark">Q</span>
+      <span class="brand-name">Quark</span>
+    </div>
+    <div class="footer-links">
+      <a href="#features">Features</a>
+      <a href="#modules">Modules</a>
+      <a href="#download">Download</a>
+      <a href="https://github.com/HZMGTX/quark-client" target="_blank" rel="noopener">GitHub</a>
+    </div>
+    <div class="footer-note">Quark is a HUD &amp; quality-of-life client. Open source, no files installed.</div>
+  </div>
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>
