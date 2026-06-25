@@ -8,7 +8,6 @@ import cc.quark.module.modules.movement.*;
 import cc.quark.module.modules.player.*;
 import cc.quark.module.modules.render.*;
 import cc.quark.module.modules.world.*;
-import cc.quark.module.modules.staff.*;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -38,7 +37,7 @@ public class ModuleManager {
         register(new AimAssist());
         register(new AnchorAura());
         register(new AntiAura());
-        // register(new cc.quark.module.modules.combat.AntiBlind2());
+        register(new AntiBlind2());
         register(new AntiBot());
         register(new AntiFire());
         register(new AntiFireball());
@@ -49,7 +48,6 @@ public class ModuleManager {
         register(new TargetStrafe());
         register(new AntiWeakness());
         register(new AttackSpeed());
-        register(new AimBot());
         register(new AuraDelay());
         register(new AutoAnchor());
         register(new AutoArmor());
@@ -61,15 +59,15 @@ public class ModuleManager {
         register(new AutoCrystal());
         register(new AutoDisconnect());
         register(new AutoEgg());
-        // register(new cc.quark.module.modules.combat.AutoLog());
+        register(new AutoLog());
         register(new AutoGapple());
-        register(new cc.quark.module.modules.combat.AutoLeave());
+        register(new AutoLeave());
         register(new AutoPearl());
-        register(new cc.quark.module.modules.combat.AutoPot());
-        // register(new cc.quark.module.modules.combat.AutoShield());
+        register(new AutoPot());
+        register(new AutoShield());
         register(new AutoSnowball());
         register(new AutoSoup());
-        register(new cc.quark.module.modules.combat.AutoTotem());
+        register(new AutoTotem());
         register(new AutoWeb());
         register(new AutoXP());
         register(new AxeOnly());
@@ -154,7 +152,7 @@ public class ModuleManager {
         register(new AutoSmite());
         register(new AutoTrap());
         register(new BowSpam());
-        register(new cc.quark.module.modules.combat.CombatLog());
+        register(new CombatLog());
         register(new CrystalSwitch());
         register(new DamageIndicator());
         register(new FightBot());
@@ -246,11 +244,12 @@ public class ModuleManager {
         register(new Anchor());
         register(new AntiBounce());
         register(new AntiDrown());
+        register(new AntiKnockback2());
         register(new AntiLevitation());
-        // register(new cc.quark.module.modules.movement.AntiTrap());
+        register(new AntiTrap());
         register(new AntiVoid());
         register(new AutoJump());
-        // register(new cc.quark.module.modules.movement.AutoSneak());
+        register(new AutoSneak());
         register(new AutoSprintToggle());
         register(new AutoWalk2());
         register(new Bhop2());
@@ -271,7 +270,7 @@ public class ModuleManager {
         register(new ElytraFly());
         register(new ElytraReplace());
         register(new ElytraSwap());
-        register(new cc.quark.module.modules.movement.EntitySpeed());
+        register(new EntitySpeed());
         register(new FastClimb());
         register(new FastFall());
         register(new FastLadder());
@@ -296,6 +295,7 @@ public class ModuleManager {
         register(new InstantStop());
         register(new Jesus());
         register(new JetPack());
+        register(new cc.quark.module.modules.movement.JumpReset());
         register(new Ladderdash());
         register(new LavaSpeed());
         register(new LavaWalk());
@@ -308,9 +308,10 @@ public class ModuleManager {
         register(new NoFallDamage2());
         register(new NoGravity());
         register(new NoJumpDelay());
+        register(new NoPush());
         register(new NoSlime());
         register(new NoSlow());
-        register(new cc.quark.module.modules.movement.NoSlowdown());
+        register(new NoSlowdown());
         register(new NoWeb());
         register(new OmniSprint());
         register(new Parkour());
@@ -318,7 +319,7 @@ public class ModuleManager {
         register(new PitchFly());
         register(new QuickStop());
         register(new ReverseStep());
-        register(new cc.quark.module.modules.movement.RubberBand());
+        register(new RubberBand());
         register(new SafeWalk());
         register(new Scaffolddash());
         register(new Skip());
@@ -333,9 +334,9 @@ public class ModuleManager {
         register(new SpeedToggle());
         register(new Spider());
         register(new Sprint());
-        // register(new cc.quark.module.modules.movement.SprintReset());
+        register(new SprintReset());
         register(new Step());
-        register(new cc.quark.module.modules.movement.Strafe());
+        register(new Strafe());
         register(new StraightLine());
         register(new Teleport());
         register(new Tower());
@@ -440,9 +441,10 @@ public class ModuleManager {
         // -------- PLAYER --------
         register(new AFKMode());
         register(new AntiAFK());
-        // register(new cc.quark.module.modules.player.AntiAFK2());
+        register(new AntiAFK2());
         register(new AntiBlind());
         register(new AntiCactus());
+        register(new AntiDebuff());
         register(new AntiHungerLoss());
         register(new AntiKick());
         register(new cc.quark.module.modules.player.AntiVoid2());
@@ -450,28 +452,29 @@ public class ModuleManager {
         register(new AutoBridge());
         register(new AutoBucket());
         register(new AutoClose());
-        // register(new cc.quark.module.modules.player.AutoCraft());
+        register(new AutoCraft());
         register(new AutoDrop());
         register(new AutoEat());
-        register(new cc.quark.module.modules.player.AutoFeed());
+        register(new AutoFeed());
+        register(new cc.quark.module.modules.combat.AntiPoison());
         register(new AutoFish());
-        register(new cc.quark.module.modules.player.AutoGG());
+        register(new AutoGG());
         register(new AutoHeal());
         register(new AutoHotbar());
         register(new AutoLava());
-        // register(new cc.quark.module.modules.player.AutoLogin());
+        register(new AutoLogin());
         register(new AutoMend());
         register(new AutoMessage());
         register(new AutoMount());
         register(new AutoPotion());
         register(new AutoRegister());
-        register(new cc.quark.module.modules.player.AutoRepair());
+        register(new AutoRepair());
         register(new AutoBot());
         register(new AutoReply());
         register(new AutoRespawn());
         register(new AutoSelect());
         register(new AutoSmelt2());
-        // register(new cc.quark.module.modules.player.AutoSword());
+        register(new AutoSword());
         register(new AutoSoup2());
         register(new AutoSprint());
         register(new AutoStack());
@@ -483,7 +486,7 @@ public class ModuleManager {
         register(new Blink());
         register(new BridgeAssist());
         register(new ChatBot());
-        register(new cc.quark.module.modules.player.ChatFilter());
+        register(new ChatFilter());
         register(new ChestAura());
         register(new cc.quark.module.modules.player.ChestStealer());
         register(new FakePlayer());
@@ -493,7 +496,7 @@ public class ModuleManager {
         register(new FastInteract());
         register(new FastPlace());
         register(new FastUse2());
-        register(new cc.quark.module.modules.player.Freecam());
+        register(new Freecam());
         register(new GodMode());
         register(new GuiMove());
         register(new HealthAlert());
@@ -509,13 +512,14 @@ public class ModuleManager {
         register(new NoCooldown());
         register(new NoFatigue());
         register(new NoHunger());
+        register(new cc.quark.module.modules.movement.NoFall());
         register(new NoPacketKick());
         register(new NoPushItems());
         register(new NoRotate());
         register(new OpenInventory());
-        register(new cc.quark.module.modules.player.PacketLogger());
+        register(new PacketLogger());
         register(new PacketSpammer());
-        // register(new cc.quark.module.modules.player.QuickDrop());
+        register(new QuickDrop());
         register(new Replenish());
         register(new SaturationKeeper());
         register(new Scaffold());
@@ -528,13 +532,13 @@ public class ModuleManager {
         register(new NoParticles());
         register(new InfiniteReach());
         register(new ArmorAlert());
-        register(new cc.quark.module.modules.player.AutoOffhand());
+        register(new AutoOffhand());
         register(new NoDeathScreen());
-        // register(new cc.quark.module.modules.player.AutoPickup());
+        register(new AutoPickup());
         register(new GhostHand());
-        register(new cc.quark.module.modules.player.AntiGrief());
+        register(new AntiGrief());
         register(new StorageOrganizer());
-        register(new cc.quark.module.modules.player.AutoSit());
+        register(new AutoSit());
         register(new PotionRefill());
         register(new ArmorDrop());
         register(new AutoLead());
@@ -617,7 +621,7 @@ public class ModuleManager {
         register(new Crosshair());
         register(new CrystalESP());
         register(new CustomFov());
-        register(new cc.quark.module.modules.render.DeathCoords());
+        register(new DeathCoords());
         register(new DirectionHud());
         register(new ESP());
         register(new EntityList());
@@ -636,7 +640,7 @@ public class ModuleManager {
         register(new MobESP());
         register(new ModuleList());
         register(new Nametags());
-        // register(new cc.quark.module.modules.render.NoBob());
+        register(new NoBob());
         register(new NoFog());
         register(new NoHurtCam());
         register(new NotificationOverlay());
@@ -646,7 +650,7 @@ public class ModuleManager {
         register(new PlayerTracers());
         register(new PotionHUD());
         register(new ServerBrand());
-        register(new cc.quark.module.modules.render.SessionInfo());
+        register(new SessionInfo());
         register(new ShulkerViewer());
         register(new SnapLook());
         register(new SpeedDisplay());
@@ -670,7 +674,7 @@ public class ModuleManager {
         register(new MotionBlur());
         register(new CaveFinder());
         register(new Tracers2());
-        // register(new NameTags());
+        register(new NameTags());
         register(new Ambience());
         register(new ESP2());
         register(new BeaconESP());
@@ -764,16 +768,18 @@ public class ModuleManager {
         register(new AutoBreeder());
         register(new AutoPlace());
         register(new AutoSmelter());
-        register(new cc.quark.module.modules.world.AutoBridge2());
-        // register(new cc.quark.module.modules.world.AutoBuild());
+        register(new AutoBridge2());
+        register(new AutoBuild());
         register(new AutoCook());
         register(new AutoDoor());
         register(new AutoFarm());
         register(new AutoFlatten());
         register(new AutoHarvest());
+        register(new AutoMine());
         register(new AutoPillar());
         register(new AutoSign());
         register(new AutoSmelt());
+        register(new cc.quark.module.modules.world.ChestStealer());
         register(new ClearArea());
         register(new CropFarm());
         register(new Excavator());
@@ -800,23 +806,25 @@ public class ModuleManager {
         register(new Scaffolding());
         register(new AutoFurnace());
         register(new VeinMiner2());
+        register(new ChestStealer2());
+        register(new AutoSmith());
         register(new SpawnProofer());
         register(new AutoWorkbench());
         register(new BlockRecorder());
         register(new AntiEnderpearl());
         register(new AutoDispenser());
         register(new AutoCompost());
-        // register(new cc.quark.module.modules.world.AutoFlint());
+        register(new AutoFlint());
         register(new AutoMilk());
         register(new AutoNetherFarm());
         register(new AutoReplant2());
         register(new FloodPlacement());
-        // register(new PathFinder());
+        register(new PathFinder());
         register(new StructureHighlight());
         register(new AutoAnvil());
-        register(new cc.quark.module.modules.world.AutoBrew());
+        register(new AutoBrew());
         register(new AutoEnchanting());
-        register(new cc.quark.module.modules.world.AutoFarm2());
+        register(new AutoFarm2());
         register(new AutoLoom());
         register(new AutoStonecutter());
         register(new EntityCleaner());
@@ -865,19 +873,14 @@ public class ModuleManager {
 
         // -------- EXPLOIT --------
         register(new AntiAim());
-        register(new BlockFly2());
-        register(new AutoDisconnect2());
-        register(new ElytraFly2());
-        register(new NoComPress());
-        register(new Phase2());
         register(new AntiCheat());
-        register(new cc.quark.module.modules.exploit.AntiCrash());
+        register(new AntiCrash());
         register(new AntiKick2());
         register(new AntiTimeout());
         register(new AutoReconnect());
         register(new AutoWalk());
         register(new BlinkPackets());
-        register(new cc.quark.module.modules.exploit.BoatFly());
+        register(new BoatFly());
         register(new ChatSpammer());
         register(new DeSync());
         register(new Disabler());
@@ -886,12 +889,12 @@ public class ModuleManager {
         register(new HighwayBuilder());
         register(new LagSwitch());
         register(new LatencySpoof());
-        register(new cc.quark.module.modules.exploit.NameProtect());
+        register(new NameProtect());
         register(new NoGround());
         register(new NoPacket());
         register(new PacketCancel());
         register(new PacketFly());
-        register(new cc.quark.module.modules.exploit.PingSpoof());
+        register(new PingSpoof());
         register(new HypixelBypass());
         register(new PortalGod());
         register(new Spoofer());
@@ -909,6 +912,7 @@ public class ModuleManager {
         register(new BookBot());
         register(new BypassCooldown());
         register(new EntitySpammer());
+        register(new LagBack());
         register(new PacketSniffer());
         register(new SpeedHack());
         register(new TabListSpoof());
@@ -941,7 +945,7 @@ public class ModuleManager {
         register(new Macros());
         register(new Panic());
         register(new AutoConfig());
-        register(new cc.quark.module.modules.misc.ServerInfo());
+        register(new ServerInfo());
         register(new Waypoints());
         register(new StreamerMode());
         register(new ChatLogger());
@@ -1031,9 +1035,6 @@ public class ModuleManager {
      * Forwards the tick to every currently-enabled module that overrides onTick.
      */
     public void onTick() {
-        if (Module.mc == null) {
-            Module.mc = net.minecraft.client.MinecraftClient.getInstance();
-        }
         for (Module module : modules) {
             if (module.isEnabled()) {
                 try {
@@ -1054,9 +1055,6 @@ public class ModuleManager {
      */
     public void onKey(int keyCode) {
         if (keyCode <= 0) return;
-        if (Module.mc == null) {
-            Module.mc = net.minecraft.client.MinecraftClient.getInstance();
-        }
         for (Module module : modules) {
             if (module.getKeybind() == keyCode) {
                 module.toggle();

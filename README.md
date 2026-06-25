@@ -1,5 +1,12 @@
 <div align="center">
 
+```text
+  ____                  _                 
+ / __ \                | |                
+| |  | |_   _  __ _ _ __| | __  ___ ___  
+| |  | | | | |/ _` | '__| |/ / / __/ __| 
+| |__| | |_| | (_| | |  |   < | (_| (__  
+ \___\_\\__,_|\__,_|_|  |_|\_(_)___\___| 
 ```
 
   <p><i>The undisputed king of 1.21.1 Fabric clients. Built for HVH, Anarchy, and Ghost/Closet cheating.</i></p>
@@ -185,7 +192,7 @@ The compiled `.jar` for each version lands in `build/libs/`. Drop it alongside F
 
 ---
 
-## In-Game Controls
+## 💻 Code Architecture
 
 ```
 cc.quark
@@ -241,6 +248,6 @@ Then add `register(new MyModule());` in `ModuleManager.java` under the appropria
 
 ---
 
-## Building for Multiple Versions
+## ⚠️ Disclaimer
 
 This is an open-source project for educational and research purposes. We are not responsible for bans, account terminations, or violations of any server's terms of service. Use responsibly. Don't ruin vanilla servers for other players — go play on anarchy.
