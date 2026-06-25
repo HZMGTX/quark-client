@@ -13,6 +13,7 @@
  * Endpoints
  *   GET  /health              -> { ok, uptime }
  *   GET  /api/stats           -> aggregate snapshot for the dashboard
+ *   GET  /api/modules         -> the real module catalog + live usage counts
  *   POST /api/event           -> record one real event
  *                                 { source:'launcher'|'client', type, clientId, payload? }
  *   GET  /*                   -> static files from ../public
@@ -43,6 +44,26 @@ const MAX_PAYLOAD_BYTES = 2048;
 const MAX_BODY_BYTES    = 8192;
 
 const VALID_SOURCES = new Set(['launcher', 'client']);
+
+// Mirrors launcher/agent/StandaloneClient.java's buildModules() — the actual
+// module list shipped in the client, not a marketing count. Kept in sync by
+// hand since the Java side has no build step that exports this as data.
+const MODULE_CATALOG = [
+    { category: 'Render', name: 'FullBright',    description: 'Maxes out brightness while enabled' },
+    { category: 'Render', name: 'Zoom',          description: 'Hold C to zoom the camera in' },
+    { category: 'HUD',    name: 'Watermark',     description: 'Quark logo + FPS' },
+    { category: 'HUD',    name: 'ModuleList',    description: 'Active module list' },
+    { category: 'HUD',    name: 'FPS',           description: 'Standalone FPS counter' },
+    { category: 'HUD',    name: 'Keystrokes',    description: 'WASD + mouse keys with live CPS' },
+    { category: 'HUD',    name: 'Coordinates',   description: 'Live player XYZ position' },
+    { category: 'HUD',    name: 'ArmorStatus',   description: 'Worn armor + durability' },
+    { category: 'HUD',    name: 'Ping',          description: 'Live connection latency' },
+    { category: 'HUD',    name: 'Direction',     description: 'Facing direction + yaw' },
+    { category: 'HUD',    name: 'Clock',         description: 'Real-time system clock' },
+    { category: 'Misc',   name: 'ClickGui',      description: 'This menu' },
+    { category: 'Misc',   name: 'ConfigManager', description: 'Autosaves your settings' },
+    { category: 'Misc',   name: 'Notifications', description: 'Toast pop-ups for toggles' },
+];
 
 function now() { return Date.now(); }
 
@@ -258,6 +279,20 @@ const server = http.createServer(async (req, res) => {
 
     if (url === '/api/stats' && req.method === 'GET') {
         sendJson(res, 200, buildSnapshot());
+        return;
+    }
+
+    if (url === '/api/modules' && req.method === 'GET') {
+        const totalToggles = Object.values(state.byModule).reduce((a, b) => a + b, 0);
+        const modules = MODULE_CATALOG.map(m => {
+            const uses = state.byModule[m.name] || 0;
+            return {
+                ...m,
+                uses,
+                share: totalToggles ? Math.round((uses / totalToggles) * 1000) / 10 : 0,
+            };
+        });
+        sendJson(res, 200, { ok: true, totalModules: modules.length, totalToggles, modules });
         return;
     }
 

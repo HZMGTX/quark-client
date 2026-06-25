@@ -237,6 +237,7 @@ public final class StandaloneClient {
         if (pressed(McReflect.KEY_RIGHT_SHIFT)) {
             guiOpen = !guiOpen;
             System.out.println("[Quark Client] Menu " + (guiOpen ? "opened" : "closed"));
+            if (guiOpen) QuarkTelemetry.report("menu_open", Map.of());
         }
         if (!guiOpen) return;
 

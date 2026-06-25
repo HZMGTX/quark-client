@@ -205,6 +205,7 @@ ipcMain.handle('config:export', async () => {
     });
     if (!filePath) return false;
     fs.writeFileSync(filePath, JSON.stringify(store.store, null, 2), 'utf8');
+    reportEvent('config_export', {});
     return true;
 });
 
@@ -218,6 +219,7 @@ ipcMain.handle('config:import', async () => {
     try {
         const data = JSON.parse(fs.readFileSync(filePaths[0], 'utf8'));
         for (const [k, v] of Object.entries(data)) store.set(k, v);
+        reportEvent('config_import', {});
         return true;
     } catch (_) { return false; }
 });
@@ -284,6 +286,7 @@ ipcMain.handle('discord:login', async () => {
                 res.writeHead(200);
                 res.end(callbackHtml('Logged in!', `Welcome, <strong>${user.username}</strong>. You can close this tab.`, '#A855F7'));
                 clearTimeout(timeout); server.close();
+                reportEvent('discord_login', {});
                 resolve(user);
             } catch (err) {
                 clearTimeout(timeout); try { server.close(); } catch (_) {}
@@ -296,7 +299,9 @@ ipcMain.handle('discord:login', async () => {
 });
 
 ipcMain.handle('discord:logout', () => {
-    store.delete('user'); store.delete('accessToken'); return true;
+    store.delete('user'); store.delete('accessToken');
+    reportEvent('discord_logout', {});
+    return true;
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -676,7 +681,7 @@ ipcMain.handle('java:list', async () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 ipcMain.handle('server:ping', (_e, host, port = 25565) => {
-    return new Promise(resolve => {
+    const pinged = new Promise(resolve => {
         const start  = Date.now();
         const socket = new net.Socket();
         let   data   = Buffer.alloc(0);
@@ -721,6 +726,10 @@ ipcMain.handle('server:ping', (_e, host, port = 25565) => {
                 });
             } catch (_) {}
         });
+    });
+    return pinged.then(result => {
+        reportEvent('server_ping', { online: result.online });
+        return result;
     });
 });
 
