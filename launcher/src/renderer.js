@@ -71,6 +71,7 @@ const CLIENT_CONTROLS = {
     'Toggle module': 'Enter',
     'Resize the UI': '[ / ]',
     'Cycle theme': 'T',
+    'Edit HUD layout': 'L',
     'Hold to zoom': 'C',
 };
 
@@ -1086,13 +1087,25 @@ function keybindsPage() {
             <div class="keybind-key" style="cursor:default">${key}</div>
           </div>`).join('')}
       </div>
-      <div class="card">
+      <div class="card" style="margin-bottom:14px">
         <div class="card-title">How toggling works</div>
         <p style="font-size:12px;color:var(--muted);line-height:1.7;margin:0">
           Open the menu with <strong style="color:var(--text)">Right-Shift</strong>, switch category with
           <strong style="color:var(--text)">←/→</strong>, move with <strong style="color:var(--text)">↑/↓</strong>,
           and press <strong style="color:var(--text)">Enter</strong> to toggle the selected module. The modules
           you enable and your UI scale are saved automatically by ConfigManager and restored the next time you inject.
+        </p>
+      </div>
+      <div class="card">
+        <div class="card-title">Repositioning the HUD</div>
+        <p style="font-size:12px;color:var(--muted);line-height:1.7;margin:0">
+          Press <strong style="color:var(--text)">L</strong> to enter layout edit mode. Use
+          <strong style="color:var(--text)">Tab</strong> to select a HUD widget, the
+          <strong style="color:var(--text)">arrow keys</strong> to move it anywhere on screen,
+          <strong style="color:var(--text)">Enter</strong> to reset it back to its default spot, and
+          <strong style="color:var(--text)">[ / ]</strong> to switch between 3 saveable layout slots.
+          Press <strong style="color:var(--text)">L</strong> or <strong style="color:var(--text)">Esc</strong>
+          again to save and exit.
         </p>
       </div>`;
 }

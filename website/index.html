@@ -10,6 +10,8 @@
 </head>
 <body>
 
+<div class="bg-decor" aria-hidden="true"></div>
+
 <header class="nav" id="nav">
   <div class="nav-inner">
     <a class="brand" href="#top">
@@ -32,7 +34,7 @@
   <section class="hero">
     <div class="hero-glow"></div>
     <div class="hero-inner">
-      <div class="badge">Pure JVM injection · No files installed</div>
+      <div class="badge mono">[ 00 ] PURE JVM INJECTION · NO FILES INSTALLED</div>
       <h1>The clean Minecraft<br><span class="grad">HUD client.</span></h1>
       <p class="lede">
         Quark attaches straight into a running Minecraft and gives you a fully
@@ -80,39 +82,66 @@
   <!-- Features -->
   <section id="features" class="section">
     <div class="section-head">
+      <div class="eyebrow">[ <b>01</b> ] FEATURES</div>
       <h2>Everything you actually want.<br>Nothing you don't.</h2>
       <p>Every feature in Quark does something real and runs live in your game.</p>
     </div>
-    <div class="feature-grid">
-      <div class="feature">
+    <div class="feature-list">
+      <div class="feature-row">
+        <div class="feature-num">01</div>
         <div class="feature-ic">⚡</div>
-        <h3>Pure JVM injection</h3>
-        <p>Attaches to a running Minecraft through the Java Attach API — no mods folder, no jar to install, no trace left behind in your game directory.</p>
+        <div class="feature-body">
+          <h3>Pure JVM injection</h3>
+          <p>Attaches to a running Minecraft through the Java Attach API — no mods folder, no jar to install, no trace left behind in your game directory.</p>
+        </div>
       </div>
-      <div class="feature">
+      <div class="feature-row">
+        <div class="feature-num">02</div>
         <div class="feature-ic">📊</div>
-        <h3>Fully live HUD</h3>
-        <p>Coordinates, direction, ping, speed, health, hunger, armour, held item, server IP, in-game time, memory and FPS — all read straight from the running client.</p>
+        <div class="feature-body">
+          <h3>Fully live HUD</h3>
+          <p>Coordinates, direction, ping, speed, health, hunger, armour, held item, server IP, in-game time, memory and FPS — all read straight from the running client.</p>
+        </div>
       </div>
-      <div class="feature">
+      <div class="feature-row">
+        <div class="feature-num">03</div>
         <div class="feature-ic">🔆</div>
-        <h3>FullBright &amp; Zoom</h3>
-        <p>Real game-option edits: max out brightness with a toggle, and hold a key to zoom the camera. Reverted cleanly the moment you turn them off.</p>
+        <div class="feature-body">
+          <h3>FullBright &amp; Zoom</h3>
+          <p>Real game-option edits: max out brightness with a toggle, and hold a key to zoom the camera. Reverted cleanly the moment you turn them off.</p>
+        </div>
       </div>
-      <div class="feature">
+      <div class="feature-row">
+        <div class="feature-num">04</div>
+        <div class="feature-ic">🎯</div>
+        <div class="feature-body">
+          <h3>Saveable HUD layouts</h3>
+          <p>Press <code>L</code> to enter layout edit mode, <code>Tab</code> to select a widget and the arrow keys to move it anywhere on screen. Three layout slots save independently and restore on the next injection.</p>
+        </div>
+      </div>
+      <div class="feature-row">
+        <div class="feature-num">05</div>
         <div class="feature-ic">🎛</div>
-        <h3>Keyboard ClickGUI</h3>
-        <p>Open the menu with Right-Shift and drive everything from the keyboard. Resize the UI with <code>[</code> <code>]</code> and cycle accent themes — including an animated rainbow — with <code>T</code>. Saved automatically.</p>
+        <div class="feature-body">
+          <h3>Keyboard ClickGUI</h3>
+          <p>Open the menu with Right-Shift and drive everything from the keyboard. Resize the UI with <code>[</code> <code>]</code> and cycle accent themes — including an animated rainbow — with <code>T</code>. Saved automatically.</p>
+        </div>
       </div>
-      <div class="feature">
+      <div class="feature-row">
+        <div class="feature-num">06</div>
         <div class="feature-ic">💾</div>
-        <h3>Autosaving config</h3>
-        <p>Enabled modules and your UI scale are written to disk automatically and restored the next time you inject. Export and import your whole setup as JSON.</p>
+        <div class="feature-body">
+          <h3>Autosaving config</h3>
+          <p>Enabled modules, your UI scale and every HUD layout slot are written to disk automatically and restored the next time you inject.</p>
+        </div>
       </div>
-      <div class="feature">
+      <div class="feature-row">
+        <div class="feature-num">07</div>
         <div class="feature-ic">🧩</div>
-        <h3>Works everywhere</h3>
-        <p>Official, Fabric, Forge, NeoForge, Lunar, Badlion, Feather, Prism, MultiMC, GDLauncher, CurseForge and more — Quark adapts to the running JVM.</p>
+        <div class="feature-body">
+          <h3>Works everywhere</h3>
+          <p>Official, Fabric, Forge, NeoForge, Lunar, Badlion, Feather, Prism, MultiMC, GDLauncher, CurseForge and more — Quark adapts to the running JVM.</p>
+        </div>
       </div>
     </div>
   </section>
@@ -120,8 +149,9 @@
   <!-- Modules -->
   <section id="modules" class="section section-alt">
     <div class="section-head">
+      <div class="eyebrow">[ <b>02</b> ] MODULES</div>
       <h2>24 real modules</h2>
-      <p>Grouped exactly like the in-game menu. Every name here runs for real.</p>
+      <p>Grouped exactly like the in-game menu. The switch shows what's on by default — every name here runs for real.</p>
     </div>
     <div class="module-cols" id="module-cols"></div>
   </section>
@@ -129,22 +159,23 @@
   <!-- How it works -->
   <section id="how" class="section">
     <div class="section-head">
+      <div class="eyebrow">[ <b>03</b> ] INSTALL</div>
       <h2>Injected in three steps</h2>
       <p>No setup, no game restart, no files.</p>
     </div>
     <div class="steps">
       <div class="step">
-        <div class="step-n">1</div>
+        <div class="step-n mono">[ 01 ]</div>
         <h3>Launch Minecraft</h3>
         <p>Start the game from any launcher and load into a world or server like you normally would.</p>
       </div>
       <div class="step">
-        <div class="step-n">2</div>
+        <div class="step-n mono">[ 02 ]</div>
         <h3>Inject with Quark</h3>
         <p>Open the Quark launcher, hit <strong>Inject</strong>, and it attaches to the running game in a second.</p>
       </div>
       <div class="step">
-        <div class="step-n">3</div>
+        <div class="step-n mono">[ 03 ]</div>
         <h3>Press Right-Shift</h3>
         <p>The ClickGUI opens in game. Toggle modules with Enter — your HUD lights up instantly.</p>
       </div>
@@ -154,9 +185,15 @@
   <!-- Download -->
   <section id="download" class="section section-cta">
     <div class="cta-card">
+      <div class="eyebrow">[ <b>04</b> ] DOWNLOAD</div>
       <h2>Get Quark</h2>
       <p>Free and open source. Grab the latest build and start customizing your HUD in minutes.</p>
-      <div class="hero-actions">
+      <div class="platform-rows">
+        <div class="platform-row"><span>Windows</span><span class="ok mono">SUPPORTED</span></div>
+        <div class="platform-row"><span>macOS</span><span class="ok mono">SUPPORTED</span></div>
+        <div class="platform-row"><span>Linux</span><span class="ok mono">SUPPORTED</span></div>
+      </div>
+      <div class="hero-actions" style="margin-top:26px">
         <a class="btn btn-primary btn-lg" href="https://github.com/HZMGTX/quark-client/releases" target="_blank" rel="noopener">⬇ Download latest</a>
         <a class="btn btn-ghost btn-lg" href="https://github.com/HZMGTX/quark-client" target="_blank" rel="noopener">Source code</a>
       </div>
@@ -166,22 +203,25 @@
 
   <!-- FAQ -->
   <section id="faq" class="section section-alt">
-    <div class="section-head"><h2>Questions</h2></div>
+    <div class="section-head">
+      <div class="eyebrow">[ <b>05</b> ] FAQ</div>
+      <h2>Questions</h2>
+    </div>
     <div class="faq">
       <details>
-        <summary>Does Quark install anything in my game folder?</summary>
+        <summary><span class="q-num">Q01</span><span class="q-text">Does Quark install anything in my game folder?</span></summary>
         <p>No. Quark attaches to the running Java process through the Attach API. There's no mod jar, no mods folder, and nothing left behind when you close the game.</p>
       </details>
       <details>
-        <summary>What does Quark actually do?</summary>
+        <summary><span class="q-num">Q02</span><span class="q-text">What does Quark actually do?</span></summary>
         <p>It's a HUD and quality-of-life client: a customizable live HUD, FullBright, Zoom and a keyboard ClickGUI. It does not include combat or movement automation — anything that couldn't be done honestly was left out rather than faked.</p>
       </details>
       <details>
-        <summary>Which Minecraft versions are supported?</summary>
+        <summary><span class="q-num">Q03</span><span class="q-text">Which Minecraft versions are supported?</span></summary>
         <p>Quark targets the 1.21.x family and resolves game internals across multiple mappings, falling back gracefully so a mismatch hides a widget instead of crashing the game.</p>
       </details>
       <details>
-        <summary>Is it really free and open source?</summary>
+        <summary><span class="q-num">Q04</span><span class="q-text">Is it really free and open source?</span></summary>
         <p>Yes. The full launcher and injected client are on GitHub. You can read every line, build it yourself, or contribute.</p>
       </details>
     </div>

@@ -61,6 +61,26 @@ public final class StandaloneClient {
     private static int themeIndex = 0;
     private static long themeHintUntil = 0L;
 
+    // ── HUD layout editor ────────────────────────────────────────────────────
+    // Widgets normally auto-stack down the left edge. Pressing L lets you pick
+    // one with Tab and nudge it anywhere with the arrow keys; positions are
+    // saved per slot so you can keep a few different arrangements around.
+    private static final List<String> POSITIONABLE = List.of(
+            "Watermark", "FPS", "FpsGraph", "SessionInfo", "Coordinates", "Direction", "Speed",
+            "Health", "Hunger", "HeldItem", "Ping", "ServerIP", "GameTime", "Clock", "Memory",
+            "CPS", "ArmorStatus");
+    private static final String[] LAYOUT_SLOT_NAMES = {"Layout 1", "Layout 2", "Layout 3"};
+    private static final int LAYOUT_SLOTS = LAYOUT_SLOT_NAMES.length;
+    private static final List<Map<String, int[]>> layouts = new ArrayList<>();
+    static {
+        for (int i = 0; i < LAYOUT_SLOTS; i++) layouts.add(new LinkedHashMap<>());
+    }
+    private static int layoutSlot = 0;
+    private static boolean editingLayout = false;
+    private static String selectedWidget = null;
+    private static final Map<String, int[]> lastPos = new LinkedHashMap<>();
+    private static long lastNudge = 0L;
+
     // ── Module model ──────────────────────────────────────────────────────────
     public static final class Module {
         public final String name;
@@ -194,6 +214,22 @@ public final class StandaloneClient {
             try { themeIndex = Math.floorMod(Integer.parseInt(t), THEME_NAMES.length); } catch (NumberFormatException ignored) {}
         }
         applyTheme();
+
+        String slot = saved.get("layout.slot");
+        if (slot != null) {
+            try { layoutSlot = Math.floorMod(Integer.parseInt(slot), LAYOUT_SLOTS); } catch (NumberFormatException ignored) {}
+        }
+        for (int i = 0; i < LAYOUT_SLOTS; i++) {
+            for (String w : POSITIONABLE) {
+                String v = saved.get("layout." + i + "." + w);
+                if (v == null) continue;
+                String[] parts = v.split(",");
+                if (parts.length != 2) continue;
+                try {
+                    layouts.get(i).put(w, new int[]{Integer.parseInt(parts[0].trim()), Integer.parseInt(parts[1].trim())});
+                } catch (NumberFormatException ignored) {}
+            }
+        }
     }
 
     private static void persist() {
@@ -204,6 +240,10 @@ public final class StandaloneClient {
                 states.put(e.getKey() + "." + m.name, String.valueOf(m.enabled));
         states.put("ui.scale", String.valueOf(guiScale));
         states.put("ui.theme", String.valueOf(themeIndex));
+        states.put("layout.slot", String.valueOf(layoutSlot));
+        for (int i = 0; i < LAYOUT_SLOTS; i++)
+            for (Map.Entry<String, int[]> e : layouts.get(i).entrySet())
+                states.put("layout." + i + "." + e.getKey(), e.getValue()[0] + "," + e.getValue()[1]);
         QuarkConfig.save(states);
     }
 
@@ -257,7 +297,7 @@ public final class StandaloneClient {
             float dt = lastFrameNanos == 0 ? 0.016f : Math.min(0.05f, (now - lastFrameNanos) / 1_000_000_000f);
             lastFrameNanos = now;
 
-            handleInput();
+            handleInput(ctx);
             updateFullBright();
             updateZoom();
             updateTheme();
@@ -289,6 +329,7 @@ public final class StandaloneClient {
             if (isEnabled("HUD", "ModuleList"))     drawModuleList(ctx);
             drawToasts(ctx);
             if (guiAnim > 0.01f) drawGui(ctx, guiAnim);
+            drawLayoutEditor(ctx);
         } catch (Throwable t) {
             // Never crash the render thread.
         }
@@ -330,7 +371,21 @@ public final class StandaloneClient {
 
     // ── Input (rising-edge detection on GLFW key state) ───────────────────────
 
-    private static void handleInput() {
+    private static void handleInput(Object ctx) {
+        if (pressed(McReflect.KEY_L)) {
+            editingLayout = !editingLayout;
+            if (editingLayout) {
+                guiOpen = false;
+                if (selectedWidget == null || !visibleWidgets().contains(selectedWidget)) selectedWidget = firstVisible();
+                toast("Layout edit on — Tab select, arrows move, Enter reset");
+            } else {
+                persist();
+                toast("Layout saved — " + LAYOUT_SLOT_NAMES[layoutSlot]);
+            }
+            return;
+        }
+        if (editingLayout) { handleLayoutEdit(ctx); return; }
+
         if (pressed(McReflect.KEY_RIGHT_SHIFT)) {
             guiOpen = !guiOpen;
             System.out.println("[Quark Client] Menu " + (guiOpen ? "opened" : "closed"));
@@ -374,6 +429,72 @@ public final class StandaloneClient {
         return v < SCALE_MIN ? SCALE_MIN : (v > SCALE_MAX ? SCALE_MAX : v);
     }
 
+    private static void handleLayoutEdit(Object ctx) {
+        if (pressed(McReflect.KEY_ESCAPE)) {
+            editingLayout = false;
+            persist();
+            toast("Layout saved — " + LAYOUT_SLOT_NAMES[layoutSlot]);
+            return;
+        }
+
+        if (pressed(McReflect.KEY_TAB)) {
+            List<String> visible = visibleWidgets();
+            if (!visible.isEmpty()) {
+                int idx = visible.indexOf(selectedWidget);
+                selectedWidget = visible.get((idx + 1) % visible.size());
+                toast("Selected: " + selectedWidget);
+            }
+        }
+
+        if (pressed(McReflect.KEY_RIGHT_BRACKET)) switchLayoutSlot(1);
+        if (pressed(McReflect.KEY_LEFT_BRACKET))  switchLayoutSlot(-1);
+
+        if (pressed(McReflect.KEY_ENTER) && selectedWidget != null) {
+            currentLayout().remove(selectedWidget);
+            toast(selectedWidget + " reset to default position");
+        }
+
+        if (selectedWidget == null) return;
+        int dx = 0, dy = 0;
+        if (McReflect.keyDown(McReflect.KEY_LEFT))  dx -= 2;
+        if (McReflect.keyDown(McReflect.KEY_RIGHT)) dx += 2;
+        if (McReflect.keyDown(McReflect.KEY_UP))    dy -= 2;
+        if (McReflect.keyDown(McReflect.KEY_DOWN))  dy += 2;
+        if (dx == 0 && dy == 0) return;
+        long now = System.currentTimeMillis();
+        if (now - lastNudge < 16) return; // ~60 nudges/sec regardless of frame rate
+        lastNudge = now;
+        nudgeSelected(ctx, dx, dy);
+    }
+
+    private static void nudgeSelected(Object ctx, int dx, int dy) {
+        int[] saved = currentLayout().get(selectedWidget);
+        int[] last = lastPos.get(selectedWidget);
+        int[] base = saved != null ? new int[]{saved[0], saved[1]}
+                : last != null ? new int[]{last[0], last[1]} : new int[]{4, 4};
+        int sw = McReflect.screenWidth(ctx), sh = McReflect.screenHeight(ctx);
+        base[0] = Math.max(0, Math.min(Math.max(0, sw - 12), base[0] + dx));
+        base[1] = Math.max(0, Math.min(Math.max(0, sh - 14), base[1] + dy));
+        currentLayout().put(selectedWidget, base);
+    }
+
+    private static void switchLayoutSlot(int dir) {
+        layoutSlot = Math.floorMod(layoutSlot + dir, LAYOUT_SLOTS);
+        toast("Switched to " + LAYOUT_SLOT_NAMES[layoutSlot]);
+        persist();
+    }
+
+    private static List<String> visibleWidgets() {
+        List<String> out = new ArrayList<>();
+        for (String w : POSITIONABLE) if (isEnabled("HUD", w)) out.add(w);
+        return out;
+    }
+
+    private static String firstVisible() {
+        List<String> v = visibleWidgets();
+        return v.isEmpty() ? null : v.get(0);
+    }
+
     /** True on the frame a key transitions from up to down. */
     private static boolean pressed(int key) {
         boolean down = McReflect.keyDown(key);
@@ -390,17 +511,32 @@ public final class StandaloneClient {
         return y;
     }
 
-    private static void leftLabel(Object ctx, String s, int color) {
-        int x = 4, y = nextLeftSlot(12);
+    private static Map<String, int[]> currentLayout() { return layouts.get(layoutSlot); }
+
+    /** Resolves where a positionable widget should draw — its saved custom spot, or the next auto-stacked slot. */
+    private static int[] anchor(String widget, int height) {
+        int[] custom = currentLayout().get(widget);
+        int[] resolved = custom != null ? new int[]{custom[0], custom[1]} : new int[]{4, nextLeftSlot(height)};
+        lastPos.put(widget, resolved);
+        return resolved;
+    }
+
+    private static void labelAt(Object ctx, int x, int y, String s, int color) {
         McReflect.fill(ctx, x, y, x + McReflect.textWidth(s) + 8, y + 12, PANEL);
         McReflect.fill(ctx, x, y, x + 2, y + 12, ACCENT);
         McReflect.text(ctx, s, x + 6, y + 2, color);
     }
 
+    private static void leftLabel(Object ctx, String widget, String s, int color) {
+        int[] p = anchor(widget, 12);
+        labelAt(ctx, p[0], p[1], s, color);
+    }
+
     private static void drawWatermark(Object ctx) {
         String label = "QUARK";
         String fps = fpsString();
-        int x = 4, y = nextLeftSlot(14);
+        int[] p = anchor("Watermark", 14);
+        int x = p[0], y = p[1];
         int w = McReflect.textWidth(label) + (fps.isEmpty() ? 0 : McReflect.textWidth(fps) + 8) + 12;
         McReflect.fill(ctx, x, y, x + w, y + 14, PANEL);
         float pulse = 0.6f + 0.4f * (float) Math.sin(System.currentTimeMillis() / 600.0);
@@ -412,7 +548,7 @@ public final class StandaloneClient {
     private static void drawFpsCounter(Object ctx) {
         String fps = fpsString();
         if (fps.isEmpty()) return;
-        leftLabel(ctx, fps, ACCENT);
+        leftLabel(ctx, "FPS", fps, ACCENT);
     }
 
     // Push one FPS sample at most ~5x/sec into the rolling history buffer.
@@ -433,7 +569,9 @@ public final class StandaloneClient {
 
     private static void drawFpsGraph(Object ctx) {
         if (fpsHistoryLen < 2) return;
-        int w = 80, h = 26, x = 4, y = nextLeftSlot(h);
+        int w = 80, h = 26;
+        int[] p = anchor("FpsGraph", h);
+        int x = p[0], y = p[1];
         McReflect.fill(ctx, x, y, x + w, y + h, PANEL);
         McReflect.fill(ctx, x, y, x + 2, y + h, ACCENT);
 
@@ -462,30 +600,30 @@ public final class StandaloneClient {
     private static void drawCoordinates(Object ctx) {
         double[] pos = McReflect.playerPos();
         if (pos == null) return;
-        leftLabel(ctx, String.format("XYZ %.1f, %.1f, %.1f", pos[0], pos[1], pos[2]), TEXT);
+        leftLabel(ctx, "Coordinates", String.format("XYZ %.1f, %.1f, %.1f", pos[0], pos[1], pos[2]), TEXT);
     }
 
     private static void drawDirection(Object ctx) {
         Float yaw = McReflect.getYaw();
         if (yaw == null) return;
-        leftLabel(ctx, "Facing " + cardinal(yaw) + " (" + Math.round(((yaw % 360) + 360) % 360) + "°)", TEXT);
+        leftLabel(ctx, "Direction", "Facing " + cardinal(yaw) + " (" + Math.round(((yaw % 360) + 360) % 360) + "°)", TEXT);
     }
 
     private static void drawPing(Object ctx) {
         Integer ping = McReflect.getPing();
         if (ping == null) return;
         int color = ping < 80 ? BAR_GOOD : (ping < 160 ? BAR_WARN : BAR_BAD);
-        leftLabel(ctx, "Ping " + ping + " ms", color);
+        leftLabel(ctx, "Ping", "Ping " + ping + " ms", color);
     }
 
     private static void drawClock(Object ctx) {
-        leftLabel(ctx, LocalTime.now().format(CLOCK_FMT), TEXT_DIM);
+        leftLabel(ctx, "Clock", LocalTime.now().format(CLOCK_FMT), TEXT_DIM);
     }
 
     private static void drawSessionInfo(Object ctx) {
         String user = McReflect.getUsername();
         if (user == null || user.isEmpty()) return;
-        leftLabel(ctx, user, TEXT);
+        leftLabel(ctx, "SessionInfo", user, TEXT);
     }
 
     private static void drawHealth(Object ctx) {
@@ -496,14 +634,14 @@ public final class StandaloneClient {
         String s = max != null && max > 0
                 ? String.format("HP %.1f / %.0f", hp, max)
                 : String.format("HP %.1f", hp);
-        leftLabel(ctx, s, color);
+        leftLabel(ctx, "Health", s, color);
     }
 
     private static void drawHunger(Object ctx) {
         Integer food = McReflect.getFood();
         if (food == null) return;
         int color = food > 12 ? BAR_GOOD : (food > 6 ? BAR_WARN : BAR_BAD);
-        leftLabel(ctx, "Food " + food + " / 20", color);
+        leftLabel(ctx, "Hunger", "Food " + food + " / 20", color);
     }
 
     private static void drawSpeed(Object ctx) {
@@ -523,19 +661,19 @@ public final class StandaloneClient {
             lastSpeedPos = pos;
             lastSpeedNanos = now;
         }
-        leftLabel(ctx, String.format("Speed %.2f b/s", bps), TEXT);
+        leftLabel(ctx, "Speed", String.format("Speed %.2f b/s", bps), TEXT);
     }
 
     private static void drawHeldItem(Object ctx) {
         String item = McReflect.getHeldItem();
         if (item == null) return;
-        leftLabel(ctx, item, TEXT);
+        leftLabel(ctx, "HeldItem", item, TEXT);
     }
 
     private static void drawServerIp(Object ctx) {
         String ip = McReflect.getServerAddress();
         if (ip == null || ip.isEmpty()) return;
-        leftLabel(ctx, ip, TEXT_DIM);
+        leftLabel(ctx, "ServerIP", ip, TEXT_DIM);
     }
 
     private static void drawGameTime(Object ctx) {
@@ -545,7 +683,7 @@ public final class StandaloneClient {
         long tod = Math.floorMod(time, 24000L);
         // Minecraft tick 0 == 06:00, 6000 == 12:00, 18000 == 00:00.
         long totalMin = Math.floorMod((tod * 24 * 60) / 24000 + 6 * 60, 24 * 60);
-        leftLabel(ctx, String.format("Day %d  %02d:%02d", day, totalMin / 60, totalMin % 60), TEXT);
+        leftLabel(ctx, "GameTime", String.format("Day %d  %02d:%02d", day, totalMin / 60, totalMin % 60), TEXT);
     }
 
     private static void drawMemory(Object ctx) {
@@ -554,18 +692,21 @@ public final class StandaloneClient {
         long used = rt.totalMemory() - rt.freeMemory();
         int pct = max > 0 ? (int) Math.round(100.0 * used / max) : 0;
         int color = pct < 70 ? BAR_GOOD : (pct < 90 ? BAR_WARN : BAR_BAD);
-        leftLabel(ctx, String.format("Mem %d%% (%.1f/%.1f GB)",
+        leftLabel(ctx, "Memory", String.format("Mem %d%% (%.1f/%.1f GB)",
                 pct, used / 1.073741824E9, max / 1.073741824E9), color);
     }
 
     private static void drawCps(Object ctx) {
         updateCps();
-        leftLabel(ctx, cps + " CPS", TEXT);
+        leftLabel(ctx, "CPS", cps + " CPS", TEXT);
     }
 
     private static void drawArmorStatus(Object ctx) {
         List<String> armor = McReflect.getArmorInfo();
         if (armor == null || armor.isEmpty()) return;
+        int rowH = 14;
+        int[] p = anchor("ArmorStatus", armor.size() * rowH);
+        int x = p[0], y = p[1];
         for (String piece : armor) {
             // Color the row by the durability percentage if present.
             int color = TEXT;
@@ -576,7 +717,8 @@ public final class StandaloneClient {
                     color = pct > 50 ? BAR_GOOD : (pct > 20 ? BAR_WARN : BAR_BAD);
                 } catch (NumberFormatException ignored) {}
             }
-            leftLabel(ctx, piece, color);
+            labelAt(ctx, x, y, piece, color);
+            y += rowH;
         }
     }
 
@@ -652,6 +794,29 @@ public final class StandaloneClient {
         if (!isEnabled("Misc", "Notifications")) return;
         TOASTS.add(new Toast(text));
         while (TOASTS.size() > 5) TOASTS.remove(0);
+    }
+
+    private static void drawLayoutEditor(Object ctx) {
+        if (!editingLayout) return;
+        int sw = McReflect.screenWidth(ctx);
+        int sh = McReflect.screenHeight(ctx);
+
+        if (selectedWidget != null) {
+            int[] p = lastPos.get(selectedWidget);
+            if (p != null) {
+                int w = McReflect.textWidth(selectedWidget) + 24;
+                McReflect.outline(ctx, p[0] - 2, p[1] - 2, p[0] + w, p[1] + 16, ACCENT);
+            }
+        }
+
+        String hint = "HUD LAYOUT — " + LAYOUT_SLOT_NAMES[layoutSlot]
+                + "   Tab " + (selectedWidget == null ? "(none)" : selectedWidget)
+                + "   Arrows Move   Enter Reset   [ ] Slot   Esc/L Done";
+        int hw = McReflect.textWidth(hint) + 16;
+        int hx = (sw - hw) / 2, hy = sh - 30;
+        McReflect.fill(ctx, hx, hy, hx + hw, hy + 16, PANEL);
+        McReflect.fill(ctx, hx, hy, hx + hw, hy + 1, ACCENT);
+        McReflect.text(ctx, hint, hx + 8, hy + 4, TEXT);
     }
 
     // ── ClickGUI (sidebar layout, scalable) ───────────────────────────────────
@@ -745,7 +910,7 @@ public final class StandaloneClient {
                 String s = "Theme: " + THEME_NAMES[themeIndex];
                 McReflect.text(ctx, s, px + 10, footerY + 18, withAlpha(ACCENT, anim));
             } else {
-                String hint = "←→ Cat   ↑↓ Mod   Enter Toggle   [ ] Scale   T Theme";
+                String hint = "←→ Cat ↑↓ Mod Enter Toggle [ ] Scale T Theme L Layout";
                 McReflect.text(ctx, hint, px + 10, footerY + 18, withAlpha(TEXT_DIM, anim));
             }
         } finally {
