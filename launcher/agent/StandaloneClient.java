@@ -57,8 +57,9 @@ public final class StandaloneClient {
 
     // Modules that paint their own dedicated HUD widget, so they stay out of the generic list.
     private static final java.util.Set<String> SELF_RENDERING = java.util.Set.of(
-            "Watermark", "ModuleList", "FPS", "Keystrokes", "Coordinates",
-            "ArmorStatus", "Ping", "Direction", "Clock");
+            "Watermark", "ModuleList", "FPS", "Keystrokes", "CPS", "Coordinates",
+            "ArmorStatus", "Ping", "Direction", "Clock", "Health", "Hunger",
+            "Speed", "HeldItem", "ServerIP", "GameTime", "Memory", "SessionInfo");
 
     private static boolean guiOpen = false;
     private static int catIndex = 0;
@@ -83,6 +84,11 @@ public final class StandaloneClient {
     private static boolean prevMouseLeft = false;
     private static int cps = 0;
     private static final List<Long> leftClickTimes = new ArrayList<>();
+
+    // Horizontal speed (blocks/sec), smoothed across frames.
+    private static double[] lastSpeedPos = null;
+    private static long lastSpeedNanos = 0L;
+    private static double bps = 0.0;
 
     private static final DateTimeFormatter CLOCK_FMT = DateTimeFormatter.ofPattern("HH:mm:ss");
 
@@ -117,11 +123,20 @@ public final class StandaloneClient {
         add("HUD",      "ModuleList",    "Active module list", true);
         add("HUD",      "FPS",           "Standalone FPS counter");
         add("HUD",      "Keystrokes",    "WASD + mouse keys with live CPS", true);
+        add("HUD",      "CPS",           "Standalone click-per-second counter");
         add("HUD",      "Coordinates",   "Live player XYZ position", true);
         add("HUD",      "ArmorStatus",   "Worn armor + durability");
         add("HUD",      "Ping",          "Live connection latency");
         add("HUD",      "Direction",     "Facing direction + yaw");
         add("HUD",      "Clock",         "Real-time system clock");
+        add("HUD",      "Health",        "Live health + absorption");
+        add("HUD",      "Hunger",        "Live food level");
+        add("HUD",      "Speed",         "Horizontal speed in blocks/sec");
+        add("HUD",      "HeldItem",      "Name + count of the held item");
+        add("HUD",      "ServerIP",      "Address of the current server");
+        add("HUD",      "GameTime",      "In-game day + clock");
+        add("HUD",      "Memory",        "JVM heap usage");
+        add("HUD",      "SessionInfo",   "Your username + FPS");
 
         add("Misc",     "ClickGui",      "This menu", true);
         add("Misc",     "ConfigManager", "Autosaves your settings", true);
@@ -183,10 +198,19 @@ public final class StandaloneClient {
             leftHudY = 4;
             if (isEnabled("HUD", "Watermark"))      drawWatermark(ctx);
             else if (isEnabled("HUD", "FPS"))       drawFpsCounter(ctx);
+            if (isEnabled("HUD", "SessionInfo"))    drawSessionInfo(ctx);
             if (isEnabled("HUD", "Coordinates"))    drawCoordinates(ctx);
             if (isEnabled("HUD", "Direction"))      drawDirection(ctx);
+            if (isEnabled("HUD", "Speed"))          drawSpeed(ctx);
+            if (isEnabled("HUD", "Health"))         drawHealth(ctx);
+            if (isEnabled("HUD", "Hunger"))         drawHunger(ctx);
+            if (isEnabled("HUD", "HeldItem"))       drawHeldItem(ctx);
             if (isEnabled("HUD", "Ping"))           drawPing(ctx);
+            if (isEnabled("HUD", "ServerIP"))       drawServerIp(ctx);
+            if (isEnabled("HUD", "GameTime"))       drawGameTime(ctx);
             if (isEnabled("HUD", "Clock"))          drawClock(ctx);
+            if (isEnabled("HUD", "Memory"))         drawMemory(ctx);
+            if (isEnabled("HUD", "CPS"))            drawCps(ctx);
             if (isEnabled("HUD", "ArmorStatus"))    drawArmorStatus(ctx);
             if (isEnabled("HUD", "Keystrokes"))     drawKeystrokes(ctx);
             if (isEnabled("HUD", "ModuleList"))     drawModuleList(ctx);
@@ -339,6 +363,87 @@ public final class StandaloneClient {
 
     private static void drawClock(Object ctx) {
         leftLabel(ctx, LocalTime.now().format(CLOCK_FMT), TEXT_DIM);
+    }
+
+    private static void drawSessionInfo(Object ctx) {
+        String user = McReflect.getUsername();
+        if (user == null || user.isEmpty()) return;
+        leftLabel(ctx, user, TEXT);
+    }
+
+    private static void drawHealth(Object ctx) {
+        Float hp = McReflect.getHealth();
+        if (hp == null) return;
+        Float max = McReflect.getMaxHealth();
+        int color = hp > 12 ? BAR_GOOD : (hp > 6 ? BAR_WARN : BAR_BAD);
+        String s = max != null && max > 0
+                ? String.format("HP %.1f / %.0f", hp, max)
+                : String.format("HP %.1f", hp);
+        leftLabel(ctx, s, color);
+    }
+
+    private static void drawHunger(Object ctx) {
+        Integer food = McReflect.getFood();
+        if (food == null) return;
+        int color = food > 12 ? BAR_GOOD : (food > 6 ? BAR_WARN : BAR_BAD);
+        leftLabel(ctx, "Food " + food + " / 20", color);
+    }
+
+    private static void drawSpeed(Object ctx) {
+        double[] pos = McReflect.playerPos();
+        long now = System.nanoTime();
+        if (pos != null) {
+            if (lastSpeedPos != null && lastSpeedNanos != 0L) {
+                double dt = (now - lastSpeedNanos) / 1_000_000_000.0;
+                if (dt > 0.0005) {
+                    double dx = pos[0] - lastSpeedPos[0];
+                    double dz = pos[2] - lastSpeedPos[2];
+                    double inst = Math.sqrt(dx * dx + dz * dz) / dt;
+                    // Smooth so the readout doesn't flicker frame-to-frame.
+                    bps += (inst - bps) * 0.25;
+                }
+            }
+            lastSpeedPos = pos;
+            lastSpeedNanos = now;
+        }
+        leftLabel(ctx, String.format("Speed %.2f b/s", bps), TEXT);
+    }
+
+    private static void drawHeldItem(Object ctx) {
+        String item = McReflect.getHeldItem();
+        if (item == null) return;
+        leftLabel(ctx, item, TEXT);
+    }
+
+    private static void drawServerIp(Object ctx) {
+        String ip = McReflect.getServerAddress();
+        if (ip == null || ip.isEmpty()) return;
+        leftLabel(ctx, ip, TEXT_DIM);
+    }
+
+    private static void drawGameTime(Object ctx) {
+        Long time = McReflect.getTimeOfDay();
+        if (time == null) return;
+        long day = Math.floorDiv(time, 24000L) + 1;
+        long tod = Math.floorMod(time, 24000L);
+        // Minecraft tick 0 == 06:00, 6000 == 12:00, 18000 == 00:00.
+        long totalMin = Math.floorMod((tod * 24 * 60) / 24000 + 6 * 60, 24 * 60);
+        leftLabel(ctx, String.format("Day %d  %02d:%02d", day, totalMin / 60, totalMin % 60), TEXT);
+    }
+
+    private static void drawMemory(Object ctx) {
+        Runtime rt = Runtime.getRuntime();
+        long max  = rt.maxMemory();
+        long used = rt.totalMemory() - rt.freeMemory();
+        int pct = max > 0 ? (int) Math.round(100.0 * used / max) : 0;
+        int color = pct < 70 ? BAR_GOOD : (pct < 90 ? BAR_WARN : BAR_BAD);
+        leftLabel(ctx, String.format("Mem %d%% (%.1f/%.1f GB)",
+                pct, used / 1.073741824E9, max / 1.073741824E9), color);
+    }
+
+    private static void drawCps(Object ctx) {
+        updateCps();
+        leftLabel(ctx, cps + " CPS", TEXT);
     }
 
     private static void drawArmorStatus(Object ctx) {

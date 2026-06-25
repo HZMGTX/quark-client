@@ -27,18 +27,46 @@ const STAFF_IDS = {
     '1401853518100303932': 'Owner',
 };
 
-const MODULE_COUNTS = {
-    combat: 288, movement: 266, render: 240, player: 266,
-    world: 206, exploit: 146, misc: 133, staff: 126,
+// The real catalog the injected client actually ships — these are the exact
+// modules in launcher/agent/StandaloneClient.java, grouped the same way. Every
+// name here corresponds to something that genuinely runs in game; there are no
+// placeholder/cheat entries. Kept in sync by hand with the agent source.
+const MODULE_LIST = {
+    render: ['FullBright', 'Zoom'],
+    hud:    ['Watermark', 'ModuleList', 'FPS', 'Keystrokes', 'CPS', 'Coordinates',
+             'ArmorStatus', 'Ping', 'Direction', 'Clock', 'Health', 'Hunger',
+             'Speed', 'HeldItem', 'ServerIP', 'GameTime', 'Memory', 'SessionInfo'],
+    misc:   ['ClickGui', 'ConfigManager', 'Notifications'],
 };
+const MODULE_DESCRIPTIONS = {
+    FullBright: 'Maxes out brightness while enabled',
+    Zoom: 'Hold C to zoom the camera in',
+    Watermark: 'Quark logo + live FPS', ModuleList: 'Active module list',
+    FPS: 'Standalone FPS counter', Keystrokes: 'WASD + mouse keys with live CPS',
+    CPS: 'Standalone click-per-second counter', Coordinates: 'Live player XYZ position',
+    ArmorStatus: 'Worn armor + durability', Ping: 'Live connection latency',
+    Direction: 'Facing direction + yaw', Clock: 'Real-time system clock',
+    Health: 'Live health', Hunger: 'Live food level',
+    Speed: 'Horizontal speed in blocks/sec', HeldItem: 'Name + count of the held item',
+    ServerIP: 'Address of the current server', GameTime: 'In-game day + clock',
+    Memory: 'JVM heap usage', SessionInfo: 'Your username + FPS',
+    ClickGui: 'The in-game menu (Right-Shift)', ConfigManager: 'Autosaves your settings',
+    Notifications: 'Toast pop-ups for toggles',
+};
+const MODULE_COUNTS = Object.fromEntries(
+    Object.entries(MODULE_LIST).map(([cat, mods]) => [cat, mods.length]));
 const TOTAL_MODULES = Object.values(MODULE_COUNTS).reduce((a, b) => a + b, 0);
+const MODULE_CATEGORY_COUNT = Object.keys(MODULE_LIST).length;
 const MAX_MODULE_COUNT = Math.max(...Object.values(MODULE_COUNTS));
 
-const DEFAULT_KEYBINDS = {
-    KillAura: 'R', Speed: 'V', Flight: 'F', Sprint: 'LSHIFT',
-    Criticals: 'C', AntiKnockback: 'G', Scaffold: 'LALT',
-    ESP: 'Z', FullBright: 'B', Zoom: 'X', Freecam: 'N',
-    BedAura: 'T', AutoTotem: 'Y', NoFall: 'J', Step: 'K',
+// In-game controls are fixed in the agent (StandaloneClient.java); shown read-only.
+const CLIENT_CONTROLS = {
+    'Open / close menu': 'Right-Shift',
+    'Switch category': '← / →',
+    'Move selection': '↑ / ↓',
+    'Toggle module': 'Enter',
+    'Resize the UI': '[ / ]',
+    'Hold to zoom': 'C',
 };
 
 function getRole(user) {
@@ -97,7 +125,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     activeAlt     = (await quark.settingsGet('activeAlt')) || null;
     profiles      = (await quark.settingsGet('profiles')) || defaultProfiles();
     servers       = (await quark.settingsGet('servers'))  || defaultServers();
-    keybinds      = (await quark.settingsGet('keybinds')) || { ...DEFAULT_KEYBINDS };
+    keybinds      = (await quark.settingsGet('keybinds')) || {};
     sessionStats  = (await quark.settingsGet('stats'))    || sessionStats;
     sessionStats.sessionStart = Date.now();
 
@@ -350,14 +378,14 @@ function home() {
     document.getElementById('content').innerHTML = `
       <div class="page-header">
         <h1>Welcome back, ${escapeHtml(currentUser.username || 'Guest')}</h1>
-        <p>Quark Ghost Client — pure JVM injection, ${TOTAL_MODULES.toLocaleString()} modules, all Minecraft launchers</p>
+        <p>Quark — pure JVM injection, ${TOTAL_MODULES} real modules, no files installed</p>
       </div>
 
       <div class="grid-4" style="margin-bottom:16px">
         <div class="stat-card">
           <div class="stat-label">Total Modules</div>
-          <div class="stat-value brand">${TOTAL_MODULES.toLocaleString()}</div>
-          <div class="stat-sub">across 8 categories</div>
+          <div class="stat-value brand">${TOTAL_MODULES}</div>
+          <div class="stat-sub">across ${MODULE_CATEGORY_COUNT} categories</div>
         </div>
         <div class="stat-card">
           <div class="stat-label">Injection Status</div>
@@ -417,7 +445,7 @@ function home() {
             ['🔧','Inject','inject'],['📦','Modules','modules'],
             ['🎮','Profiles','profiles'],['🌐','Servers','servers'],
             ['💬','Chat','chat'],['📋','Changelog','changelog'],
-            ['⌨','Keybinds','keybinds'],['📊','Stats','stats'],
+            ['⌨','Controls','keybinds'],['📊','Stats','stats'],
           ].map(([icon, label, page]) =>
             `<button class="staff-action-btn" data-nav="${page}"><span class="icon">${icon}</span>${label}</button>`
           ).join('')}
@@ -473,9 +501,15 @@ function news() {
     const entries = [
         {
             icon: '🚀', tags: ['update'],
-            title: 'Quark 2.0 — Massive Update',
+            title: 'Quark — Real HUD Client',
             date: 'June 2025',
-            desc: '1671 modules across 8 categories. Pure JVM agent injection. Complete launcher redesign with support for every Minecraft launcher — Official, Prism, MultiMC, GDLauncher, CurseForge, Lunar, Badlion, TLauncher, Feather and more.',
+            desc: `${TOTAL_MODULES} real modules that all run in game via pure JVM agent injection — FullBright, Zoom and a full live HUD (coordinates, armour, ping, speed, health, hunger, held item, server IP, in-game time, memory and more). No files installed, no mods folder.`,
+        },
+        {
+            icon: '📊', tags: ['feature'],
+            title: 'Live Stats Dashboard',
+            date: 'June 2025',
+            desc: 'An optional, opt-in telemetry dashboard (the website/ folder) tracks real launcher and in-game activity — module toggles, sessions and injects — with no usernames, tokens or IPs ever sent. Point it at your own server URL in Settings → Stats & Analytics.',
         },
         {
             icon: '⚡', tags: ['feature'],
@@ -490,22 +524,16 @@ function news() {
             desc: 'Add your favourite servers and see live player counts, latency, version and MOTD. The server pinger uses the native Minecraft status protocol.',
         },
         {
-            icon: '🛡', tags: ['feature'],
-            title: '126 Staff Modules',
+            icon: '💬', tags: ['feature'],
+            title: 'Global Chat — Real Backend',
             date: 'May 2025',
-            desc: 'The Staff Panel now includes 126 dedicated anti-cheat detection modules including KillauraDetector, FlightDetector, ReachDetector, ScaffoldDetector, MacroDetector and a full violation log system.',
-        },
-        {
-            icon: '✓', tags: ['fix'],
-            title: 'EventBus Double-Subscribe Fixed',
-            date: 'May 2025',
-            desc: 'Fixed 161 module files that incorrectly called mc.getEventBus().subscribe(this) manually. The Module base class handles subscription automatically on enable/disable.',
+            desc: 'Global Chat connects to a real WebSocket relay (launcher/server) with presence, history and reconnect backoff. If no relay URL is configured it honestly shows a "not configured" state instead of faking online users.',
         },
         {
             icon: '🔑', tags: ['feature'],
-            title: 'Keybind Editor',
+            title: 'In-Game Controls',
             date: 'April 2025',
-            desc: 'You can now configure keybinds for all major modules directly from the launcher. Keybinds are stored locally and synced to the injected client on next attach.',
+            desc: 'The Controls page shows the real, fixed in-game controls — Right-Shift opens the menu, arrows navigate, Enter toggles, and [ ] resize the UI. Your enabled modules and UI scale autosave and restore on the next inject.',
         },
     ];
 
@@ -782,42 +810,11 @@ async function runInject(pid, context) {
 // PAGE: Modules
 // ─────────────────────────────────────────────────────────────────────────────
 
-const MODULE_LIST = {
-    combat:   ['KillAura','Criticals','Reach','Velocity','AutoCrystal','Surround','AntiKnockback','AutoTotem',
-                'BedAura','AimAssist','CrystalAura','Burrow','WTap','CritBot','TargetStrafe','SilentAura',
-                'MultiAura','AutoGapple','ShieldBreaker','TriggerBot','BackTrack','AntiPoison','AntiFire',
-                'HoleSnap','Vampire','HoleFiller','ForceField','Executioner','PingPredict','SuperCrit',
-                'ComboHit','PacketReach','DoubleHit','LifeSteal','AutoMLG'],
-    movement: ['Flight','Speed','NoFall','Jesus','Spider','Step','Sprint','BunnyHop','Glide','ElytraFly',
-                'SafeWalk','AirStrafe','HighJump','Parkour','TeleportFly','WaterFly','ClimbSpeed',
-                'SmoothStep','FastHead','JumpBoost','IceSpeed','LongJump','EdgeClamp','MoonWalk',
-                'SneakFlight','AntiLevitation','FastLadder','NoSlow','Scaffold','BoatFly'],
-    render:   ['ESP','Tracers','FullBright','Chams','XRay','Radar','HoleESP','StorageESP','NameTags',
-                'Trajectories','Zoom','FreeLook','BlockESP','CrystalESP','ItemESP','EntityGlow',
-                'ChunkESP','HideSelf','ClearVision','TargetHUD','SkyColor','DirectionHUD','BreadCrumbs',
-                'TimeChanger','NoHurtCam','ViewModel'],
-    player:   ['AutoEat','InvMove','AutoTool','AutoArmor','FastPlace','FoodSwapper','InvProtect',
-                'AutoRefill','PotionSelector','SmartEat','AutoSword','InventorySort','AntiHurtCam',
-                'AntiStuck','ChestStealer2','AutoFish2','FastBreak','NoClip','PacketMine','AntiAFK'],
-    world:    ['Nuker','AutoFarm','ChestStealer','AutoMine','VeinMiner','TreeFeller','AutoFish','AutoBuild',
-                'AutoBreeder','AutoEnchant','AutoAnvil','AutoCraft','AutoEnderFarm','BlockRotator',
-                'AutoTerraformer','FillChunk','MobTrap','AutoSmith','AutoLoom'],
-    exploit:  ['PacketFly','Disabler','Timer','Freecam','Phase','NoCompress','SpeedHack','PortalGod',
-                'PacketDupe','SignCrash','LecternExploit','CommandSpoof','FastUse','AntiServerVelocity',
-                'KickSpoof','PearlPhase'],
-    misc:     ['AutoGG','ChatBot','MacroRecorder','DiscordRPC','PingSpoof','SessionInfo','StreamerFilter',
-                'PanicHotkey','GamepadSupport','TabListLogger','AutoWaypoint','SessionLog','AutoCommand',
-                'CrashDetector','ServerSpammer'],
-    staff:    ['Vanish','XrayDetector','KillauraDetector','FlightDetector','AntiGrief','BanLog',
-                'PlayerWatch','ViolationLog','StaffMode','ChatFilter','SpectatorTools','SpeedDetector',
-                'ReachDetector','ScaffoldDetector','AimAssistDetector','MacroDetector'],
-};
-
 function modules() {
     document.getElementById('content').innerHTML = `
       <div class="page-header">
         <h1>Module Browser</h1>
-        <p>${TOTAL_MODULES.toLocaleString()} modules across 8 categories</p>
+        <p>${TOTAL_MODULES} real modules across ${MODULE_CATEGORY_COUNT} categories — every one runs in game</p>
       </div>
 
       <div class="search-wrap">
@@ -845,12 +842,10 @@ function modules() {
         container.innerHTML = cats.map(([cat, mods]) => {
             const filtered = s ? mods.filter(m => m.toLowerCase().includes(s)) : mods;
             if (!filtered.length) return '';
-            const count = MODULE_COUNTS[cat] || mods.length;
             return `
-              <div class="module-cat-header">${cat.toUpperCase()} <span>${count} total${s ? ', ' + filtered.length + ' shown' : ''}</span></div>
+              <div class="module-cat-header">${cat.toUpperCase()} <span>${filtered.length} module${filtered.length === 1 ? '' : 's'}${s && filtered.length !== mods.length ? ' shown' : ''}</span></div>
               <div class="module-grid" style="margin-bottom:16px">
-                ${filtered.map(m => `<div class="module-chip">${m}</div>`).join('')}
-                ${!s && count > mods.length ? `<div class="module-chip" style="color:var(--muted);border-style:dashed;font-size:10px">+${count - mods.length} more…</div>` : ''}
+                ${filtered.map(m => `<div class="module-chip" title="${escapeHtml(MODULE_DESCRIPTIONS[m] || '')}">${m}</div>`).join('')}
               </div>`;
         }).join('');
         if (!container.innerHTML.trim()) {
@@ -981,90 +976,35 @@ function renderServers() {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// PAGE: Keybinds
+// PAGE: Controls
 // ─────────────────────────────────────────────────────────────────────────────
 
 function keybindsPage() {
-    const cats = {
-        Combat  : ['KillAura','Criticals','Reach','Velocity','AutoCrystal','AntiKnockback','AutoTotem','BedAura'],
-        Movement: ['Flight','Speed','Sprint','Step','NoFall','Scaffold','BunnyHop','ElytraFly'],
-        Render  : ['ESP','FullBright','Zoom','Chams','XRay','Tracers','FreeLook','Radar'],
-        Player  : ['AutoEat','AutoTool','FastPlace','InvMove','AutoArmor'],
-        Misc    : ['PanicHotkey','Freecam','Timer','MacroRecorder'],
-    };
-
-    let listening = null;
-
+    // The injected client (StandaloneClient.java) is driven by fixed keys baked
+    // into the agent — the launcher can't rebind them, so this page honestly
+    // shows the real controls rather than pretending to be an editor.
     document.getElementById('content').innerHTML = `
-      <div class="page-header" style="display:flex;align-items:center;justify-content:space-between">
-        <div><h1>Keybind Editor</h1><p>Set in-game keybinds for modules. Click a key to rebind.</p></div>
-        <button class="btn btn-secondary btn-sm" id="btn-reset-keys">Reset All</button>
+      <div class="page-header">
+        <h1>Controls</h1>
+        <p>The in-game client is keyboard-driven. These controls are built into the injected client and are always active.</p>
       </div>
-      ${Object.entries(cats).map(([cat, mods]) => `
-        <div class="card" style="margin-bottom:14px">
-          <div class="card-title">${cat}</div>
-          ${mods.map(m => `
-            <div class="keybind-row">
-              <div>
-                <div class="keybind-name">${m}</div>
-                <div class="keybind-cat">${cat}</div>
-              </div>
-              <div class="keybind-key ${keybinds[m] ? '' : 'none'}" data-module="${m}">
-                ${keybinds[m] || '—'}
-              </div>
-            </div>`).join('')}
-        </div>`).join('')}
-      <div style="margin-top:14px;display:flex;gap:8px">
-        <button class="btn btn-primary btn-sm" id="btn-save-keys">Save Keybinds</button>
-        <p style="font-size:11px;color:var(--muted);align-self:center">Press Escape to clear a keybind</p>
+      <div class="card" style="margin-bottom:14px">
+        <div class="card-title">In-game controls</div>
+        ${Object.entries(CLIENT_CONTROLS).map(([action, key]) => `
+          <div class="keybind-row">
+            <div><div class="keybind-name">${action}</div></div>
+            <div class="keybind-key" style="cursor:default">${key}</div>
+          </div>`).join('')}
+      </div>
+      <div class="card">
+        <div class="card-title">How toggling works</div>
+        <p style="font-size:12px;color:var(--muted);line-height:1.7;margin:0">
+          Open the menu with <strong style="color:var(--text)">Right-Shift</strong>, switch category with
+          <strong style="color:var(--text)">←/→</strong>, move with <strong style="color:var(--text)">↑/↓</strong>,
+          and press <strong style="color:var(--text)">Enter</strong> to toggle the selected module. The modules
+          you enable and your UI scale are saved automatically by ConfigManager and restored the next time you inject.
+        </p>
       </div>`;
-
-    document.querySelectorAll('.keybind-key').forEach(el => {
-        el.addEventListener('click', () => {
-            if (listening) {
-                listening.textContent = keybinds[listening.dataset.module] || '—';
-                listening.classList.remove('listening');
-            }
-            if (listening === el) { listening = null; return; }
-            listening = el;
-            el.classList.add('listening');
-            el.textContent = '…';
-        });
-    });
-
-    const keyHandler = e => {
-        if (!listening) return;
-        e.preventDefault();
-        const m = listening.dataset.module;
-        if (e.key === 'Escape') {
-            delete keybinds[m];
-            listening.textContent = '—';
-            listening.classList.add('none');
-        } else {
-            const key = e.key.toUpperCase();
-            keybinds[m] = key;
-            listening.textContent = key;
-            listening.classList.remove('none');
-        }
-        listening.classList.remove('listening');
-        listening = null;
-    };
-    document.addEventListener('keydown', keyHandler, { capture: true });
-    pageCleanup = () => document.removeEventListener('keydown', keyHandler, { capture: true });
-
-    document.getElementById('btn-reset-keys').addEventListener('click', () => {
-        if (confirm('Reset all keybinds to defaults?')) {
-            keybinds = { ...DEFAULT_KEYBINDS };
-            quark.settingsSet('keybinds', keybinds);
-            keybindsPage();
-            notify('Keybinds reset to defaults', 'info');
-        }
-    });
-
-    document.getElementById('btn-save-keys').addEventListener('click', () => {
-        quark.settingsSet('keybinds', keybinds);
-        notify('Keybinds saved', 'success');
-    });
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1094,8 +1034,8 @@ function statsPage() {
         </div>
         <div class="stat-card">
           <div class="stat-label">Total Modules</div>
-          <div class="stat-value">${TOTAL_MODULES.toLocaleString()}</div>
-          <div class="stat-sub">across 8 categories</div>
+          <div class="stat-value">${TOTAL_MODULES}</div>
+          <div class="stat-sub">across ${MODULE_CATEGORY_COUNT} categories</div>
         </div>
         <div class="stat-card">
           <div class="stat-label">Status</div>
@@ -1544,26 +1484,25 @@ function addChatMsg(user, text, system, ts) {
 function changelog() {
     const entries = [
         { v: '2.0.0', date: 'June 2025', items: [
-            { text: '1671 total modules — largest update ever', fix: false },
+            { text: `${TOTAL_MODULES} real modules — every one runs in game`, fix: false },
+            { text: 'Expanded in-game HUD: speed, health, hunger, held item, server IP, game time, memory, session info', fix: false },
             { text: 'Pure JVM agent injection — no JAR/mods needed', fix: false },
-            { text: 'Support for every major Minecraft launcher', fix: false },
-            { text: 'Complete launcher redesign — glass UI, purple/cyan theme', fix: false },
+            { text: 'Optional opt-in stats dashboard (website/) — no usernames, tokens or IPs sent', fix: false },
             { text: 'System tray, auto-inject, live process monitoring', fix: false },
             { text: 'Server manager with live MC ping protocol', fix: false },
-            { text: 'Keybind editor, statistics dashboard, news page', fix: false },
-            { text: 'Alt manager, profile system, global chat', fix: false },
-            { text: 'Fixed 161 redundant event subscribe/unsubscribe calls', fix: true },
+            { text: 'Replaced the fake keybind editor with an honest Controls reference', fix: true },
+            { text: 'Corrected inflated module counts to reflect what actually ships', fix: true },
             { text: 'Java discovery — scans all installed JDKs', fix: true },
         ]},
         { v: '1.5.0', date: 'May 2025', items: [
-            { text: '126 staff modules with full anti-cheat detection suite', fix: false },
+            { text: 'Global Chat — real WebSocket relay with presence and history', fix: false },
             { text: 'EnvironmentDetector: auto-detects loader and launcher', fix: false },
             { text: 'ClassResolver: multi-environment class name resolution', fix: false },
             { text: 'AttachShim: JVM attach shim for injection without tools.jar', fix: false },
         ]},
         { v: '1.0.0', date: 'April 2025', items: [
-            { text: 'Initial release with 800+ modules', fix: false },
-            { text: 'Fabric mod base with EventBus architecture', fix: false },
+            { text: 'Initial release — self-contained injected HUD client', fix: false },
+            { text: 'Keyboard-driven ClickGUI rendered via reflection', fix: false },
             { text: 'Electron launcher with Discord OAuth', fix: false },
             { text: 'ASM 9 bytecode instrumentation for game hooks', fix: false },
         ]},
@@ -1819,9 +1758,9 @@ async function settings() {
           <div class="card">
             <div class="card-title">About</div>
             <div style="font-size:12px;color:var(--muted);line-height:2.2">
-              <div>Quark Ghost Client <span style="color:var(--brand)">v2.0.0</span></div>
-              <div>Modules: <span style="color:var(--text)">${TOTAL_MODULES.toLocaleString()}</span></div>
-              <div>MC Target: <span style="color:var(--text)">1.21.1 Fabric</span></div>
+              <div>Quark Client <span style="color:var(--brand)">v2.0.0</span></div>
+              <div>Modules: <span style="color:var(--text)">${TOTAL_MODULES}</span> (all real)</div>
+              <div>MC Target: <span style="color:var(--text)">1.21.x (multi-mapping)</span></div>
               <div>Injection: <span style="color:var(--cyan)">JVM Attach API + ASM 9</span></div>
               <div>Launchers: <span style="color:var(--text)">All major launchers</span></div>
             </div>
@@ -1933,7 +1872,7 @@ async function settings() {
             quark.settingsSet('profiles', []);
             quark.settingsSet('servers', []);
             quark.settingsSet('keybinds', {});
-            alts = []; profiles = defaultProfiles(); servers = defaultServers(); keybinds = { ...DEFAULT_KEYBINDS };
+            alts = []; profiles = defaultProfiles(); servers = defaultServers(); keybinds = {};
             notify('All data cleared', 'info');
         }
     });
