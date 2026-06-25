@@ -40,7 +40,7 @@ public class FoodAlert extends Module {
             ChatUtil.warn("[FoodAlert] Food is low: " + foodLevel + "/20");
             if (sound.isEnabled() && mc.getSoundManager() != null) {
                 mc.getSoundManager().play(
-                        PositionedSoundInstance.master(SoundEvents.BLOCK_NOTE_BLOCK_PLING.value(), 0.5f, 1.0f));
+                        PositionedSoundInstance.master(SoundEvents.BLOCK_NOTE_BLOCK_PLING, 0.5f, 1.0f));
             }
             timer.reset();
         }

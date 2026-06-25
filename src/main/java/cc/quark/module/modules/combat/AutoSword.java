@@ -5,53 +5,94 @@ import cc.quark.event.events.EventTick;
 import cc.quark.module.Category;
 import cc.quark.module.Module;
 import cc.quark.setting.BoolSetting;
-import cc.quark.setting.IntSetting;
-import cc.quark.util.EntityUtil;
+import cc.quark.setting.DoubleSetting;
+import cc.quark.util.ChatUtil;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.AxeItem;
-import net.minecraft.item.ItemStack;
 import net.minecraft.item.SwordItem;
+import net.minecraft.network.packet.c2s.play.UpdateSelectedSlotC2SPacket;
 
-import java.util.List;
-
+/**
+ * AutoSword - automatically switches to a sword (or axe as fallback) when an
+ * enemy player comes within range, and restores the previous slot when they leave.
+ */
 public class AutoSword extends Module {
 
-    private final BoolSetting preferAxe = register(new BoolSetting("Prefer Axe", "Prefer axe over sword", false));
-    private final IntSetting range = register(new IntSetting("Range", "Range to detect enemies", 5, 1, 10));
+    private final DoubleSetting range = register(new DoubleSetting(
+            "Range", "Distance to trigger sword switch (blocks)", 5.0, 2.0, 10.0));
+
+    private final BoolSetting useAxe = register(new BoolSetting(
+            "Use Axe", "Fall back to axe if no sword is found", true));
+
+    private final BoolSetting restoreSlot = register(new BoolSetting(
+            "Restore Slot", "Switch back to original slot when out of range", true));
+
+    private int previousSlot = -1;
+    private boolean switched = false;
 
     public AutoSword() {
-        super("AutoSword", "Auto-switches to sword/axe when entering combat", Category.COMBAT);
+        super("AutoSword", "Auto-switches to sword when enemy is in range", Category.COMBAT);
+    }
+
+    @Override
+    public void onDisable() {
+        if (switched && restoreSlot.isEnabled() && previousSlot != -1 && mc.player != null) {
+            mc.player.getInventory().selectedSlot = previousSlot;
+            mc.player.networkHandler.sendPacket(new UpdateSelectedSlotC2SPacket(previousSlot));
+        }
+        switched = false;
+        previousSlot = -1;
     }
 
     @EventHandler
     public void onTick(EventTick event) {
         if (mc.player == null || mc.world == null) return;
 
-        List<LivingEntity> targets = EntityUtil.getEntitiesOfType(LivingEntity.class, range.get());
-        targets.removeIf(e -> e == mc.player || !(e instanceof PlayerEntity));
+        boolean enemyNearby = isEnemyInRange();
 
-        if (targets.isEmpty()) return;
+        if (enemyNearby && !switched) {
+            int swordSlot = findWeaponSlot();
+            if (swordSlot == -1) return;
+            previousSlot = mc.player.getInventory().selectedSlot;
+            mc.player.getInventory().selectedSlot = swordSlot;
+            mc.player.networkHandler.sendPacket(new UpdateSelectedSlotC2SPacket(swordSlot));
+            switched = true;
+        } else if (!enemyNearby && switched) {
+            if (restoreSlot.isEnabled() && previousSlot != -1) {
+                mc.player.getInventory().selectedSlot = previousSlot;
+                mc.player.networkHandler.sendPacket(new UpdateSelectedSlotC2SPacket(previousSlot));
+            }
+            switched = false;
+            previousSlot = -1;
+        }
+    }
 
-        int swordSlot = -1;
-        int axeSlot = -1;
+    private boolean isEnemyInRange() {
+        for (Entity e : mc.world.getEntities()) {
+            if (e == mc.player) continue;
+            if (!(e instanceof PlayerEntity p)) continue;
+            if (p.isDead() || p.getHealth() <= 0f) continue;
+            if (mc.player.distanceTo(p) <= range.get()) return true;
+        }
+        return false;
+    }
 
+    private int findWeaponSlot() {
+        // Search hotbar (slots 0-8)
         for (int i = 0; i < 9; i++) {
-            ItemStack stack = mc.player.getInventory().getStack(i);
-            if (stack.isEmpty()) continue;
-            if (stack.getItem() instanceof SwordItem && swordSlot == -1) swordSlot = i;
-            if (stack.getItem() instanceof AxeItem && axeSlot == -1) axeSlot = i;
+            if (mc.player.getInventory().getStack(i).getItem() instanceof SwordItem) {
+                return i;
+            }
         }
-
-        int targetSlot = -1;
-        if (preferAxe.isEnabled()) {
-            targetSlot = axeSlot != -1 ? axeSlot : swordSlot;
-        } else {
-            targetSlot = swordSlot != -1 ? swordSlot : axeSlot;
+        if (useAxe.isEnabled()) {
+            for (int i = 0; i < 9; i++) {
+                if (mc.player.getInventory().getStack(i).getItem() instanceof AxeItem) {
+                    return i;
+                }
+            }
         }
-
-        if (targetSlot != -1 && mc.player.getInventory().selectedSlot != targetSlot) {
-            mc.player.getInventory().selectedSlot = targetSlot;
-        }
+        return -1;
     }
 }

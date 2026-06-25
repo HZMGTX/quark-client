@@ -5,29 +5,55 @@ import cc.quark.event.events.EventRender2D;
 import cc.quark.module.Category;
 import cc.quark.module.Module;
 import cc.quark.setting.BoolSetting;
-import cc.quark.setting.IntSetting;
-import cc.quark.util.ColorUtil;
+import cc.quark.util.RenderUtil;
 import net.minecraft.client.gui.DrawContext;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.util.math.Vec3d;
 
 public class HealthBar extends Module {
-    private final IntSetting x = register(new IntSetting("X", "X position", 2, 0, 1000));
-    private final IntSetting y = register(new IntSetting("Y", "Y position", 30, 0, 600));
-    private final BoolSetting showNum = register(new BoolSetting("Number", "Show HP number", true));
 
-    public HealthBar() { super("HealthBar", "Custom health bar with color gradient", Category.RENDER); }
+    private final BoolSetting showAbsorption = register(new BoolSetting("ShowAbsorption", "Include absorption hearts in the bar", true));
+
+    public HealthBar() {
+        super("HealthBar", "Renders a health bar below each entity's nameplate", Category.RENDER);
+    }
 
     @EventHandler
-    public void onRender2D(EventRender2D e) {
-        if (mc.player == null) return;
-        DrawContext ctx = e.getDrawContext();
-        float hp = mc.player.getHealth();
-        float maxHp = mc.player.getMaxHealth();
-        float pct = hp / maxHp;
-        int px = x.get(), py = y.get(), bw = 80, bh = 6;
-        ctx.fill(px, py, px + bw, py + bh, ColorUtil.withAlpha(0x222222, 200));
-        int hpColor = pct > 0.5f ? 0x55FF55 : (pct > 0.25f ? 0xFFFF55 : 0xFF5555);
-        ctx.fill(px, py, px + (int)(bw * pct), py + bh, ColorUtil.withAlpha(hpColor, 220));
-        if (showNum.isEnabled())
-            cc.quark.util.RenderUtil.drawCustomText(ctx, (int)hp + "/" + (int)maxHp, px + bw + 3, py, 0xFFFFFFFF);
+    public void onRender2D(EventRender2D event) {
+        if (mc.world == null || mc.player == null) return;
+        DrawContext ctx = event.getDrawContext();
+
+        for (Entity e : mc.world.getEntities()) {
+            if (!(e instanceof LivingEntity living)) continue;
+            if (e == mc.player) continue;
+            if (living.isDead()) continue;
+
+            Vec3d headPos = new Vec3d(e.getX(), e.getY() + e.getHeight() + 0.3, e.getZ());
+            double[] screen = RenderUtil.project(headPos);
+            if (screen == null) continue;
+
+            float maxHp  = living.getMaxHealth();
+            float hp     = living.getHealth();
+            float absorb = showAbsorption.isEnabled() ? living.getAbsorptionAmount() : 0f;
+            float total  = hp + absorb;
+            float pct    = maxHp > 0 ? Math.min(total / maxHp, 1f) : 1f;
+
+            int barW = 40;
+            int barH = 3;
+            int bx   = (int) screen[0] - barW / 2;
+            int by   = (int) screen[1] + 2;
+
+            ctx.fill(bx, by, bx + barW, by + barH, 0xFF333333);
+            int fillW = (int) (barW * pct);
+            int col   = pct > 0.5f ? 0xFF33FF33 : (pct > 0.25f ? 0xFFFFAA00 : 0xFFFF3333);
+            ctx.fill(bx, by, bx + fillW, by + barH, col);
+
+            if (absorb > 0 && showAbsorption.isEnabled()) {
+                int absorpW = (int) (barW * Math.min(absorb / maxHp, 1f));
+                ctx.fill(bx, by, bx + absorpW, by + barH, 0xFFFFDD44);
+            }
+        }
     }
 }

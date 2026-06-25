@@ -8,6 +8,7 @@ import cc.quark.setting.IntSetting;
 import cc.quark.util.TimerUtil;
 import net.minecraft.entity.passive.SheepEntity;
 import net.minecraft.item.Items;
+import net.minecraft.network.packet.c2s.play.UpdateSelectedSlotC2SPacket;
 import net.minecraft.util.Hand;
 import net.minecraft.util.math.Box;
 
@@ -44,8 +45,9 @@ public class AutoShear extends Module {
         }
         if (shearSlot == -1) return;
 
-        // Switch to shears
+        // Switch to shears and notify server of slot change
         mc.player.getInventory().selectedSlot = shearSlot;
+        mc.player.networkHandler.sendPacket(new UpdateSelectedSlotC2SPacket(shearSlot));
 
         // Find nearby unsheared sheep
         Box searchBox = mc.player.getBoundingBox().expand(5.0);

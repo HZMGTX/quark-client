@@ -40,16 +40,9 @@ public class ItemTracker extends Module {
         if (tickCounter < 20) return;
         tickCounter = 0;
 
-        Map<Integer, String> current = new HashMap<>();
-        for (int i = 0; i < 36; i++) {
-            ItemStack stack = mc.player.getInventory().getStack(i);
-            if (!stack.isEmpty()) {
-                current.put(i, stack.getCount() + "x " + stack.getItem().toString());
-            }
-        }
+        Map<Integer, String> current = captureInventory();
 
         if (logChanges.isEnabled()) {
-            // Check for added items
             for (Map.Entry<Integer, String> entry : current.entrySet()) {
                 String prev = previousInventory.get(entry.getKey());
                 if (!entry.getValue().equals(prev)) {
@@ -60,7 +53,6 @@ public class ItemTracker extends Module {
                     }
                 }
             }
-            // Check for removed items
             for (Map.Entry<Integer, String> entry : previousInventory.entrySet()) {
                 if (!current.containsKey(entry.getKey())) {
                     ChatUtil.info("[ItemTracker] Removed: " + entry.getValue() + " (slot " + entry.getKey() + ")");
@@ -72,12 +64,19 @@ public class ItemTracker extends Module {
         previousInventory.putAll(current);
     }
 
-    private void snapshotInventory() {
+    private Map<Integer, String> captureInventory() {
+        Map<Integer, String> snapshot = new HashMap<>();
         for (int i = 0; i < 36; i++) {
             ItemStack stack = mc.player.getInventory().getStack(i);
             if (!stack.isEmpty()) {
-                previousInventory.put(i, stack.getCount() + "x " + stack.getItem().toString());
+                snapshot.put(i, stack.getCount() + "x " + stack.getItem().toString());
             }
         }
+        return snapshot;
+    }
+
+    private void snapshotInventory() {
+        previousInventory.clear();
+        previousInventory.putAll(captureInventory());
     }
 }

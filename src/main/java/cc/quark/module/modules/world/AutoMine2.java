@@ -6,149 +6,131 @@ import cc.quark.module.Category;
 import cc.quark.module.Module;
 import cc.quark.setting.BoolSetting;
 import cc.quark.setting.IntSetting;
-import cc.quark.setting.StringSetting;
+import cc.quark.setting.ModeSetting;
 import cc.quark.util.TimerUtil;
-import net.minecraft.block.Block;
+import net.minecraft.block.BlockState;
+import net.minecraft.block.Blocks;
 import net.minecraft.network.packet.c2s.play.PlayerActionC2SPacket;
-import net.minecraft.registry.Registries;
 import net.minecraft.util.Hand;
-import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 
-/**
- * AutoMine2 - Automatically mines blocks matching a configurable target type
- * within a search radius around the player.
- */
+import java.util.ArrayList;
+import java.util.List;
+
 public class AutoMine2 extends Module {
 
-    private final StringSetting target = register(new StringSetting(
-            "Target", "Block to mine (registry name, e.g. coal_ore)", "coal_ore"));
-    private final IntSetting radius = register(new IntSetting(
-            "Radius", "Search radius around player", 4, 1, 8));
-    private final IntSetting delay = register(new IntSetting(
-            "Delay", "Milliseconds between mine actions", 50, 0, 500));
-    private final BoolSetting autoTool = register(new BoolSetting(
-            "AutoTool", "Switch to best tool for the target block", true));
-    private final BoolSetting packetMine = register(new BoolSetting(
-            "PacketMine", "Send START/STOP packets for faster mining", true));
+    private final ModeSetting pattern = register(new ModeSetting(
+            "Pattern", "Mining pattern to follow",
+            "Line", "Line", "2x1", "3x3", "Staircase"));
+
+    private final IntSetting length = register(new IntSetting(
+            "Length", "How many blocks to mine in the pattern", 16, 1, 64));
+
+    private final IntSetting delayMs = register(new IntSetting(
+            "Delay", "Milliseconds between block breaks", 250, 50, 2000));
+
+    private final BoolSetting swingHand = register(new BoolSetting(
+            "SwingHand", "Animate hand when breaking", true));
+
+    private final BoolSetting skipAir = register(new BoolSetting(
+            "SkipAir", "Skip air blocks in the pattern", true));
 
     private final TimerUtil timer = new TimerUtil();
-    private BlockPos currentTarget = null;
-    private int prevSlot = 0;
+    private final List<BlockPos> mineQueue = new ArrayList<>();
+    private int queueIndex = 0;
 
     public AutoMine2() {
-        super("AutoMine2", "Automatically mines blocks matching a configurable target type", Category.WORLD);
+        super("AutoMine2", "Auto-mines blocks in a configurable pattern", Category.WORLD);
     }
 
     @Override
     public void onEnable() {
-        currentTarget = null;
         timer.reset();
+        buildQueue();
+        queueIndex = 0;
     }
 
     @Override
     public void onDisable() {
-        if (mc.player != null && prevSlot >= 0 && prevSlot < 9) {
-            mc.player.getInventory().selectedSlot = prevSlot;
-        }
+        mineQueue.clear();
+        queueIndex = 0;
     }
 
     @EventHandler
     public void onTick(EventTick event) {
         if (mc.player == null || mc.world == null || mc.interactionManager == null) return;
-        if (!timer.hasReached(delay.get())) return;
+        if (!timer.hasReached(delayMs.get())) return;
 
-        Block targetBlock = resolveBlock(target.get());
-        if (targetBlock == null) return;
-
-        // If current target is already mined, clear it
-        if (currentTarget != null && mc.world.getBlockState(currentTarget).isAir()) {
-            currentTarget = null;
+        // Rebuild queue when exhausted or pattern changes
+        if (queueIndex >= mineQueue.size()) {
+            buildQueue();
+            queueIndex = 0;
+            if (mineQueue.isEmpty()) return;
         }
 
-        // Find nearest target block
-        if (currentTarget == null) {
-            BlockPos center = mc.player.getBlockPos();
-            int r = radius.get();
-            double bestDist = Double.MAX_VALUE;
-            for (BlockPos pos : BlockPos.iterate(center.add(-r, -r, -r), center.add(r, r, r))) {
-                if (!mc.world.getBlockState(pos).isOf(targetBlock)) continue;
-                double dist = pos.getSquaredDistance(center);
-                if (dist < bestDist) {
-                    bestDist = dist;
-                    currentTarget = pos.toImmutable();
+        // Find next non-air block if skipAir
+        while (queueIndex < mineQueue.size()) {
+            BlockPos pos = mineQueue.get(queueIndex);
+            queueIndex++;
+
+            BlockState state = mc.world.getBlockState(pos);
+            if (skipAir.isEnabled() && state.isAir()) continue;
+            if (state.getBlock() == Blocks.BEDROCK) continue;
+            float hardness = state.getHardness(mc.world, pos);
+            if (hardness < 0) continue;
+
+            // Send start + stop destroy packets for instant-break feel
+            mc.player.networkHandler.sendPacket(
+                    new PlayerActionC2SPacket(PlayerActionC2SPacket.Action.START_DESTROY_BLOCK, pos, Direction.DOWN));
+            mc.player.networkHandler.sendPacket(
+                    new PlayerActionC2SPacket(PlayerActionC2SPacket.Action.STOP_DESTROY_BLOCK, pos, Direction.DOWN));
+            mc.interactionManager.attackBlock(pos, Direction.DOWN);
+
+            if (swingHand.isEnabled()) {
+                mc.player.swingHand(Hand.MAIN_HAND);
+            }
+
+            timer.reset();
+            return;
+        }
+    }
+
+    private void buildQueue() {
+        mineQueue.clear();
+        if (mc.player == null) return;
+
+        BlockPos origin = mc.player.getBlockPos();
+        // Mine in the direction the player is facing (simplified to relative offsets)
+        int len = length.get();
+
+        switch (pattern.get()) {
+            case "Line" -> {
+                for (int i = 1; i <= len; i++) {
+                    mineQueue.add(origin.add(i, 0, 0));
+                }
+            }
+            case "2x1" -> {
+                for (int i = 1; i <= len; i++) {
+                    mineQueue.add(origin.add(i, 0, 0));
+                    mineQueue.add(origin.add(i, 1, 0));
+                }
+            }
+            case "3x3" -> {
+                for (int i = 1; i <= len; i++) {
+                    for (int dy = -1; dy <= 1; dy++) {
+                        for (int dz = -1; dz <= 1; dz++) {
+                            mineQueue.add(origin.add(i, dy, dz));
+                        }
+                    }
+                }
+            }
+            case "Staircase" -> {
+                for (int i = 1; i <= len; i++) {
+                    mineQueue.add(origin.add(i, -i, 0));
+                    mineQueue.add(origin.add(i, -i + 1, 0));
                 }
             }
         }
-
-        if (currentTarget == null) return;
-
-        // Switch to best tool
-        if (autoTool.isEnabled()) {
-            int best = findBestTool(targetBlock);
-            if (best != -1) {
-                prevSlot = mc.player.getInventory().selectedSlot;
-                mc.player.getInventory().selectedSlot = best;
-            }
-        }
-
-        Direction face = Direction.UP;
-
-        if (packetMine.isEnabled()) {
-            mc.player.networkHandler.sendPacket(new PlayerActionC2SPacket(
-                    PlayerActionC2SPacket.Action.START_DESTROY_BLOCK, currentTarget, face));
-        }
-
-        mc.interactionManager.attackBlock(currentTarget, face);
-        mc.player.swingHand(Hand.MAIN_HAND);
-
-        if (mc.world.getBlockState(currentTarget).isAir()) {
-            if (packetMine.isEnabled()) {
-                mc.player.networkHandler.sendPacket(new PlayerActionC2SPacket(
-                        PlayerActionC2SPacket.Action.STOP_DESTROY_BLOCK, currentTarget, face));
-            }
-            currentTarget = null;
-        }
-
-        timer.reset();
-    }
-
-    private Block resolveBlock(String name) {
-        try {
-            String id = name.trim().toLowerCase();
-            if (!id.contains(":")) id = "minecraft:" + id;
-            return Registries.BLOCK.get(Identifier.of(id));
-        } catch (Exception e) {
-            return null;
-        }
-    }
-
-    private int findBestTool(Block block) {
-        if (mc.player == null) return -1;
-        // Prefer pickaxe for ore/stone, axe for wood, shovel for dirt
-        String name = target.get().toLowerCase();
-        Class<?> preferred = null;
-        if (name.contains("ore") || name.contains("stone") || name.contains("cobble")
-                || name.contains("deepslate") || name.contains("granite") || name.contains("diorite")
-                || name.contains("andesite") || name.contains("obsidian")) {
-            preferred = net.minecraft.item.PickaxeItem.class;
-        } else if (name.contains("log") || name.contains("wood") || name.contains("plank")) {
-            preferred = net.minecraft.item.AxeItem.class;
-        } else if (name.contains("dirt") || name.contains("sand") || name.contains("gravel")
-                || name.contains("clay") || name.contains("soul")) {
-            preferred = net.minecraft.item.ShovelItem.class;
-        }
-
-        for (int i = 0; i < 9; i++) {
-            var item = mc.player.getInventory().getStack(i).getItem();
-            if (preferred != null && preferred.isInstance(item)) return i;
-        }
-        // Fallback: any mining tool
-        for (int i = 0; i < 9; i++) {
-            var item = mc.player.getInventory().getStack(i).getItem();
-            if (item instanceof net.minecraft.item.MiningToolItem) return i;
-        }
-        return -1;
     }
 }

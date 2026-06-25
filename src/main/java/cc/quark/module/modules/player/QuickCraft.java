@@ -4,46 +4,37 @@ import cc.quark.event.EventHandler;
 import cc.quark.event.events.EventTick;
 import cc.quark.module.Category;
 import cc.quark.module.Module;
-import cc.quark.setting.IntSetting;
-import cc.quark.setting.ModeSetting;
-import net.minecraft.item.Items;
-import net.minecraft.recipe.RecipeEntry;
-import net.minecraft.recipe.RecipeType;
-import net.minecraft.screen.PlayerScreenHandler;
+import cc.quark.setting.BoolSetting;
+import cc.quark.util.TimerUtil;
+import net.minecraft.client.gui.screen.ingame.CraftingScreen;
+import net.minecraft.screen.CraftingScreenHandler;
+import net.minecraft.screen.slot.SlotActionType;
 
 public class QuickCraft extends Module {
 
-    private final ModeSetting recipe = register(new ModeSetting(
-            "Recipe", "Preset recipe to auto-craft", "Planks", "Planks", "Sticks", "Torches"));
+    private final BoolSetting autoOpen = register(new BoolSetting(
+            "AutoOpen", "Automatically open nearest crafting table", false));
 
-    private final IntSetting count = register(new IntSetting(
-            "Count", "Number of craft operations to perform", 1, 1, 64));
-
-    private int crafted = 0;
+    private final TimerUtil timer = new TimerUtil();
 
     public QuickCraft() {
-        super("QuickCraft", "Quick-crafts common recipes", Category.PLAYER);
-    }
-
-    @Override
-    public void onEnable() {
-        crafted = 0;
+        super("QuickCraft", "Shift-clicks to instantly craft full stacks on a workbench", Category.PLAYER);
     }
 
     @EventHandler
     public void onTick(EventTick event) {
         if (mc.player == null || mc.world == null) return;
-        if (crafted >= count.get()) { crafted = 0; return; }
+        if (!timer.hasReached(100)) return;
+        timer.reset();
 
-        // Signal crafting via recipe book (simplified stub)
-        // A full implementation requires mixin into the recipe book handler.
-        // This module registers the intent; actual craft packets are sent via screen interaction.
-        if (mc.currentScreen == null) {
-            // Open inventory
-            mc.player.sendMessage(
-                    net.minecraft.text.Text.literal("[QuickCraft] Open crafting table to craft: " + recipe.get()),
-                    true);
-            crafted++;
+        if (!(mc.currentScreen instanceof CraftingScreen)) return;
+        if (!(mc.player.currentScreenHandler instanceof CraftingScreenHandler handler)) return;
+
+        var output = handler.getSlot(0).getStack();
+        if (output.isEmpty()) return;
+
+        while (!handler.getSlot(0).getStack().isEmpty()) {
+            mc.interactionManager.clickSlot(handler.syncId, 0, 0, SlotActionType.QUICK_MOVE, mc.player);
         }
     }
 }

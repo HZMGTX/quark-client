@@ -1,48 +1,41 @@
 package cc.quark.module.modules.movement;
 
 import cc.quark.event.EventHandler;
-import cc.quark.event.events.EventTick;
+import cc.quark.event.events.EventPacketSend;
 import cc.quark.module.Category;
 import cc.quark.module.Module;
 import cc.quark.setting.IntSetting;
-import net.minecraft.util.math.Vec3d;
+import cc.quark.util.TimerUtil;
+import net.minecraft.network.packet.c2s.play.PlayerMoveC2SPacket;
 
 public class AntiLag extends Module {
 
-    private final IntSetting pingMs = register(new IntSetting(
-            "Ping (ms)", "Estimated server latency to compensate for", 100, 0, 500));
+    private final IntSetting packetsPerSecond = register(new IntSetting(
+            "Packets Per Second", "Number of movement packets sent per second", 10, 1, 20));
 
-    private Vec3d prevVelocity = Vec3d.ZERO;
+    private final TimerUtil timer = new TimerUtil();
 
     public AntiLag() {
-        super("AntiLag", "Compensates for high latency in movement", Category.MOVEMENT);
+        super("AntiLag", "Reduces movement packet rate to prevent lag-induced desync",
+                Category.MOVEMENT);
     }
 
     @Override
     public void onEnable() {
-        prevVelocity = Vec3d.ZERO;
+        timer.reset();
     }
 
     @EventHandler
-    public void onTick(EventTick event) {
-        if (mc.player == null) return;
+    public void onPacketSend(EventPacketSend event) {
+        if (!(event.getPacket() instanceof PlayerMoveC2SPacket)) return;
 
-        // Predict future position based on current velocity and ping
-        double ticksAhead = pingMs.get() / 50.0;
-        Vec3d vel = mc.player.getVelocity();
+        int pps = packetsPerSecond.get();
+        long intervalMs = 1000L / pps;
 
-        // Smooth velocity prediction
-        double predictX = vel.x * ticksAhead;
-        double predictZ = vel.z * ticksAhead;
-
-        // Apply a small pre-compensating nudge toward predicted position
-        double factor = 0.05;
-        mc.player.setVelocity(
-                vel.x + predictX * factor,
-                vel.y,
-                vel.z + predictZ * factor
-        );
-
-        prevVelocity = vel;
+        if (!timer.hasReached(intervalMs)) {
+            event.cancel();
+        } else {
+            timer.reset();
+        }
     }
 }

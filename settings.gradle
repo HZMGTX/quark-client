@@ -14,19 +14,24 @@ plugins {
 
 stonecutter {
     create(rootProject) {
-        // Minecraft versions this mod is built for.
-        // Verify yarn/loader/fabric-api coordinates at https://fabricmc.net/develop
-        // before building each version. Year-based (25.x, 26.x) entries need their
-        // own mapping coordinates added to build.gradle once pinned.
-        //
-        // Supported version targets (Modern Fabric / Stonecutter):
-        //   1.19.4  - fabric-api 0.87.0+1.19.4
-        //   1.20.1  - fabric-api 0.92.2+1.20.1
-        //   1.20.4  - fabric-api 0.97.0+1.20.4
-        //   1.21.1  - fabric-api 0.102.0+1.21.1  (primary)
-        //
-        // 1.18.2 requires Java 17; uses loader 0.14.x and older Fabric API.
-        versions("1.18.2", "1.19.4", "1.20.1", "1.20.4", "1.20.6", "1.21.1", "1.21.4")
+        // All Minecraft versions Quark supports.
+        // 1.20.x – 1.21.x: verified coordinates in build.gradle
+        // 25.x – 26.x: year-based naming adopted by Mojang; coordinates are
+        //   estimated — verify at https://fabricmc.net/develop before building.
+        versions(
+            "1.20.1",
+            "1.20.4",
+            "1.20.6",
+            "1.21.1",
+            "1.21.3",
+            "1.21.4",
+            "1.21.5",
+            "25.1",
+            "25.2",
+            "26.1",
+            "26.2"
+        )
+        // VCS (git) version — the canonical source of truth.
         vcsVersion = "1.21.1"
     }
 }

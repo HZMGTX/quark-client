@@ -10,7 +10,9 @@ import cc.quark.setting.ModeSetting;
 import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.CropBlock;
+//? if mc >= "1.20.5" {
 import net.minecraft.component.DataComponentTypes;
+//?}
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.mob.HostileEntity;
@@ -179,7 +181,11 @@ public class AutoBot extends Module {
         for (int i = 0; i < 9; i++) {
             ItemStack stack = mc.player.getInventory().getStack(i);
             if (stack.isEmpty()) continue;
+            //? if mc >= "1.20.5" {
             if (!stack.contains(DataComponentTypes.FOOD)) continue;
+            //?} else {
+            /*if (!stack.getItem().isFood()) continue;*/
+            //?}
             mc.player.getInventory().selectedSlot = i;
             mc.interactionManager.interactItem(mc.player, Hand.MAIN_HAND);
             return;

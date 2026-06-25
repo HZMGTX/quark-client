@@ -16,8 +16,6 @@ public class DeathLogger extends Module {
 
     private final BoolSetting chatLog = register(new BoolSetting(
             "ChatLog", "Log death info to chat", true));
-    private final BoolSetting fileLog = register(new BoolSetting(
-            "FileLog", "Log death info to file (not yet implemented)", false));
 
     private static final DateTimeFormatter TIME_FMT = DateTimeFormatter.ofPattern("HH:mm:ss");
 

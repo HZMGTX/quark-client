@@ -6,13 +6,18 @@ import cc.quark.module.Category;
 import cc.quark.module.Module;
 import cc.quark.setting.IntSetting;
 import net.minecraft.client.gui.DrawContext;
+//? if mc >= "1.20.5" {
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.ItemEnchantmentsComponent;
 import net.minecraft.enchantment.Enchantment;
-import net.minecraft.item.ItemStack;
 import net.minecraft.registry.entry.RegistryEntry;
-
 import java.util.Map;
+//?} else {
+/*import net.minecraft.enchantment.Enchantment;
+import net.minecraft.enchantment.EnchantmentHelper;
+import java.util.Map;*/
+//?}
+import net.minecraft.item.ItemStack;
 
 public class WeaponInfo extends Module {
 
@@ -57,6 +62,7 @@ public class WeaponInfo extends Module {
         y += lineH;
 
         // Enchantments
+        //? if mc >= "1.20.5" {
         ItemEnchantmentsComponent enchantments = stack.get(DataComponentTypes.ENCHANTMENTS);
         if (enchantments != null && !enchantments.isEmpty()) {
             for (Map.Entry<RegistryEntry<Enchantment>, Integer> entry : enchantments.getEnchantmentEntries()) {
@@ -69,6 +75,16 @@ public class WeaponInfo extends Module {
                 y += lineH;
             }
         }
+        //?} else {
+        /*Map<Enchantment, Integer> enchantments = EnchantmentHelper.get(stack);
+        for (Map.Entry<Enchantment, Integer> entry : enchantments.entrySet()) {
+            String enchName = entry.getKey().getName(entry.getValue()).getString().replace("_", " ");
+            int lvl = entry.getValue();
+            String label = capitalize(enchName) + (lvl > 1 ? " " + lvl : "");
+            ctx.drawTextWithShadow(mc.textRenderer, label, x, y, 0xFFFFAA00);
+            y += lineH;
+        }*/
+        //?}
     }
 
     private String capitalize(String s) {

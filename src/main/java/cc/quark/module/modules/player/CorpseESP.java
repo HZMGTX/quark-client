@@ -10,7 +10,6 @@ import cc.quark.util.RenderUtil;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.network.packet.s2c.play.EntityStatusS2CPacket;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Vec3d;
@@ -43,14 +42,15 @@ public class CorpseESP extends Module {
         if (packet.getStatus() != 3) return;
 
         Entity entity = packet.getEntity(mc.world);
-        if (entity == null) return;
-        if (!(entity instanceof PlayerEntity) && !(entity instanceof LivingEntity)) return;
+        if (!(entity instanceof LivingEntity)) return;
 
         Vec3d pos = entity.getPos();
-        if (deathPositions.size() >= maxMarkers.get()) {
-            deathPositions.remove(0);
-        }
-        deathPositions.add(pos);
+        mc.execute(() -> {
+            if (deathPositions.size() >= maxMarkers.get()) {
+                deathPositions.remove(0);
+            }
+            deathPositions.add(pos);
+        });
     }
 
     @EventHandler

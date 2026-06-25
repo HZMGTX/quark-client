@@ -30,19 +30,17 @@ public class ChatHistory extends Module {
 
     @Override
     public void onEnable() {
-        if (mc.player == null) {
-            disable();
-            return;
-        }
+        if (mc.player == null) return;
 
-        // Print last 10 stored messages
-        int start = Math.max(0, history.size() - 10);
-        ChatUtil.info("[ChatHistory] Last " + Math.min(10, history.size()) + " messages:");
-        for (int i = start; i < history.size(); i++) {
-            ChatUtil.info(history.get(i));
+        List<String> snapshot;
+        synchronized (history) {
+            int start = Math.max(0, history.size() - 10);
+            snapshot = new ArrayList<>(history.subList(start, history.size()));
         }
-
-        disable();
+        ChatUtil.info("[ChatHistory] Last " + snapshot.size() + " messages:");
+        for (String msg : snapshot) {
+            ChatUtil.info(msg);
+        }
     }
 
     @EventHandler
@@ -59,10 +57,11 @@ public class ChatHistory extends Module {
             entry = content;
         }
 
-        history.add(entry);
-        // Trim to maxLines
-        while (history.size() > maxLines.get()) {
-            history.remove(0);
+        synchronized (history) {
+            history.add(entry);
+            while (history.size() > maxLines.get()) {
+                history.remove(0);
+            }
         }
     }
 }

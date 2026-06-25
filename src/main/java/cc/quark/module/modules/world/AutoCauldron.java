@@ -4,7 +4,7 @@ import cc.quark.event.EventHandler;
 import cc.quark.event.events.EventTick;
 import cc.quark.module.Category;
 import cc.quark.module.Module;
-import cc.quark.setting.DoubleSetting;
+import cc.quark.setting.BoolSetting;
 import cc.quark.util.TimerUtil;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.LeveledCauldronBlock;
@@ -17,13 +17,12 @@ import net.minecraft.util.math.Vec3d;
 
 public class AutoCauldron extends Module {
 
-    private final DoubleSetting range = register(new DoubleSetting(
-            "Range", "Range to detect cauldrons", 3.0, 1.0, 6.0));
+    private final BoolSetting autoRefill = register(new BoolSetting("AutoRefill", "Automatically refill cauldron when empty using water bucket", true));
 
     private final TimerUtil timer = new TimerUtil();
 
     public AutoCauldron() {
-        super("AutoCauldron", "Auto-fills cauldrons with water/lava buckets", Category.WORLD);
+        super("AutoCauldron", "Uses cauldron with bucket to fill/empty water", Category.WORLD);
     }
 
     @Override
@@ -36,52 +35,46 @@ public class AutoCauldron extends Module {
         if (mc.player == null || mc.world == null || mc.interactionManager == null) return;
         if (!timer.hasReached(400)) return;
 
-        int r = (int) Math.ceil(range.get());
-        double rangeSq = range.get() * range.get();
         BlockPos center = mc.player.getBlockPos();
-
-        for (BlockPos pos : BlockPos.iterate(center.add(-r, -2, -r), center.add(r, 2, r))) {
-            if (pos.getSquaredDistance(mc.player.getPos()) > rangeSq) continue;
+        for (BlockPos pos : BlockPos.iterate(center.add(-3, -1, -3), center.add(3, 1, 3))) {
             var state = mc.world.getBlockState(pos);
+            BlockPos immutable = pos.toImmutable();
 
-            boolean isEmptyWaterCauldron = state.isOf(Blocks.CAULDRON);
-            boolean isPartialLava = state.isOf(Blocks.LAVA_CAULDRON)
-                    && state.contains(LeveledCauldronBlock.LEVEL)
-                    && state.get(LeveledCauldronBlock.LEVEL) < 3;
-            boolean isPartialWater = state.isOf(Blocks.WATER_CAULDRON)
-                    && state.contains(LeveledCauldronBlock.LEVEL)
-                    && state.get(LeveledCauldronBlock.LEVEL) < 3;
-
-            if (!isEmptyWaterCauldron && !isPartialLava && !isPartialWater) continue;
-
-            // Choose bucket type based on cauldron
-            int bucketSlot = -1;
-            if (isPartialLava) {
-                bucketSlot = findBucketSlot(true);
-            } else {
-                bucketSlot = findBucketSlot(false);
-                if (bucketSlot == -1) bucketSlot = findBucketSlot(true);
+            if (state.isOf(Blocks.WATER_CAULDRON)) {
+                int level = state.get(LeveledCauldronBlock.LEVEL);
+                if (level > 0) {
+                    int bucketSlot = findItem(Items.BUCKET);
+                    if (bucketSlot == -1) continue;
+                    int saved = mc.player.getInventory().selectedSlot;
+                    mc.player.getInventory().selectedSlot = bucketSlot;
+                    BlockHitResult hit = new BlockHitResult(Vec3d.ofCenter(pos), Direction.UP, immutable, false);
+                    mc.interactionManager.interactBlock(mc.player, Hand.MAIN_HAND, hit);
+                    mc.player.swingHand(Hand.MAIN_HAND);
+                    mc.player.getInventory().selectedSlot = saved;
+                    timer.reset();
+                    return;
+                }
             }
-            if (bucketSlot == -1) return;
 
-            int prev = mc.player.getInventory().selectedSlot;
-            mc.player.getInventory().selectedSlot = bucketSlot;
-            Vec3d hitVec = Vec3d.ofCenter(pos).add(0, 0.5, 0);
-            BlockHitResult hit = new BlockHitResult(hitVec, Direction.UP, pos.toImmutable(), false);
-            mc.interactionManager.interactBlock(mc.player, Hand.MAIN_HAND, hit);
-            mc.player.swingHand(Hand.MAIN_HAND);
-            mc.player.getInventory().selectedSlot = prev;
-            timer.reset();
-            return;
+            if (autoRefill.isEnabled() && state.isOf(Blocks.CAULDRON)) {
+                int waterBucketSlot = findItem(Items.WATER_BUCKET);
+                if (waterBucketSlot == -1) continue;
+                int saved = mc.player.getInventory().selectedSlot;
+                mc.player.getInventory().selectedSlot = waterBucketSlot;
+                BlockHitResult hit = new BlockHitResult(Vec3d.ofCenter(pos), Direction.UP, immutable, false);
+                mc.interactionManager.interactBlock(mc.player, Hand.MAIN_HAND, hit);
+                mc.player.swingHand(Hand.MAIN_HAND);
+                mc.player.getInventory().selectedSlot = saved;
+                timer.reset();
+                return;
+            }
         }
-        timer.reset();
     }
 
-    private int findBucketSlot(boolean lava) {
+    private int findItem(net.minecraft.item.Item item) {
         if (mc.player == null) return -1;
-        var target = lava ? Items.LAVA_BUCKET : Items.WATER_BUCKET;
         for (int i = 0; i < 36; i++) {
-            if (mc.player.getInventory().getStack(i).isOf(target)) return i < 9 ? i : i;
+            if (mc.player.getInventory().getStack(i).isOf(item)) return i;
         }
         return -1;
     }
