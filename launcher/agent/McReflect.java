@@ -122,6 +122,56 @@ public final class McReflect {
         return 1080;
     }
 
+    // ── Matrix transform (for UI scaling) ─────────────────────────────────────
+
+    private static Method getMatricesM, matrixPushM, matrixPopM, matrixScaleM, matrixTranslateM;
+    private static boolean matrixResolved = false;
+
+    private static Object matrices(Object ctx) {
+        try {
+            if (!matrixResolved) {
+                getMatricesM = findMethod(ctx.getClass(),
+                        new String[]{"getMatrices", "method_51448", "m_280168_"});
+                matrixResolved = true;
+            }
+            return getMatricesM != null ? getMatricesM.invoke(ctx) : null;
+        } catch (Throwable ignored) {}
+        return null;
+    }
+
+    /** Push a scaled+translated matrix so subsequent draws scale around (cx,cy). Returns true if applied. */
+    public static boolean pushScale(Object ctx, float scale, float cx, float cy) {
+        try {
+            Object ms = matrices(ctx);
+            if (ms == null) return false;
+            if (matrixPushM == null)
+                matrixPushM = findMethod(ms.getClass(), new String[]{"push", "method_22903", "m_85836_"});
+            if (matrixTranslateM == null)
+                matrixTranslateM = findMethod(ms.getClass(), new String[]{"translate", "method_22904", "m_85837_"},
+                        float.class, float.class, float.class);
+            if (matrixScaleM == null)
+                matrixScaleM = findMethod(ms.getClass(), new String[]{"scale", "method_22905", "m_85841_"},
+                        float.class, float.class, float.class);
+            if (matrixPushM == null || matrixScaleM == null) return false;
+            matrixPushM.invoke(ms);
+            if (matrixTranslateM != null) matrixTranslateM.invoke(ms, cx, cy, 0f);
+            matrixScaleM.invoke(ms, scale, scale, 1f);
+            if (matrixTranslateM != null) matrixTranslateM.invoke(ms, -cx, -cy, 0f);
+            return true;
+        } catch (Throwable ignored) {}
+        return false;
+    }
+
+    public static void popMatrix(Object ctx) {
+        try {
+            Object ms = matrices(ctx);
+            if (ms == null) return;
+            if (matrixPopM == null)
+                matrixPopM = findMethod(ms.getClass(), new String[]{"pop", "method_22909", "m_85849_"});
+            if (matrixPopM != null) matrixPopM.invoke(ms);
+        } catch (Throwable ignored) {}
+    }
+
     // ── Input (GLFW polling, render-thread safe) ──────────────────────────────
 
     public static final int KEY_RIGHT_SHIFT = 344;
@@ -132,6 +182,8 @@ public final class McReflect {
     public static final int KEY_ENTER       = 257;
     public static final int KEY_ESCAPE      = 256;
     public static final int KEY_C           = 67;
+    public static final int KEY_LEFT_BRACKET  = 91;
+    public static final int KEY_RIGHT_BRACKET = 93;
 
     public static final int MOUSE_LEFT  = 0;
     public static final int MOUSE_RIGHT = 1;
@@ -235,12 +287,12 @@ public final class McReflect {
     private static final Map<String, Field> optionFieldCache = new HashMap<>();
 
     /** Brightness slider value (0.0-1.0 in vanilla), or null if unresolved. */
-    public static Double getGamma() { return getOptionValue("gamma"); }
-    public static void   setGamma(double v) { setOptionValue("gamma", v); }
+    public static Double getGamma() { return getOptionValue("gamma", "field_1840"); }
+    public static void   setGamma(double v) { setOptionValue(v, "gamma", "field_1840"); }
 
     /** Field of view value, or null if unresolved. */
-    public static Double getFov() { return getOptionValue("fov"); }
-    public static void   setFov(double v) { setOptionValue("fov", v); }
+    public static Double getFov() { return getOptionValue("fov", "field_1839"); }
+    public static void   setFov(double v) { setOptionValue(v, "fov", "field_1839"); }
 
     private static Object gameOptions() {
         if (mcInstance == null) return null;
@@ -250,12 +302,12 @@ public final class McReflect {
         } catch (Throwable ignored) { return null; }
     }
 
-    /** Reads a SimpleOption<Double>/OptionInstance<Double>-style settings field by name. */
-    private static Double getOptionValue(String fieldName) {
+    /** Reads a SimpleOption<Double>/OptionInstance<Double>-style settings field, trying each candidate name. */
+    private static Double getOptionValue(String... candidates) {
         try {
             Object options = gameOptions();
             if (options == null) return null;
-            Field f = optionFieldCache.computeIfAbsent(fieldName, n -> findField(options.getClass(), n));
+            Field f = optionFieldCache.computeIfAbsent(candidates[0], n -> findField(options.getClass(), candidates));
             if (f == null) return null;
             Object opt = f.get(options);
             if (opt == null) return null;
@@ -269,11 +321,11 @@ public final class McReflect {
         return null;
     }
 
-    private static void setOptionValue(String fieldName, double value) {
+    private static void setOptionValue(double value, String... candidates) {
         try {
             Object options = gameOptions();
             if (options == null) return;
-            Field f = optionFieldCache.computeIfAbsent(fieldName, n -> findField(options.getClass(), n));
+            Field f = optionFieldCache.computeIfAbsent(candidates[0], n -> findField(options.getClass(), candidates));
             if (f == null) return;
             Object opt = f.get(options);
             if (opt == null) return;
@@ -282,6 +334,117 @@ public final class McReflect {
             try { setter.invoke(opt, value); return; } catch (Throwable ignored) {}
             try { setter.invoke(opt, (int) Math.round(value)); } catch (Throwable ignored) {}
         } catch (Throwable ignored) {}
+    }
+
+    // ── Live read-only telemetry (HUD widgets) ────────────────────────────────
+
+    private static Method getYawM;
+    private static Field  yawF;
+
+    /** Local player yaw in degrees, or null if unresolved. */
+    public static Float getYaw() {
+        try {
+            Object player = player();
+            if (player == null) return null;
+            if (getYawM == null) getYawM = findMethod(player.getClass(), new String[]{"getYaw", "method_36454"});
+            if (getYawM != null) {
+                Object v = getYawM.invoke(player);
+                if (v instanceof Number) return ((Number) v).floatValue();
+            }
+            if (yawF == null) yawF = findField(player.getClass(), "yaw", "field_5982", "rotationYaw");
+            if (yawF != null) return yawF.getFloat(player);
+        } catch (Throwable ignored) {}
+        return null;
+    }
+
+    private static Method getNetHandlerM, getUuidM, getPlayerListEntryM, getLatencyM;
+
+    /** Local player's ping in ms, or null if unresolved. */
+    public static Integer getPing() {
+        try {
+            Object player = player();
+            if (mcInstance == null || player == null) return null;
+            if (getNetHandlerM == null)
+                getNetHandlerM = findMethod(mcInstance.getClass(), new String[]{"getNetworkHandler", "method_1562", "m_91403_"});
+            Object net = getNetHandlerM != null ? getNetHandlerM.invoke(mcInstance) : null;
+            if (net == null) return null;
+            if (getUuidM == null)
+                getUuidM = findMethod(player.getClass(), new String[]{"getUuid", "method_5667", "m_20148_"});
+            Object uuid = getUuidM != null ? getUuidM.invoke(player) : null;
+            if (uuid == null) return null;
+            if (getPlayerListEntryM == null)
+                getPlayerListEntryM = findMethod(net.getClass(), new String[]{"getPlayerListEntry", "method_2871", "m_104949_"}, java.util.UUID.class);
+            Object entry = getPlayerListEntryM != null ? getPlayerListEntryM.invoke(net, uuid) : null;
+            if (entry == null) return null;
+            if (getLatencyM == null)
+                getLatencyM = findMethod(entry.getClass(), new String[]{"getLatency", "method_2959", "m_105322_"});
+            if (getLatencyM != null) {
+                Object v = getLatencyM.invoke(entry);
+                if (v instanceof Number) return ((Number) v).intValue();
+            }
+        } catch (Throwable ignored) {}
+        return null;
+    }
+
+    private static Method getArmorItemsM, isEmptyM, getNameM, getStringM, getDamageM, getMaxDamageM;
+
+    /**
+     * Armor pieces the player is wearing, top (helmet) to bottom (boots),
+     * each as "Name dur%" (durability suffix omitted for unbreakable items).
+     * Empty list if the player has no armor; null if unresolved.
+     */
+    public static java.util.List<String> getArmorInfo() {
+        try {
+            Object player = player();
+            if (player == null) return null;
+            if (getArmorItemsM == null)
+                getArmorItemsM = findMethod(player.getClass(), new String[]{"getArmorItems", "method_5661", "m_6168_"});
+            if (getArmorItemsM == null) return null;
+            Object items = getArmorItemsM.invoke(player);
+            if (!(items instanceof Iterable)) return null;
+
+            java.util.List<String> out = new java.util.ArrayList<>();
+            for (Object stack : (Iterable<?>) items) {
+                if (stack == null) continue;
+                if (isEmptyM == null)
+                    isEmptyM = findMethod(stack.getClass(), new String[]{"isEmpty", "method_7960", "m_41619_"});
+                if (isEmptyM != null && Boolean.TRUE.equals(isEmptyM.invoke(stack))) continue;
+
+                String name = stackName(stack);
+                if (name == null) name = "Armor";
+
+                if (getMaxDamageM == null)
+                    getMaxDamageM = findMethod(stack.getClass(), new String[]{"getMaxDamage", "method_7936", "m_41776_"});
+                if (getDamageM == null)
+                    getDamageM = findMethod(stack.getClass(), new String[]{"getDamage", "method_7919", "m_41773_"});
+                int max = getMaxDamageM != null ? ((Number) getMaxDamageM.invoke(stack)).intValue() : 0;
+                int dmg = getDamageM != null ? ((Number) getDamageM.invoke(stack)).intValue() : 0;
+                if (max > 0) {
+                    int pct = (int) Math.round(100.0 * (max - dmg) / max);
+                    out.add(name + " " + pct + "%");
+                } else {
+                    out.add(name);
+                }
+            }
+            // getArmorItems is boots->helmet; show helmet first.
+            java.util.Collections.reverse(out);
+            return out;
+        } catch (Throwable ignored) {}
+        return null;
+    }
+
+    private static String stackName(Object stack) {
+        try {
+            if (getNameM == null)
+                getNameM = findMethod(stack.getClass(), new String[]{"getName", "method_7964", "m_41786_"});
+            Object text = getNameM != null ? getNameM.invoke(stack) : null;
+            if (text == null) return null;
+            if (getStringM == null)
+                getStringM = findMethod(text.getClass(), new String[]{"getString", "method_10851"});
+            if (getStringM != null) return (String) getStringM.invoke(text);
+            return text.toString();
+        } catch (Throwable ignored) {}
+        return null;
     }
 
     // ── Internal resolution ───────────────────────────────────────────────────

@@ -11,6 +11,7 @@ let selectedPid  = null;
 let processList  = [];
 let injected     = false;
 let alts         = [];
+let activeAlt    = null;   // name of the account selected for the next launch
 let profiles     = [];
 let servers      = [];
 let keybinds     = {};
@@ -93,6 +94,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     // Load persisted state
     const stored  = await quark.settingsGet('user');
     alts          = (await quark.settingsGet('alts'))     || [];
+    activeAlt     = (await quark.settingsGet('activeAlt')) || null;
     profiles      = (await quark.settingsGet('profiles')) || defaultProfiles();
     servers       = (await quark.settingsGet('servers'))  || defaultServers();
     keybinds      = (await quark.settingsGet('keybinds')) || { ...DEFAULT_KEYBINDS };
@@ -550,17 +552,14 @@ function inject() {
           <div class="card">
             <div class="card-title">Options</div>
             <div class="toggle-row">
-              <div><div class="toggle-label">Stealth Mode</div><div class="toggle-sub">Minimise injection footprint</div></div>
-              <label class="toggle"><input type="checkbox" id="opt-stealth" checked><span class="toggle-slider"></span></label>
+              <div><div class="toggle-label">Auto-inject on launch</div><div class="toggle-sub">Watch for Minecraft and attach automatically</div></div>
+              <label class="toggle"><input type="checkbox" id="opt-auto-inject"><span class="toggle-slider"></span></label>
             </div>
             <div class="toggle-row">
-              <div><div class="toggle-label">Auto-Reinject</div><div class="toggle-sub">Re-inject if client restarts</div></div>
-              <label class="toggle"><input type="checkbox" id="opt-auto-reinject"><span class="toggle-slider"></span></label>
+              <div><div class="toggle-label">Silent injection</div><div class="toggle-sub">Suppress routine attach log output</div></div>
+              <label class="toggle"><input type="checkbox" id="opt-silent"><span class="toggle-slider"></span></label>
             </div>
-            <div class="toggle-row">
-              <div><div class="toggle-label">Verbose Log</div><div class="toggle-sub">Show detailed attach output</div></div>
-              <label class="toggle"><input type="checkbox" id="opt-verbose"><span class="toggle-slider"></span></label>
-            </div>
+            <p style="font-size:10px;color:var(--muted);margin-top:8px">These mirror the Settings page and are saved instantly.</p>
           </div>
 
           <div class="card">
@@ -615,6 +614,31 @@ function inject() {
         const log = document.getElementById('inject-log');
         if (log) log.innerHTML = '<span class="log-info">[Quark] Log cleared.</span>';
     });
+
+    // Hydrate + wire the real, persisted option toggles.
+    (async () => {
+        const autoEl   = document.getElementById('opt-auto-inject');
+        const silentEl = document.getElementById('opt-silent');
+        if (autoEl)   autoEl.checked   = !!(await quark.settingsGet('autoInject'));
+        if (silentEl) silentEl.checked = !!(await quark.settingsGet('silentInject'));
+
+        autoEl?.addEventListener('change', async () => {
+            await quark.settingsSet('autoInject', autoEl.checked);
+            if (autoEl.checked) {
+                quark.injectAutoStart();
+                document.getElementById('tb-auto-inject-indicator')?.classList.remove('hidden');
+                notify('Auto-inject enabled', 'success');
+            } else {
+                quark.injectAutoStop();
+                document.getElementById('tb-auto-inject-indicator')?.classList.add('hidden');
+                notify('Auto-inject disabled', 'info');
+            }
+        });
+        silentEl?.addEventListener('change', async () => {
+            await quark.settingsSet('silentInject', silentEl.checked);
+            notify(silentEl.checked ? 'Silent injection on' : 'Silent injection off', 'info');
+        });
+    })();
 
     refreshProcessList(true);
 }
@@ -1287,15 +1311,18 @@ function altsPage() {
       </div>
       <div class="card" style="margin-bottom:14px">
         <div class="card-title" id="alt-count-title">Saved Alts (${alts.length})</div>
+        <div id="alt-active-sub" style="font-size:11px;color:var(--muted);margin:-4px 0 10px">${activeAlt ? 'Active account: ' + escapeHtml(activeAlt) : 'No active account selected'}</div>
         <div id="alt-list" style="display:flex;flex-direction:column;gap:8px"></div>
         ${alts.length === 0 ? '<div style="color:var(--muted);font-size:12px;text-align:center;padding:16px">No alts saved. Click + Add Alt.</div>' : ''}
       </div>
       <div class="card">
         <div class="card-title">Info</div>
         <p style="font-size:12px;color:var(--muted);line-height:1.8">
-          Alt switching requires the injected client to be active. After adding an alt, use the
-          <strong style="color:var(--brand)">Use</strong> button to switch accounts in-game.
-          Microsoft/offline accounts are both supported.
+          The <strong style="color:var(--brand)">Use</strong> button marks an account as
+          <strong style="color:var(--text)">active</strong> — it's saved and shown as your
+          selected profile for the next session. Both Microsoft and offline accounts are stored.
+          Minecraft can't hot-swap the login of an already-running game, so set the active
+          account before launching.
         </p>
       </div>`;
 
@@ -1322,25 +1349,35 @@ function renderAlts() {
         list.innerHTML = '<div style="color:var(--muted);font-size:12px;text-align:center;padding:16px">No alts saved. Click + Add Alt.</div>';
         return;
     }
-    list.innerHTML = alts.map((a, i) => `
-      <div class="alt-item">
+    list.innerHTML = alts.map((a, i) => {
+        const isActive = activeAlt && a.name === activeAlt;
+        return `
+      <div class="alt-item" style="${isActive ? 'border-color:var(--brand)' : ''}">
         <div class="alt-avatar" style="background:linear-gradient(135deg,#A855F7,#06B6D4);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:15px">
           ${(a.name[0] || '?').toUpperCase()}
         </div>
         <div class="alt-info">
-          <div class="alt-name">${escapeHtml(a.name)}</div>
+          <div class="alt-name">${escapeHtml(a.name)}${isActive ? ' <span style="font-size:9px;font-weight:700;color:var(--brand);background:rgba(168,85,247,0.12);border-radius:4px;padding:1px 6px;margin-left:4px">ACTIVE</span>' : ''}</div>
           <div class="alt-status">${a.type || 'Offline'} · Added ${new Date(a.added).toLocaleDateString()}</div>
         </div>
         <div class="alt-actions">
-          <button class="btn btn-primary btn-sm" data-alt-use="${i}">Use</button>
+          <button class="btn ${isActive ? 'btn-secondary' : 'btn-primary'} btn-sm" data-alt-use="${i}" ${isActive ? 'disabled' : ''}>${isActive ? 'Active' : 'Use'}</button>
           <button class="btn btn-danger btn-sm" data-alt-del="${i}">✕</button>
         </div>
-      </div>`).join('');
+      </div>`;
+    }).join('');
 
     list.querySelectorAll('[data-alt-use]').forEach(b => {
-        b.addEventListener('click', () => {
-            if (!injected) { notify('Inject Quark first before switching alts.', 'warn'); return; }
-            notify('Switching alt in-game…', 'info');
+        b.addEventListener('click', async () => {
+            const idx = parseInt(b.dataset.altUse, 10);
+            const a = alts[idx];
+            if (!a) return;
+            activeAlt = a.name;
+            await quark.settingsSet('activeAlt', activeAlt);
+            renderAlts();
+            const sub = document.getElementById('alt-active-sub');
+            if (sub) sub.textContent = 'Active account: ' + activeAlt;
+            notify(`"${a.name}" set as active account for next launch`, 'success');
         });
     });
     list.querySelectorAll('[data-alt-del]').forEach(b => {
@@ -1361,7 +1398,9 @@ function renderAlts() {
 // PAGE: Global Chat
 // ─────────────────────────────────────────────────────────────────────────────
 
-function chat() {
+async function chat() {
+    const relayUrl = (await quark.settingsGet('chatServerUrl') || '').trim();
+
     document.getElementById('content').innerHTML = `
       <div class="page-header">
         <h1>Global Chat</h1>
@@ -1370,47 +1409,119 @@ function chat() {
       <div class="card">
         <div class="card-title">
           <span>Live Chat</span>
-          <span id="chat-online" style="font-size:11px;color:var(--success);font-weight:500;margin-left:auto">● Connecting…</span>
+          <span id="chat-online" style="font-size:11px;font-weight:500;margin-left:auto;color:var(--muted)">● Connecting…</span>
         </div>
-        <div class="chat-box" id="chat-box">
-          <div class="chat-msg">
-            <div class="chat-msg-avatar" style="background:var(--grad-h);display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:700">Q</div>
-            <div class="chat-msg-body">
-              <span class="chat-msg-user" style="color:var(--cyan)">System</span>
-              <span class="chat-msg-time">now</span>
-              <div class="chat-msg-text">Welcome to Quark Global Chat! Be respectful.</div>
-            </div>
-          </div>
-        </div>
+        <div class="chat-box" id="chat-box"></div>
         <div class="chat-input-row">
-          <input class="form-input" id="chat-input" placeholder="Message…" autocomplete="off" maxlength="200">
-          <button class="btn btn-primary" id="btn-chat-send">Send</button>
+          <input class="form-input" id="chat-input" placeholder="${relayUrl ? 'Message…' : 'Set a relay URL in Settings to chat'}" autocomplete="off" maxlength="240" ${relayUrl ? '' : 'disabled'}>
+          <button class="btn btn-primary" id="btn-chat-send" ${relayUrl ? '' : 'disabled'}>Send</button>
         </div>
       </div>`;
 
-    const connectTimer = setTimeout(() => {
-        const el = document.getElementById('chat-online');
-        if (el) el.textContent = '● 8 online';
-        addChatMsg('System', 'Chat relay connected.', true);
-    }, 900);
-    pageCleanup = () => clearTimeout(connectTimer);
-
     const input = document.getElementById('chat-input');
-    document.getElementById('btn-chat-send').addEventListener('click', sendChatMsg);
-    input?.addEventListener('keydown', e => { if (e.key === 'Enter') sendChatMsg(); });
+
+    if (!relayUrl) {
+        setChatStatus('● Not configured', 'var(--muted)');
+        addChatMsg('System',
+            'Global Chat is not configured. Add a relay URL under Settings → Global Chat, ' +
+            'then deploy launcher/server (see its README) to host one.', true);
+        pageCleanup = () => {};
+        return;
+    }
+
+    let ws = null;
+    let closedByUs = false;
+    let reconnectTimer = null;
+    let attempts = 0;
+
+    function connect() {
+        setChatStatus('● Connecting…', 'var(--muted)');
+        try {
+            ws = new WebSocket(relayUrl);
+        } catch (e) {
+            scheduleReconnect();
+            return;
+        }
+
+        ws.onopen = () => {
+            attempts = 0;
+            ws.send(JSON.stringify({ type: 'join', user: currentUser?.username || 'Guest' }));
+        };
+
+        ws.onmessage = ev => {
+            let m;
+            try { m = JSON.parse(ev.data); } catch (_) { return; }
+            switch (m.type) {
+                case 'welcome':
+                    setChatStatus(`● ${m.online} online`, 'var(--success)');
+                    addChatMsg('System', 'Connected to Quark Global Chat. Be respectful.', true);
+                    break;
+                case 'presence':
+                    setChatStatus(`● ${m.online} online`, 'var(--success)');
+                    break;
+                case 'history':
+                    (m.messages || []).forEach(h => addChatMsg(h.user, h.text, false, h.ts));
+                    break;
+                case 'msg':
+                    addChatMsg(m.user, m.text, false, m.ts);
+                    break;
+                case 'system':
+                    addChatMsg('System', m.text, true, m.ts);
+                    break;
+                case 'error':
+                    notify(m.text || 'Chat error', 'warn');
+                    break;
+            }
+        };
+
+        ws.onclose = () => {
+            if (closedByUs) return;
+            setChatStatus('● Offline — reconnecting…', 'var(--danger)');
+            scheduleReconnect();
+        };
+
+        ws.onerror = () => { try { ws.close(); } catch (_) {} };
+    }
+
+    function scheduleReconnect() {
+        if (closedByUs) return;
+        attempts++;
+        const delay = Math.min(15000, 1000 * Math.pow(2, attempts - 1));
+        reconnectTimer = setTimeout(connect, delay);
+    }
 
     function sendChatMsg() {
         const val = input?.value.trim();
         if (!val) return;
-        addChatMsg(currentUser?.username || 'Guest', val, false);
+        if (!ws || ws.readyState !== WebSocket.OPEN) {
+            notify('Not connected to chat yet', 'warn');
+            return;
+        }
+        ws.send(JSON.stringify({ type: 'chat', text: val }));
         input.value = '';
     }
+
+    document.getElementById('btn-chat-send').addEventListener('click', sendChatMsg);
+    input?.addEventListener('keydown', e => { if (e.key === 'Enter') sendChatMsg(); });
+
+    connect();
+
+    pageCleanup = () => {
+        closedByUs = true;
+        if (reconnectTimer) clearTimeout(reconnectTimer);
+        if (ws) { try { ws.close(); } catch (_) {} }
+    };
 }
 
-function addChatMsg(user, text, system) {
+function setChatStatus(text, color) {
+    const el = document.getElementById('chat-online');
+    if (el) { el.textContent = text; el.style.color = color; }
+}
+
+function addChatMsg(user, text, system, ts) {
     const box = document.getElementById('chat-box');
     if (!box) return;
-    const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const time = new Date(ts || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     const div  = document.createElement('div');
     div.className = 'chat-msg';
     div.innerHTML = `
@@ -1477,165 +1588,106 @@ function changelog() {
 // PAGE: Staff
 // ─────────────────────────────────────────────────────────────────────────────
 
+// Real server-command palette. Each entry is a vanilla/Essentials-style slash
+// command with {p} (target player) and {r} (reason) placeholders. Buttons build
+// the exact command and copy it to the clipboard to paste in-game — the launcher
+// never forges packets or touches a server you don't control.
+const STAFF_COMMANDS = [
+    { icon: '🎮', name: 'Creative',   cmd: '/gamemode creative {p}',          desc: 'Set creative mode' },
+    { icon: '🗡', name: 'Survival',   cmd: '/gamemode survival {p}',          desc: 'Set survival mode' },
+    { icon: '👤', name: 'Spectator',  cmd: '/gamemode spectator {p}',         desc: 'Set spectator mode' },
+    { icon: '📍', name: 'TP to You',  cmd: '/tp {p} @s',                      desc: 'Bring player to you' },
+    { icon: '🧭', name: 'Go to',      cmd: '/tp @s {p}',                      desc: 'Teleport to player' },
+    { icon: '❤', name: 'Heal',       cmd: '/effect give {p} regeneration 5 4', desc: 'Regen the player' },
+    { icon: '🍖', name: 'Feed',       cmd: '/effect give {p} saturation 1 4', desc: 'Restore hunger' },
+    { icon: '🧹', name: 'Clear Inv',  cmd: '/clear {p}',                      desc: 'Empty inventory' },
+    { icon: '🔇', name: 'Mute',       cmd: '/mute {p} {r}',                   desc: 'Essentials mute' },
+    { icon: '🔊', name: 'Unmute',     cmd: '/unmute {p}',                     desc: 'Lift a mute' },
+    { icon: '🥾', name: 'Kick',       cmd: '/kick {p} {r}',                   desc: 'Kick from server' },
+    { icon: '🔨', name: 'Ban',        cmd: '/ban {p} {r}',                    desc: 'Ban from server' },
+    { icon: '🕊', name: 'Pardon',     cmd: '/pardon {p}',                     desc: 'Remove a ban' },
+    { icon: '⭐', name: 'OP',         cmd: '/op {p}',                         desc: 'Grant operator' },
+    { icon: '➖', name: 'De-OP',      cmd: '/deop {p}',                       desc: 'Revoke operator' },
+    { icon: '💀', name: 'Kill',       cmd: '/kill {p}',                       desc: 'Kill the player' },
+    { icon: '☀', name: 'Day',        cmd: '/time set day',                   desc: 'Set time to day' },
+    { icon: '🌧', name: 'Clear Wx',   cmd: '/weather clear',                  desc: 'Clear the weather' },
+];
+
+function buildStaffCommand(template) {
+    const p = (document.getElementById('staff-target')?.value || '').trim();
+    const r = (document.getElementById('staff-reason')?.value || '').trim();
+    let cmd = template.replace(/\{p\}/g, p || '<player>');
+    cmd = cmd.replace(/\{r\}/g, r || (template.includes('{r}') ? 'No reason given' : ''));
+    return cmd.replace(/\s+/g, ' ').trim();
+}
+
 function staff() {
     if (!isStaff(currentUser)) { navigateTo('home'); return; }
 
-    const MOCK_USERS = [
-        { name: 'voidx_',    status: 'injected', version: '1.21.1', launcher: 'Fabric',   injects: 3  },
-        { name: 'cr4ck3r',   status: 'idle',     version: '1.20.4', launcher: 'Lunar',    injects: 1  },
-        { name: 'phantom__', status: 'injected', version: '1.21.1', launcher: 'Forge',    injects: 7  },
-        { name: 'stealth99', status: 'idle',     version: '1.19.2', launcher: 'Official', injects: 2  },
-        { name: 'nullbyte',  status: 'injected', version: '1.21.1', launcher: 'Prism',    injects: 12 },
-        { name: 'ghost_pvp', status: 'online',   version: '1.21.1', launcher: 'Badlion',  injects: 0  },
-        { name: 'x_h4cker',  status: 'injected', version: '1.20.1', launcher: 'Fabric',   injects: 4  },
-        { name: 'sk1llz_',   status: 'idle',     version: '1.21.1', launcher: 'MultiMC',  injects: 1  },
-        { name: 'cryst4l',   status: 'injected', version: '1.21.1', launcher: 'CurseForge', injects: 9 },
-        { name: 'zeroPing',  status: 'online',   version: '1.21.4', launcher: 'Fabric',   injects: 0  },
-    ];
-
-    let onlineBase = 247;
-    let refreshTimer = null;
-
     document.getElementById('content').innerHTML = `
       <div class="page-header">
-        <h1>Staff Panel</h1>
-        <p>Administrative tools, cheat detection and live user monitoring</p>
+        <h1>Command Palette</h1>
+        <p>Build server moderation commands and copy them ready to paste in-game</p>
       </div>
 
-      <!-- LIVE COUNTERS -->
-      <div class="grid-4" style="margin-bottom:16px">
-        <div class="stat-card glow">
-          <div class="stat-label">Online Users</div>
-          <div class="stat-value brand" id="stat-online">247</div>
-          <div class="stat-sub">using Quark right now</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Injected</div>
-          <div class="stat-value" id="stat-injected" style="color:var(--brand)">188</div>
-          <div class="stat-sub">active injections</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Peak Today</div>
-          <div class="stat-value">614</div>
-          <div class="stat-sub">concurrent users</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Total Registered</div>
-          <div class="stat-value">12,841</div>
-          <div class="stat-sub">all-time accounts</div>
-        </div>
-      </div>
-
-      <!-- LIVE CONNECTED USERS -->
       <div class="card" style="margin-bottom:16px">
-        <div class="card-title">
-          Live Connected Users
-          <span style="font-size:9px;font-weight:600;color:var(--success);background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.2);border-radius:4px;padding:1px 8px;margin-left:4px">● LIVE</span>
-        </div>
-        <div id="user-table" style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px"></div>
-        <div style="display:flex;align-items:center;gap:10px">
-          <button class="btn btn-secondary btn-sm" id="btn-refresh-users">↺ Refresh</button>
-          <span style="font-size:10px;color:var(--muted)" id="last-refresh-label">Updated just now</span>
+        <div class="card-title">Target</div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <div style="flex:1;min-width:180px">
+            <div class="form-label">Player</div>
+            <input class="form-input" id="staff-target" placeholder="username (e.g. Notch)" autocomplete="off">
+          </div>
+          <div style="flex:1;min-width:180px">
+            <div class="form-label">Reason <span style="color:var(--muted);font-weight:400">(for kick/ban/mute)</span></div>
+            <input class="form-input" id="staff-reason" placeholder="optional reason" autocomplete="off">
+          </div>
         </div>
       </div>
 
-      <!-- ACTION BUTTONS -->
-      <div class="grid-4" style="margin-bottom:16px">
-        ${[
-            ['👁', 'Vanish',      'Invisible to players'],
-            ['⚡', 'Fly',         'Toggle staff flight'],
-            ['🛡', 'God Mode',    'Toggle invincibility'],
-            ['🔍', 'Inspect',     'View player inventory'],
-            ['🔨', 'Ban Player',  'Issue server ban'],
-            ['🔇', 'Mute Player', 'Silence a player'],
-            ['📍', 'Teleport',    'TP to any player'],
-            ['📋', 'Logs',        'View violation history'],
-            ['🚨', 'Alert',       'Broadcast staff alert'],
-            ['🧊', 'Freeze',      'Freeze a player'],
-            ['👤', 'Spectate',    'Spectate any player'],
-            ['⚙',  'Admin',       'Server admin tools'],
-        ].map(([icon, name, desc]) => `
-          <div class="staff-action-btn" data-staff-action="${escapeHtml(name)}">
-            <span class="icon">${icon}</span>
-            <span style="font-weight:600;font-size:12px">${name}</span>
-            <span style="font-size:10px;color:var(--muted);text-align:center">${desc}</span>
-          </div>`).join('')}
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-title">Commands</div>
+        <div class="grid-4">
+          ${STAFF_COMMANDS.map((c, i) => `
+            <div class="staff-action-btn" data-cmd-idx="${i}" title="${escapeHtml(c.cmd)}">
+              <span class="icon">${c.icon}</span>
+              <span style="font-weight:600;font-size:12px">${c.name}</span>
+              <span style="font-size:10px;color:var(--muted);text-align:center">${c.desc}</span>
+            </div>`).join('')}
+        </div>
       </div>
 
-      <div class="grid-2">
-        <div class="card">
-          <div class="card-title">Active Violations</div>
-          <div id="violations" style="display:flex;flex-direction:column;gap:8px">
-            <div style="color:var(--muted);font-size:12px;text-align:center;padding:16px">No active violations detected.</div>
-          </div>
-          <button class="btn btn-secondary btn-sm" style="margin-top:8px" id="btn-simulate">
-            Simulate Detection (Demo)
-          </button>
+      <div class="card">
+        <div class="card-title">Last Built Command</div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <code id="staff-preview" style="flex:1;font-size:13px;color:var(--cyan);background:var(--bg-input);border:1px solid var(--border);border-radius:7px;padding:10px 12px;overflow-x:auto;white-space:nowrap">Pick a command above…</code>
+          <button class="btn btn-secondary btn-sm" id="btn-copy-last">Copy</button>
         </div>
-
-        <div style="display:flex;flex-direction:column;gap:14px">
-          <div class="card">
-            <div class="card-title">Detection Modules (${MODULE_COUNTS.staff})</div>
-            <div class="module-grid">
-              ${['KillauraDetector','FlightDetector','SpeedDetector','ReachDetector',
-                 'ScaffoldDetector','AimAssistDetector','MacroDetector','XrayDetector',
-                 'AntiGrief','PlayerWatch','ViolationLog','BanLog'].map(m =>
-                `<div class="module-chip">${m}</div>`).join('')}
-              <div class="module-chip" style="border-style:dashed;color:var(--muted);font-size:10px">+${MODULE_COUNTS.staff - 12} more…</div>
-            </div>
-          </div>
-
-          <div class="card">
-            <div class="card-title">Player Log</div>
-            <div style="color:var(--muted);font-size:12px;text-align:center;padding:12px">
-              Connect to a server and inject to see player data.
-            </div>
-          </div>
-        </div>
+        <p style="font-size:10px;color:var(--muted);margin-top:8px">
+          Commands are copied to your clipboard — paste them into the in-game chat or your
+          server console. Only works on servers where you already hold the required permissions.
+        </p>
       </div>`;
 
-    function renderUserTable(users) {
-        const table = document.getElementById('user-table');
-        if (!table) return;
-        table.innerHTML = users.map(u => {
-            const sc = u.status === 'injected' ? 'var(--brand)' : u.status === 'online' ? 'var(--success)' : 'var(--muted)';
-            const sd = u.status === 'injected' ? '⚡' : u.status === 'online' ? '●' : '○';
-            return `<div style="display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--bg-input);border:1px solid var(--border);border-radius:7px">
-              <div style="width:28px;height:28px;border-radius:50%;background:var(--grad-h);display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:700;flex-shrink:0">${(u.name[0]||'?').toUpperCase()}</div>
-              <div style="flex:1;min-width:0">
-                <div style="font-size:12px;font-weight:600">${escapeHtml(u.name)}</div>
-                <div style="font-size:10px;color:var(--muted)">${escapeHtml(u.launcher)} · MC ${escapeHtml(u.version)}</div>
-              </div>
-              <div style="font-size:11px;font-weight:600;color:${sc};min-width:68px;text-align:center">${sd} ${u.status}</div>
-              <div style="font-size:10px;color:var(--muted);min-width:56px;text-align:right">${u.injects} inject${u.injects !== 1 ? 's' : ''}</div>
-            </div>`;
-        }).join('');
-    }
+    let lastCmd = '';
 
-    function refreshUsers() {
-        const n = onlineBase + Math.floor(Math.random() * 16) - 8;
-        onlineBase = Math.max(220, Math.min(280, n));
-        const inj  = Math.floor(onlineBase * 0.76);
-        const elO  = document.getElementById('stat-online');
-        const elI  = document.getElementById('stat-injected');
-        if (elO) elO.textContent = onlineBase.toLocaleString();
-        if (elI) elI.textContent = inj.toLocaleString();
-        renderUserTable(shuffle(MOCK_USERS).slice(0, 8));
-        const lb = document.getElementById('last-refresh-label');
-        if (lb) lb.textContent = 'Updated ' + new Date().toLocaleTimeString();
-    }
-
-    renderUserTable(MOCK_USERS.slice(0, 8));
-    refreshTimer = setInterval(refreshUsers, 5000);
-    pageCleanup = () => clearInterval(refreshTimer);
-
-    document.getElementById('btn-refresh-users')?.addEventListener('click', refreshUsers);
-
-    document.querySelectorAll('[data-staff-action]').forEach(btn => {
-        btn.addEventListener('click', () => notify(`${btn.dataset.staffAction} triggered (requires injection)`, 'info'));
+    document.querySelectorAll('[data-cmd-idx]').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            const idx = parseInt(btn.dataset.cmdIdx, 10);
+            const entry = STAFF_COMMANDS[idx];
+            if (!entry) return;
+            lastCmd = buildStaffCommand(entry.cmd);
+            const prev = document.getElementById('staff-preview');
+            if (prev) prev.textContent = lastCmd;
+            const ok = await copyText(lastCmd);
+            notify(ok ? `Copied: ${lastCmd}` : `Built: ${lastCmd}`, ok ? 'success' : 'info');
+        });
     });
 
-    document.getElementById('btn-simulate')?.addEventListener('click', simulateViolation);
+    document.getElementById('btn-copy-last')?.addEventListener('click', async () => {
+        if (!lastCmd) { notify('Pick a command first', 'info'); return; }
+        const ok = await copyText(lastCmd);
+        notify(ok ? 'Copied to clipboard' : 'Copy failed', ok ? 'success' : 'warn');
+    });
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1705,6 +1757,16 @@ async function settings() {
               <label class="toggle"><input type="checkbox" id="cfg-start-min" ${cfg.startMinimised ? 'checked' : ''}><span class="toggle-slider"></span></label>
             </div>
             <button class="btn btn-secondary btn-sm" style="margin-top:10px" id="btn-save-launcher">Save Launcher Config</button>
+          </div>
+
+          <div class="card">
+            <div class="card-title">Global Chat</div>
+            <div class="form-row">
+              <div class="form-label">Relay URL</div>
+              <input class="form-input" id="cfg-chat-url" placeholder="wss://your-relay-host" value="${escapeHtml(cfg.chatServerUrl || '')}" autocomplete="off">
+              <div class="form-hint">Host the relay in <strong>launcher/server</strong> (see its README), then paste its <code>wss://</code> URL here. Leave blank to disable chat.</div>
+            </div>
+            <button class="btn btn-secondary btn-sm" id="btn-save-chat">Save Chat Config</button>
           </div>
 
           <div class="card">
@@ -1791,6 +1853,16 @@ async function settings() {
         notify('Launcher config saved', 'success');
     });
 
+    document.getElementById('btn-save-chat')?.addEventListener('click', async () => {
+        let url = document.getElementById('cfg-chat-url').value.trim();
+        if (url && !/^wss?:\/\//i.test(url)) {
+            notify('Relay URL must start with ws:// or wss://', 'warn');
+            return;
+        }
+        await quark.settingsSet('chatServerUrl', url);
+        notify(url ? 'Chat relay saved — reopen Global Chat to connect' : 'Global Chat disabled', 'success');
+    });
+
     document.getElementById('btn-export-config')?.addEventListener('click', async () => {
         const ok = await quark.configExport();
         notify(ok ? 'Config exported successfully' : 'Export cancelled', ok ? 'success' : 'info');
@@ -1848,26 +1920,6 @@ async function settings() {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Demo helper for staff panel
-// ─────────────────────────────────────────────────────────────────────────────
-
-function simulateViolation() {
-    const box = document.getElementById('violations');
-    if (!box) return;
-    const players = ['Player123', 'xXhackerXx', 'SpeedRunner99', 'CrystalGod'];
-    const hacks   = ['KillAura', 'Flight', 'Speed', 'Reach'];
-    const p = players[Math.floor(Math.random() * players.length)];
-    const h = hacks[Math.floor(Math.random() * hacks.length)];
-    const vl = Math.floor(Math.random() * 120) + 10;
-    const div = document.createElement('div');
-    div.style.cssText = 'display:flex;align-items:center;gap:8px;padding:8px;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);border-radius:7px;font-size:12px';
-    div.innerHTML = `<span style="font-size:16px">🚨</span><div><strong>${p}</strong> — ${h} (VL ${vl})</div><span style="margin-left:auto;color:var(--muted);font-size:10px">${new Date().toLocaleTimeString()}</span>`;
-    const empty = box.querySelector('[style*="text-align:center"]');
-    if (empty) empty.remove();
-    box.appendChild(div);
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
 // Helpers
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -1878,11 +1930,24 @@ function escapeHtml(str)   {
         .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
-function shuffle(arr) {
-    const out = [...arr];
-    for (let i = out.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [out[i], out[j]] = [out[j], out[i]];
+// Copy text to the clipboard, with a legacy execCommand fallback. Returns true on success.
+async function copyText(text) {
+    try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            await navigator.clipboard.writeText(text);
+            return true;
+        }
+    } catch (_) { /* fall through to legacy path */ }
+    try {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.cssText = 'position:fixed;opacity:0';
+        document.body.appendChild(ta);
+        ta.select();
+        const ok = document.execCommand('copy');
+        document.body.removeChild(ta);
+        return ok;
+    } catch (_) {
+        return false;
     }
-    return out;
 }

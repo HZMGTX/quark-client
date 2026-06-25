@@ -1,14 +1,18 @@
 package cc.quark.agent;
 
 import java.io.*;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Properties;
 
 /**
- * Persists StandaloneClient module toggle state across game sessions.
- * Stored as a flat properties file under the user's home directory so it
- * survives reinjection without needing the real Fabric mod's config system.
+ * Persists StandaloneClient state across game sessions — module toggles plus
+ * scalar settings such as the ClickGUI scale. Stored as a flat properties file
+ * under the user's home directory so it survives reinjection without needing
+ * the real Fabric mod's config system.
+ *
+ * Values are kept as raw strings; callers decide how to interpret each key
+ * (booleans for module state, numbers for sliders).
  */
 final class QuarkConfig {
 
@@ -16,8 +20,8 @@ final class QuarkConfig {
 
     private QuarkConfig() {}
 
-    static Map<String, Boolean> load() {
-        Map<String, Boolean> out = new HashMap<>();
+    static Map<String, String> load() {
+        Map<String, String> out = new LinkedHashMap<>();
         if (!FILE.exists()) return out;
         Properties p = new Properties();
         try (InputStream in = new FileInputStream(FILE)) {
@@ -26,21 +30,21 @@ final class QuarkConfig {
             return out;
         }
         for (String key : p.stringPropertyNames()) {
-            out.put(key, Boolean.parseBoolean(p.getProperty(key)));
+            out.put(key, p.getProperty(key));
         }
         return out;
     }
 
-    static void save(Map<String, Boolean> states) {
+    static void save(Map<String, String> values) {
         Properties p = new Properties();
-        for (Map.Entry<String, Boolean> e : states.entrySet()) {
-            p.setProperty(e.getKey(), String.valueOf(e.getValue()));
+        for (Map.Entry<String, String> e : values.entrySet()) {
+            p.setProperty(e.getKey(), e.getValue());
         }
         try {
             File parent = FILE.getParentFile();
             if (parent != null) parent.mkdirs();
             try (OutputStream out = new FileOutputStream(FILE)) {
-                p.store(out, "Quark client module state");
+                p.store(out, "Quark client state");
             }
         } catch (IOException ignored) {}
     }

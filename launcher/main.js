@@ -37,6 +37,7 @@ function createWindow() {
         frame          : false,
         transparent    : false,
         backgroundColor: '#080810',
+        show           : false,
         webPreferences : {
             preload         : path.join(__dirname, 'preload.js'),
             contextIsolation: true,
@@ -45,6 +46,17 @@ function createWindow() {
     });
 
     win.loadFile(path.join(__dirname, 'src', 'index.html'));
+
+    // Honour the "Start minimised" setting once the page is ready to paint.
+    win.once('ready-to-show', () => {
+        if (store.get('startMinimised', false)) {
+            if (store.get('minimiseToTray', false) && tray) win.hide();
+            else win.minimize();
+        } else {
+            win.show();
+            win.focus();
+        }
+    });
 
     if (process.env.NODE_ENV === 'development') {
         win.webContents.openDevTools({ mode: 'detach' });
@@ -446,6 +458,9 @@ ipcMain.handle('inject:run', async (_e, pid) => {
 });
 
 function sendLog(msg, level = 'info') {
+    // "Silent injection" suppresses routine info chatter but always keeps
+    // warnings and errors so failures are never hidden.
+    if (level === 'info' && store.get('silentInject', false)) return;
     if (win && !win.isDestroyed()) {
         win.webContents.send('inject:log', { msg, level });
     }
