@@ -36,7 +36,7 @@ const STAFF_IDS = {
 // placeholder/cheat entries. Kept in sync by hand with the agent source.
 const MODULE_LIST = {
     render: ['FullBright', 'Zoom'],
-    hud:    ['Watermark', 'ModuleList', 'FPS', 'Keystrokes', 'CPS', 'Coordinates',
+    hud:    ['Watermark', 'ModuleList', 'FPS', 'FpsGraph', 'Keystrokes', 'CPS', 'Coordinates',
              'ArmorStatus', 'Ping', 'Direction', 'Clock', 'Health', 'Hunger',
              'Speed', 'HeldItem', 'ServerIP', 'GameTime', 'Memory', 'SessionInfo'],
     misc:   ['ClickGui', 'ConfigManager', 'Notifications'],
@@ -45,7 +45,8 @@ const MODULE_DESCRIPTIONS = {
     FullBright: 'Maxes out brightness while enabled',
     Zoom: 'Hold C to zoom the camera in',
     Watermark: 'Quark logo + live FPS', ModuleList: 'Active module list',
-    FPS: 'Standalone FPS counter', Keystrokes: 'WASD + mouse keys with live CPS',
+    FPS: 'Standalone FPS counter', FpsGraph: 'Rolling FPS line graph',
+    Keystrokes: 'WASD + mouse keys with live CPS',
     CPS: 'Standalone click-per-second counter', Coordinates: 'Live player XYZ position',
     ArmorStatus: 'Worn armor + durability', Ping: 'Live connection latency',
     Direction: 'Facing direction + yaw', Clock: 'Real-time system clock',
@@ -69,6 +70,7 @@ const CLIENT_CONTROLS = {
     'Move selection': '↑ / ↓',
     'Toggle module': 'Enter',
     'Resize the UI': '[ / ]',
+    'Cycle theme': 'T',
     'Hold to zoom': 'C',
 };
 

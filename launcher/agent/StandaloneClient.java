@@ -31,18 +31,35 @@ public final class StandaloneClient {
     private StandaloneClient() {}
 
     // ── Theme (ARGB) ──────────────────────────────────────────────────────────
-    private static final int ACCENT      = 0xFF22D3EE;
-    private static final int ACCENT_DARK = 0xFF0E7490;
+    // Accent colours are swappable in game (press T with the menu open). Static
+    // chrome and status colours stay fixed.
+    private static int ACCENT      = 0xFF22D3EE;
+    private static int ACCENT_DARK = 0xFF0E7490;
+    private static int TEXT_ON     = 0xFF67E8F9;
     private static final int HEADER_BG   = 0xFF12161F;
     private static final int PANEL       = 0xF00B0E14;
     private static final int ROW         = 0xFF161B22;
     private static final int ROW_SEL     = 0xFF1F2733;
     private static final int TEXT        = 0xFFE6EDF3;
     private static final int TEXT_DIM    = 0xFF7D8590;
-    private static final int TEXT_ON     = 0xFF67E8F9;
     private static final int BAR_GOOD    = 0xFF34D399;
     private static final int BAR_WARN    = 0xFFF59E0B;
     private static final int BAR_BAD     = 0xFFEF4444;
+
+    // Accent palettes. The last entry ("Rainbow") is animated per-frame.
+    private static final String[] THEME_NAMES = {
+            "Cyan", "Purple", "Green", "Crimson", "Amber", "Pink", "Rainbow" };
+    private static final int[][] THEMES = {
+            { 0xFF22D3EE, 0xFF0E7490, 0xFF67E8F9 }, // Cyan
+            { 0xFFA855F7, 0xFF7C3AED, 0xFFC4B5FD }, // Purple
+            { 0xFF34D399, 0xFF059669, 0xFF6EE7B7 }, // Green
+            { 0xFFEF4444, 0xFFB91C1C, 0xFFFCA5A5 }, // Crimson
+            { 0xFFF59E0B, 0xFFB45309, 0xFFFCD34D }, // Amber
+            { 0xFFEC4899, 0xFFBE185D, 0xFFF9A8D4 }, // Pink
+    };
+    private static final int RAINBOW_INDEX = THEME_NAMES.length - 1;
+    private static int themeIndex = 0;
+    private static long themeHintUntil = 0L;
 
     // ── Module model ──────────────────────────────────────────────────────────
     public static final class Module {
@@ -57,7 +74,7 @@ public final class StandaloneClient {
 
     // Modules that paint their own dedicated HUD widget, so they stay out of the generic list.
     private static final java.util.Set<String> SELF_RENDERING = java.util.Set.of(
-            "Watermark", "ModuleList", "FPS", "Keystrokes", "CPS", "Coordinates",
+            "Watermark", "ModuleList", "FPS", "FpsGraph", "Keystrokes", "CPS", "Coordinates",
             "ArmorStatus", "Ping", "Direction", "Clock", "Health", "Hunger",
             "Speed", "HeldItem", "ServerIP", "GameTime", "Memory", "SessionInfo");
 
@@ -84,6 +101,11 @@ public final class StandaloneClient {
     private static boolean prevMouseLeft = false;
     private static int cps = 0;
     private static final List<Long> leftClickTimes = new ArrayList<>();
+
+    // Rolling FPS samples for the FpsGraph widget.
+    private static final int[] fpsHistory = new int[60];
+    private static int fpsHistoryLen = 0;
+    private static long lastFpsSample = 0L;
 
     // Horizontal speed (blocks/sec), smoothed across frames.
     private static double[] lastSpeedPos = null;
@@ -121,6 +143,7 @@ public final class StandaloneClient {
         add("HUD",      "Watermark",     "Quark logo + FPS", true);
         add("HUD",      "ModuleList",    "Active module list", true);
         add("HUD",      "FPS",           "Standalone FPS counter");
+        add("HUD",      "FpsGraph",      "Rolling FPS line graph");
         add("HUD",      "Keystrokes",    "WASD + mouse keys with live CPS", true);
         add("HUD",      "CPS",           "Standalone click-per-second counter");
         add("HUD",      "Coordinates",   "Live player XYZ position", true);
@@ -166,6 +189,11 @@ public final class StandaloneClient {
         if (s != null) {
             try { guiScale = clampScale(Float.parseFloat(s)); } catch (NumberFormatException ignored) {}
         }
+        String t = saved.get("ui.theme");
+        if (t != null) {
+            try { themeIndex = Math.floorMod(Integer.parseInt(t), THEME_NAMES.length); } catch (NumberFormatException ignored) {}
+        }
+        applyTheme();
     }
 
     private static void persist() {
@@ -175,7 +203,50 @@ public final class StandaloneClient {
             for (Module m : e.getValue())
                 states.put(e.getKey() + "." + m.name, String.valueOf(m.enabled));
         states.put("ui.scale", String.valueOf(guiScale));
+        states.put("ui.theme", String.valueOf(themeIndex));
         QuarkConfig.save(states);
+    }
+
+    // ── Theme switching ───────────────────────────────────────────────────────
+
+    private static void applyTheme() {
+        if (themeIndex != RAINBOW_INDEX) {
+            int[] p = THEMES[themeIndex];
+            ACCENT = p[0]; ACCENT_DARK = p[1]; TEXT_ON = p[2];
+        }
+    }
+
+    private static void cycleTheme() {
+        themeIndex = (themeIndex + 1) % THEME_NAMES.length;
+        applyTheme();
+        themeHintUntil = System.currentTimeMillis() + 1400;
+        toast("Theme: " + THEME_NAMES[themeIndex]);
+        persist();
+    }
+
+    // Rainbow theme: derive the accent from the current time each frame.
+    private static void updateTheme() {
+        if (themeIndex != RAINBOW_INDEX) return;
+        float hue = (System.currentTimeMillis() % 4000L) / 4000f;
+        ACCENT      = hsvToArgb(hue, 0.75f, 1.0f);
+        ACCENT_DARK = hsvToArgb(hue, 0.85f, 0.55f);
+        TEXT_ON     = hsvToArgb(hue, 0.45f, 1.0f);
+    }
+
+    private static int hsvToArgb(float h, float s, float v) {
+        float r = 0, g = 0, b = 0;
+        int i = (int) (h * 6) % 6;
+        float f = h * 6 - (float) Math.floor(h * 6);
+        float p = v * (1 - s), q = v * (1 - f * s), t = v * (1 - (1 - f) * s);
+        switch (i) {
+            case 0: r = v; g = t; b = p; break;
+            case 1: r = q; g = v; b = p; break;
+            case 2: r = p; g = v; b = t; break;
+            case 3: r = p; g = q; b = v; break;
+            case 4: r = t; g = p; b = v; break;
+            default: r = v; g = p; b = q; break;
+        }
+        return 0xFF000000 | ((int) (r * 255) << 16) | ((int) (g * 255) << 8) | (int) (b * 255);
     }
 
     // ── Per-frame ─────────────────────────────────────────────────────────────
@@ -189,6 +260,8 @@ public final class StandaloneClient {
             handleInput();
             updateFullBright();
             updateZoom();
+            updateTheme();
+            sampleFps();
 
             float target = guiOpen ? 1f : 0f;
             guiAnim += (target - guiAnim) * Math.min(1f, dt * 12f);
@@ -197,6 +270,7 @@ public final class StandaloneClient {
             leftHudY = 4;
             if (isEnabled("HUD", "Watermark"))      drawWatermark(ctx);
             else if (isEnabled("HUD", "FPS"))       drawFpsCounter(ctx);
+            if (isEnabled("HUD", "FpsGraph"))       drawFpsGraph(ctx);
             if (isEnabled("HUD", "SessionInfo"))    drawSessionInfo(ctx);
             if (isEnabled("HUD", "Coordinates"))    drawCoordinates(ctx);
             if (isEnabled("HUD", "Direction"))      drawDirection(ctx);
@@ -275,6 +349,8 @@ public final class StandaloneClient {
         if (pressed(McReflect.KEY_RIGHT_BRACKET)) adjustScale(SCALE_STEP);
         if (pressed(McReflect.KEY_LEFT_BRACKET))  adjustScale(-SCALE_STEP);
 
+        if (pressed(McReflect.KEY_T)) cycleTheme();
+
         if (pressed(McReflect.KEY_ENTER)) {
             Module m = current().get(modIndex);
             m.enabled = !m.enabled;
@@ -337,6 +413,50 @@ public final class StandaloneClient {
         String fps = fpsString();
         if (fps.isEmpty()) return;
         leftLabel(ctx, fps, ACCENT);
+    }
+
+    // Push one FPS sample at most ~5x/sec into the rolling history buffer.
+    private static void sampleFps() {
+        if (!isEnabled("HUD", "FpsGraph")) return;
+        long now = System.currentTimeMillis();
+        if (now - lastFpsSample < 200) return;
+        lastFpsSample = now;
+        Integer fps = McReflect.fps();
+        if (fps == null) return;
+        if (fpsHistoryLen < fpsHistory.length) {
+            fpsHistory[fpsHistoryLen++] = fps;
+        } else {
+            System.arraycopy(fpsHistory, 1, fpsHistory, 0, fpsHistory.length - 1);
+            fpsHistory[fpsHistory.length - 1] = fps;
+        }
+    }
+
+    private static void drawFpsGraph(Object ctx) {
+        if (fpsHistoryLen < 2) return;
+        int w = 80, h = 26, x = 4, y = nextLeftSlot(h);
+        McReflect.fill(ctx, x, y, x + w, y + h, PANEL);
+        McReflect.fill(ctx, x, y, x + 2, y + h, ACCENT);
+
+        int max = 1;
+        for (int i = 0; i < fpsHistoryLen; i++) max = Math.max(max, fpsHistory[i]);
+
+        int gx = x + 5, gy = y + 3, gw = w - 9, gh = h - 12;
+        int prevX = -1, prevY = -1;
+        for (int i = 0; i < fpsHistoryLen; i++) {
+            int px = gx + (int) ((gw) * (i / (float) (fpsHistory.length - 1)));
+            int py = gy + gh - (int) (gh * (fpsHistory[i] / (float) max));
+            if (prevX >= 0) {
+                // Draw a thin line segment between successive samples.
+                int steps = Math.max(1, Math.abs(px - prevX));
+                for (int s = 0; s <= steps; s++) {
+                    int lx = prevX + (px - prevX) * s / steps;
+                    int ly = prevY + (py - prevY) * s / steps;
+                    McReflect.fill(ctx, lx, ly, lx + 1, ly + 1, ACCENT);
+                }
+            }
+            prevX = px; prevY = py;
+        }
+        McReflect.text(ctx, fpsHistory[fpsHistoryLen - 1] + " fps", x + 5, y + h - 9, TEXT_DIM);
     }
 
     private static void drawCoordinates(Object ctx) {
@@ -614,14 +734,18 @@ public final class StandaloneClient {
             Module selMod = mods.get(modIndex);
             McReflect.text(ctx, selMod.name + " — " + selMod.description, px + 10, footerY + 5, withAlpha(TEXT_DIM, anim));
 
-            // Show the live scale when adjusting, otherwise the controls hint.
-            if (System.currentTimeMillis() < scaleHintUntil) {
+            // Show the live scale/theme when adjusting, otherwise the controls hint.
+            long nowMs = System.currentTimeMillis();
+            if (nowMs < scaleHintUntil) {
                 String s = "UI scale " + Math.round(guiScale * 100) + "%";
                 McReflect.text(ctx, s, px + 10, footerY + 18, withAlpha(ACCENT, anim));
                 String range = "[ - ]  +";
                 McReflect.text(ctx, range, px + panelW - McReflect.textWidth(range) - 10, footerY + 18, withAlpha(TEXT_DIM, anim));
+            } else if (nowMs < themeHintUntil) {
+                String s = "Theme: " + THEME_NAMES[themeIndex];
+                McReflect.text(ctx, s, px + 10, footerY + 18, withAlpha(ACCENT, anim));
             } else {
-                String hint = "←→ Cat   ↑↓ Mod   Enter Toggle   [ ] Scale";
+                String hint = "←→ Cat   ↑↓ Mod   Enter Toggle   [ ] Scale   T Theme";
                 McReflect.text(ctx, hint, px + 10, footerY + 18, withAlpha(TEXT_DIM, anim));
             }
         } finally {
