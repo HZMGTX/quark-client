@@ -106,6 +106,7 @@ public final class StandaloneClient {
         MinecraftHook.addRender2DListener(StandaloneClient::onRender);
         toast("QUARK ready — Right-Shift to open");
         System.out.println("[Quark Client] Standalone client ready — press Right-Shift in game to open the menu.");
+        QuarkTelemetry.report("session_start", Map.of());
     }
 
     private static void buildModules() {
@@ -257,6 +258,7 @@ public final class StandaloneClient {
             System.out.println("[Quark Client] " + m.name + " -> " + (m.enabled ? "ON" : "OFF"));
             toast(m.name + (m.enabled ? " enabled" : " disabled"));
             persist();
+            QuarkTelemetry.report("module_toggle", Map.of("module", m.name, "enabled", m.enabled));
         }
     }
 

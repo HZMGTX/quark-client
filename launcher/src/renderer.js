@@ -1378,6 +1378,7 @@ function renderAlts() {
             const sub = document.getElementById('alt-active-sub');
             if (sub) sub.textContent = 'Active account: ' + activeAlt;
             notify(`"${a.name}" set as active account for next launch`, 'success');
+            quark.statsReport('alt_switch', {});
         });
     });
     list.querySelectorAll('[data-alt-del]').forEach(b => {
@@ -1455,6 +1456,7 @@ async function chat() {
                 case 'welcome':
                     setChatStatus(`● ${m.online} online`, 'var(--success)');
                     addChatMsg('System', 'Connected to Quark Global Chat. Be respectful.', true);
+                    quark.statsReport('chat_connect', {});
                     break;
                 case 'presence':
                     setChatStatus(`● ${m.online} online`, 'var(--success)');
@@ -1770,6 +1772,16 @@ async function settings() {
           </div>
 
           <div class="card">
+            <div class="card-title">Stats &amp; Analytics</div>
+            <div class="form-row">
+              <div class="form-label">Stats Server URL</div>
+              <input class="form-input" id="cfg-stats-url" placeholder="http://localhost:8788" value="${escapeHtml(cfg.statsServerUrl || '')}" autocomplete="off">
+              <div class="form-hint">Host the dashboard in <strong>website/server</strong> (see its README). Reports anonymous launch/inject/module events under a random id — no usernames or IPs. Leave blank to disable.</div>
+            </div>
+            <button class="btn btn-secondary btn-sm" id="btn-save-stats">Save Stats Config</button>
+          </div>
+
+          <div class="card">
             <div class="card-title">Config Backup</div>
             <div style="display:flex;flex-direction:column;gap:8px">
               <button class="btn btn-secondary btn-sm" id="btn-export-config">⬆ Export Config</button>
@@ -1861,6 +1873,16 @@ async function settings() {
         }
         await quark.settingsSet('chatServerUrl', url);
         notify(url ? 'Chat relay saved — reopen Global Chat to connect' : 'Global Chat disabled', 'success');
+    });
+
+    document.getElementById('btn-save-stats')?.addEventListener('click', async () => {
+        let url = document.getElementById('cfg-stats-url').value.trim();
+        if (url && !/^https?:\/\//i.test(url)) {
+            notify('Stats Server URL must start with http:// or https://', 'warn');
+            return;
+        }
+        await quark.settingsSet('statsServerUrl', url);
+        notify(url ? 'Stats reporting enabled' : 'Stats reporting disabled', 'success');
     });
 
     document.getElementById('btn-export-config')?.addEventListener('click', async () => {
